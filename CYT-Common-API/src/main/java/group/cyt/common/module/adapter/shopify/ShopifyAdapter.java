@@ -48,8 +48,7 @@ public class ShopifyAdapter implements PlatformAdapter {
     // 找不到对应店铺凭据时保持原行为（下面按「店铺不一致」拒绝），不会串到别的店。
     String credentialSystem = system;
     if (!requested.isBlank()
-        && !normalize(credentials.resolve("SHOPIFY_STORE", system))
-            .equalsIgnoreCase(requested)) {
+        && !normalize(credentials.resolve("SHOPIFY_STORE", system)).equalsIgnoreCase(requested)) {
       String scoped = credentials.systemForStore("SHOPIFY_STORE", requested);
       if (scoped != null) credentialSystem = scoped;
     }
@@ -117,6 +116,10 @@ public class ShopifyAdapter implements PlatformAdapter {
       }
       case "orders.create" -> create(c, p);
       case "refunds.create" -> refund(c, p);
+      case "refunds.quote" -> new ShopifyRefundMethods((q, v) -> graphql(c, q, v)).quote(p);
+      case "refunds.execute_plan" ->
+          new ShopifyRefundMethods((q, v) -> graphql(c, q, v)).execute(p);
+      case "store_credit.credit" -> new ShopifyRefundMethods((q, v) -> graphql(c, q, v)).credit(p);
       default -> throw GatewayException.config("未知 Shopify 操作: " + key);
     };
   }

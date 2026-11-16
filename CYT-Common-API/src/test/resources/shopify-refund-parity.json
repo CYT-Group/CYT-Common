@@ -1,0 +1,6480 @@
+[
+  {
+    "name": "EUR full mixed payment",
+    "order": {
+      "id": "gid://shopify/Order/1",
+      "presentmentCurrencyCode": "EUR",
+      "taxesIncluded": false,
+      "withoutShipping": {
+        "amountSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        }
+      },
+      "customer": {
+        "id": "gid://shopify/Customer/2"
+      },
+      "totalPriceSet": {
+        "presentmentMoney": {
+          "amount": "100.00",
+          "currencyCode": "EUR"
+        },
+        "shopMoney": {
+          "amount": "110.00",
+          "currencyCode": "USD"
+        }
+      },
+      "totalReceivedSet": {
+        "presentmentMoney": {
+          "amount": "100.00",
+          "currencyCode": "EUR"
+        },
+        "shopMoney": {
+          "amount": "110.00",
+          "currencyCode": "USD"
+        }
+      },
+      "totalRefundedSet": {
+        "presentmentMoney": {
+          "amount": "0.00",
+          "currencyCode": "EUR"
+        },
+        "shopMoney": {
+          "amount": "0.00",
+          "currencyCode": "USD"
+        }
+      },
+      "transactionsCount": {
+        "count": 2,
+        "precision": "EXACT"
+      },
+      "transactions": [
+        {
+          "id": "gid://shopify/OrderTransaction/1",
+          "kind": "CAPTURE",
+          "status": "SUCCESS",
+          "gateway": "shopify_payments",
+          "amountSet": {
+            "presentmentMoney": {
+              "amount": "70.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "77.00",
+              "currencyCode": "USD"
+            }
+          },
+          "formattedGateway": "Bank card"
+        },
+        {
+          "id": "gid://shopify/OrderTransaction/2",
+          "kind": "SALE",
+          "status": "SUCCESS",
+          "gateway": "shopify_store_credit",
+          "amountSet": {
+            "presentmentMoney": {
+              "amount": "30.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "33.00",
+              "currencyCode": "USD"
+            }
+          },
+          "formattedGateway": "Store Credit"
+        }
+      ],
+      "full": {
+        "subtotalSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        },
+        "discountedSubtotalSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        },
+        "totalCartDiscountAmountSet": {
+          "presentmentMoney": {
+            "amount": "0.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "0.00",
+            "currencyCode": "USD"
+          }
+        },
+        "totalTaxSet": {
+          "presentmentMoney": {
+            "amount": "0.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "0.00",
+            "currencyCode": "USD"
+          }
+        },
+        "totalDutiesSet": {
+          "presentmentMoney": {
+            "amount": "0.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "0.00",
+            "currencyCode": "USD"
+          }
+        },
+        "shipping": {
+          "amountSet": {
+            "presentmentMoney": {
+              "amount": "0.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "0.00",
+              "currencyCode": "USD"
+            }
+          },
+          "taxSet": {
+            "presentmentMoney": {
+              "amount": "0.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "0.00",
+              "currencyCode": "USD"
+            }
+          },
+          "maximumRefundableSet": {
+            "presentmentMoney": {
+              "amount": "0.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "0.00",
+              "currencyCode": "USD"
+            }
+          }
+        },
+        "amountSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        },
+        "maximumRefundableSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        },
+        "suggestedTransactions": [
+          {
+            "kind": "SUGGESTED_REFUND",
+            "gateway": "shopify_payments",
+            "formattedGateway": "Bank card",
+            "parentTransaction": {
+              "id": "gid://shopify/OrderTransaction/1",
+              "kind": "CAPTURE",
+              "status": "SUCCESS",
+              "gateway": "shopify_payments"
+            },
+            "amountSet": {
+              "presentmentMoney": {
+                "amount": "70.00",
+                "currencyCode": "EUR"
+              },
+              "shopMoney": {
+                "amount": "77.00",
+                "currencyCode": "USD"
+              }
+            },
+            "maximumRefundableSet": {
+              "presentmentMoney": {
+                "amount": "70.00",
+                "currencyCode": "EUR"
+              },
+              "shopMoney": {
+                "amount": "77.00",
+                "currencyCode": "USD"
+              }
+            }
+          },
+          {
+            "kind": "SUGGESTED_REFUND",
+            "gateway": "shopify_store_credit",
+            "formattedGateway": "Store Credit",
+            "parentTransaction": {
+              "id": "gid://shopify/OrderTransaction/2",
+              "kind": "SALE",
+              "status": "SUCCESS",
+              "gateway": "shopify_store_credit"
+            },
+            "amountSet": {
+              "presentmentMoney": {
+                "amount": "30.00",
+                "currencyCode": "EUR"
+              },
+              "shopMoney": {
+                "amount": "33.00",
+                "currencyCode": "USD"
+              }
+            },
+            "maximumRefundableSet": {
+              "presentmentMoney": {
+                "amount": "30.00",
+                "currencyCode": "EUR"
+              },
+              "shopMoney": {
+                "amount": "33.00",
+                "currencyCode": "USD"
+              }
+            }
+          }
+        ]
+      },
+      "selected": {
+        "subtotalSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        },
+        "discountedSubtotalSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        },
+        "totalCartDiscountAmountSet": {
+          "presentmentMoney": {
+            "amount": "0.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "0.00",
+            "currencyCode": "USD"
+          }
+        },
+        "totalTaxSet": {
+          "presentmentMoney": {
+            "amount": "0.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "0.00",
+            "currencyCode": "USD"
+          }
+        },
+        "totalDutiesSet": {
+          "presentmentMoney": {
+            "amount": "0.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "0.00",
+            "currencyCode": "USD"
+          }
+        },
+        "shipping": {
+          "amountSet": {
+            "presentmentMoney": {
+              "amount": "0.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "0.00",
+              "currencyCode": "USD"
+            }
+          },
+          "taxSet": {
+            "presentmentMoney": {
+              "amount": "0.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "0.00",
+              "currencyCode": "USD"
+            }
+          },
+          "maximumRefundableSet": {
+            "presentmentMoney": {
+              "amount": "0.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "0.00",
+              "currencyCode": "USD"
+            }
+          }
+        },
+        "amountSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        },
+        "maximumRefundableSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        },
+        "suggestedTransactions": [
+          {
+            "kind": "SUGGESTED_REFUND",
+            "gateway": "shopify_payments",
+            "formattedGateway": "Bank card",
+            "parentTransaction": {
+              "id": "gid://shopify/OrderTransaction/1",
+              "kind": "CAPTURE",
+              "status": "SUCCESS",
+              "gateway": "shopify_payments"
+            },
+            "amountSet": {
+              "presentmentMoney": {
+                "amount": "70.00",
+                "currencyCode": "EUR"
+              },
+              "shopMoney": {
+                "amount": "77.00",
+                "currencyCode": "USD"
+              }
+            },
+            "maximumRefundableSet": {
+              "presentmentMoney": {
+                "amount": "70.00",
+                "currencyCode": "EUR"
+              },
+              "shopMoney": {
+                "amount": "77.00",
+                "currencyCode": "USD"
+              }
+            }
+          },
+          {
+            "kind": "SUGGESTED_REFUND",
+            "gateway": "shopify_store_credit",
+            "formattedGateway": "Store Credit",
+            "parentTransaction": {
+              "id": "gid://shopify/OrderTransaction/2",
+              "kind": "SALE",
+              "status": "SUCCESS",
+              "gateway": "shopify_store_credit"
+            },
+            "amountSet": {
+              "presentmentMoney": {
+                "amount": "30.00",
+                "currencyCode": "EUR"
+              },
+              "shopMoney": {
+                "amount": "33.00",
+                "currencyCode": "USD"
+              }
+            },
+            "maximumRefundableSet": {
+              "presentmentMoney": {
+                "amount": "30.00",
+                "currencyCode": "EUR"
+              },
+              "shopMoney": {
+                "amount": "33.00",
+                "currencyCode": "USD"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "params": {
+      "store": "fixture.myshopify.com",
+      "order_id": "gid://shopify/Order/1",
+      "target": "original",
+      "amount": null,
+      "currency": null,
+      "items": [],
+      "refund_shipping": false,
+      "allocations": []
+    },
+    "expected": {
+      "version": 1,
+      "store": "fixture.myshopify.com",
+      "order_id": "gid://shopify/Order/1",
+      "target": "original",
+      "currency": "EUR",
+      "amount": "100.00",
+      "paid": "100.00",
+      "refunded": "0.00",
+      "remaining": "100.00",
+      "customer_id": "gid://shopify/Customer/2",
+      "order_refund_amount": "100.00",
+      "bonus_credit_amount": "0.00",
+      "allocations": [
+        {
+          "parent_id": "gid://shopify/OrderTransaction/1",
+          "gateway": "shopify_payments",
+          "manual": false,
+          "label": "Bank card",
+          "maximum": "70.00",
+          "suggested": "70.00",
+          "amount": "70.00"
+        },
+        {
+          "parent_id": "gid://shopify/OrderTransaction/2",
+          "gateway": "shopify_store_credit",
+          "manual": false,
+          "label": "Store Credit",
+          "maximum": "30.00",
+          "suggested": "30.00",
+          "amount": "30.00"
+        }
+      ],
+      "shipping_refund_amount": "0.00",
+      "shipping_refund_total": "0.00",
+      "calculation": {
+        "subtotal": {
+          "customer": "100.00",
+          "shop": "110.00"
+        },
+        "discounted_subtotal": {
+          "customer": "100.00",
+          "shop": "110.00"
+        },
+        "cart_discount": {
+          "customer": "0.00",
+          "shop": "0.00"
+        },
+        "tax": {
+          "customer": "0.00",
+          "shop": "0.00"
+        },
+        "duties": {
+          "customer": "0.00",
+          "shop": "0.00"
+        },
+        "recommended": {
+          "customer": "100.00",
+          "shop": "110.00"
+        },
+        "shipping": {
+          "customer": "0.00",
+          "shop": "0.00"
+        },
+        "shipping_tax": {
+          "customer": "0.00",
+          "shop": "0.00"
+        },
+        "shipping_maximum": {
+          "customer": "0.00",
+          "shop": "0.00"
+        }
+      },
+      "taxes_included": false,
+      "shop_currency": "USD",
+      "shop_money": {
+        "total": {
+          "customer": "100.00",
+          "shop": "110.00"
+        },
+        "paid": {
+          "customer": "100.00",
+          "shop": "110.00"
+        },
+        "refunded": {
+          "customer": "0.00",
+          "shop": "0.00"
+        }
+      },
+      "items": [],
+      "refund_shipping": false,
+      "quote_hash": "fde2abf14f4d38caed339232be09cd124ed8608a751b9887a411fde6c64f78d4",
+      "payments": [
+        {
+          "parent_id": "gid://shopify/OrderTransaction/1",
+          "gateway": "shopify_payments",
+          "label": "Bank card",
+          "paid": "70.00"
+        },
+        {
+          "parent_id": "gid://shopify/OrderTransaction/2",
+          "gateway": "shopify_store_credit",
+          "label": "Store Credit",
+          "paid": "30.00"
+        }
+      ],
+      "channels": [
+        {
+          "parent_id": "gid://shopify/OrderTransaction/1",
+          "gateway": "shopify_payments",
+          "manual": false,
+          "label": "Bank card",
+          "maximum": "70.00",
+          "suggested": "70.00"
+        },
+        {
+          "parent_id": "gid://shopify/OrderTransaction/2",
+          "gateway": "shopify_store_credit",
+          "manual": false,
+          "label": "Store Credit",
+          "maximum": "30.00",
+          "suggested": "30.00"
+        }
+      ],
+      "recommended_amount": "100.00"
+    }
+  },
+  {
+    "name": "mixed partial allocation",
+    "order": {
+      "id": "gid://shopify/Order/1",
+      "presentmentCurrencyCode": "EUR",
+      "taxesIncluded": false,
+      "withoutShipping": {
+        "amountSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        }
+      },
+      "customer": {
+        "id": "gid://shopify/Customer/2"
+      },
+      "totalPriceSet": {
+        "presentmentMoney": {
+          "amount": "100.00",
+          "currencyCode": "EUR"
+        },
+        "shopMoney": {
+          "amount": "110.00",
+          "currencyCode": "USD"
+        }
+      },
+      "totalReceivedSet": {
+        "presentmentMoney": {
+          "amount": "100.00",
+          "currencyCode": "EUR"
+        },
+        "shopMoney": {
+          "amount": "110.00",
+          "currencyCode": "USD"
+        }
+      },
+      "totalRefundedSet": {
+        "presentmentMoney": {
+          "amount": "0.00",
+          "currencyCode": "EUR"
+        },
+        "shopMoney": {
+          "amount": "0.00",
+          "currencyCode": "USD"
+        }
+      },
+      "transactionsCount": {
+        "count": 2,
+        "precision": "EXACT"
+      },
+      "transactions": [
+        {
+          "id": "gid://shopify/OrderTransaction/1",
+          "kind": "CAPTURE",
+          "status": "SUCCESS",
+          "gateway": "shopify_payments",
+          "amountSet": {
+            "presentmentMoney": {
+              "amount": "70.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "77.00",
+              "currencyCode": "USD"
+            }
+          },
+          "formattedGateway": "Bank card"
+        },
+        {
+          "id": "gid://shopify/OrderTransaction/2",
+          "kind": "SALE",
+          "status": "SUCCESS",
+          "gateway": "shopify_store_credit",
+          "amountSet": {
+            "presentmentMoney": {
+              "amount": "30.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "33.00",
+              "currencyCode": "USD"
+            }
+          },
+          "formattedGateway": "Store Credit"
+        }
+      ],
+      "full": {
+        "subtotalSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        },
+        "discountedSubtotalSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        },
+        "totalCartDiscountAmountSet": {
+          "presentmentMoney": {
+            "amount": "0.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "0.00",
+            "currencyCode": "USD"
+          }
+        },
+        "totalTaxSet": {
+          "presentmentMoney": {
+            "amount": "0.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "0.00",
+            "currencyCode": "USD"
+          }
+        },
+        "totalDutiesSet": {
+          "presentmentMoney": {
+            "amount": "0.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "0.00",
+            "currencyCode": "USD"
+          }
+        },
+        "shipping": {
+          "amountSet": {
+            "presentmentMoney": {
+              "amount": "0.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "0.00",
+              "currencyCode": "USD"
+            }
+          },
+          "taxSet": {
+            "presentmentMoney": {
+              "amount": "0.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "0.00",
+              "currencyCode": "USD"
+            }
+          },
+          "maximumRefundableSet": {
+            "presentmentMoney": {
+              "amount": "0.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "0.00",
+              "currencyCode": "USD"
+            }
+          }
+        },
+        "amountSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        },
+        "maximumRefundableSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        },
+        "suggestedTransactions": [
+          {
+            "kind": "SUGGESTED_REFUND",
+            "gateway": "shopify_payments",
+            "formattedGateway": "Bank card",
+            "parentTransaction": {
+              "id": "gid://shopify/OrderTransaction/1",
+              "kind": "CAPTURE",
+              "status": "SUCCESS",
+              "gateway": "shopify_payments"
+            },
+            "amountSet": {
+              "presentmentMoney": {
+                "amount": "70.00",
+                "currencyCode": "EUR"
+              },
+              "shopMoney": {
+                "amount": "77.00",
+                "currencyCode": "USD"
+              }
+            },
+            "maximumRefundableSet": {
+              "presentmentMoney": {
+                "amount": "70.00",
+                "currencyCode": "EUR"
+              },
+              "shopMoney": {
+                "amount": "77.00",
+                "currencyCode": "USD"
+              }
+            }
+          },
+          {
+            "kind": "SUGGESTED_REFUND",
+            "gateway": "shopify_store_credit",
+            "formattedGateway": "Store Credit",
+            "parentTransaction": {
+              "id": "gid://shopify/OrderTransaction/2",
+              "kind": "SALE",
+              "status": "SUCCESS",
+              "gateway": "shopify_store_credit"
+            },
+            "amountSet": {
+              "presentmentMoney": {
+                "amount": "30.00",
+                "currencyCode": "EUR"
+              },
+              "shopMoney": {
+                "amount": "33.00",
+                "currencyCode": "USD"
+              }
+            },
+            "maximumRefundableSet": {
+              "presentmentMoney": {
+                "amount": "30.00",
+                "currencyCode": "EUR"
+              },
+              "shopMoney": {
+                "amount": "33.00",
+                "currencyCode": "USD"
+              }
+            }
+          }
+        ]
+      },
+      "selected": {
+        "subtotalSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        },
+        "discountedSubtotalSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        },
+        "totalCartDiscountAmountSet": {
+          "presentmentMoney": {
+            "amount": "0.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "0.00",
+            "currencyCode": "USD"
+          }
+        },
+        "totalTaxSet": {
+          "presentmentMoney": {
+            "amount": "0.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "0.00",
+            "currencyCode": "USD"
+          }
+        },
+        "totalDutiesSet": {
+          "presentmentMoney": {
+            "amount": "0.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "0.00",
+            "currencyCode": "USD"
+          }
+        },
+        "shipping": {
+          "amountSet": {
+            "presentmentMoney": {
+              "amount": "0.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "0.00",
+              "currencyCode": "USD"
+            }
+          },
+          "taxSet": {
+            "presentmentMoney": {
+              "amount": "0.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "0.00",
+              "currencyCode": "USD"
+            }
+          },
+          "maximumRefundableSet": {
+            "presentmentMoney": {
+              "amount": "0.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "0.00",
+              "currencyCode": "USD"
+            }
+          }
+        },
+        "amountSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        },
+        "maximumRefundableSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        },
+        "suggestedTransactions": [
+          {
+            "kind": "SUGGESTED_REFUND",
+            "gateway": "shopify_payments",
+            "formattedGateway": "Bank card",
+            "parentTransaction": {
+              "id": "gid://shopify/OrderTransaction/1",
+              "kind": "CAPTURE",
+              "status": "SUCCESS",
+              "gateway": "shopify_payments"
+            },
+            "amountSet": {
+              "presentmentMoney": {
+                "amount": "70.00",
+                "currencyCode": "EUR"
+              },
+              "shopMoney": {
+                "amount": "77.00",
+                "currencyCode": "USD"
+              }
+            },
+            "maximumRefundableSet": {
+              "presentmentMoney": {
+                "amount": "70.00",
+                "currencyCode": "EUR"
+              },
+              "shopMoney": {
+                "amount": "77.00",
+                "currencyCode": "USD"
+              }
+            }
+          },
+          {
+            "kind": "SUGGESTED_REFUND",
+            "gateway": "shopify_store_credit",
+            "formattedGateway": "Store Credit",
+            "parentTransaction": {
+              "id": "gid://shopify/OrderTransaction/2",
+              "kind": "SALE",
+              "status": "SUCCESS",
+              "gateway": "shopify_store_credit"
+            },
+            "amountSet": {
+              "presentmentMoney": {
+                "amount": "30.00",
+                "currencyCode": "EUR"
+              },
+              "shopMoney": {
+                "amount": "33.00",
+                "currencyCode": "USD"
+              }
+            },
+            "maximumRefundableSet": {
+              "presentmentMoney": {
+                "amount": "30.00",
+                "currencyCode": "EUR"
+              },
+              "shopMoney": {
+                "amount": "33.00",
+                "currencyCode": "USD"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "params": {
+      "store": "fixture.myshopify.com",
+      "order_id": "gid://shopify/Order/1",
+      "target": "original",
+      "amount": "20.00",
+      "currency": null,
+      "items": [],
+      "refund_shipping": false,
+      "allocations": [
+        {
+          "parent_id": "gid://shopify/OrderTransaction/2",
+          "amount": "20.00"
+        }
+      ]
+    },
+    "expected": {
+      "version": 1,
+      "store": "fixture.myshopify.com",
+      "order_id": "gid://shopify/Order/1",
+      "target": "original",
+      "currency": "EUR",
+      "amount": "20.00",
+      "paid": "100.00",
+      "refunded": "0.00",
+      "remaining": "100.00",
+      "customer_id": "gid://shopify/Customer/2",
+      "order_refund_amount": "20.00",
+      "bonus_credit_amount": "0.00",
+      "allocations": [
+        {
+          "parent_id": "gid://shopify/OrderTransaction/2",
+          "gateway": "shopify_store_credit",
+          "manual": false,
+          "label": "Store Credit",
+          "maximum": "30.00",
+          "suggested": "30.00",
+          "amount": "20.00"
+        }
+      ],
+      "shipping_refund_amount": "0.00",
+      "shipping_refund_total": "0.00",
+      "calculation": {
+        "subtotal": {
+          "customer": "100.00",
+          "shop": "110.00"
+        },
+        "discounted_subtotal": {
+          "customer": "100.00",
+          "shop": "110.00"
+        },
+        "cart_discount": {
+          "customer": "0.00",
+          "shop": "0.00"
+        },
+        "tax": {
+          "customer": "0.00",
+          "shop": "0.00"
+        },
+        "duties": {
+          "customer": "0.00",
+          "shop": "0.00"
+        },
+        "recommended": {
+          "customer": "100.00",
+          "shop": "110.00"
+        },
+        "shipping": {
+          "customer": "0.00",
+          "shop": "0.00"
+        },
+        "shipping_tax": {
+          "customer": "0.00",
+          "shop": "0.00"
+        },
+        "shipping_maximum": {
+          "customer": "0.00",
+          "shop": "0.00"
+        }
+      },
+      "taxes_included": false,
+      "shop_currency": "USD",
+      "shop_money": {
+        "total": {
+          "customer": "100.00",
+          "shop": "110.00"
+        },
+        "paid": {
+          "customer": "100.00",
+          "shop": "110.00"
+        },
+        "refunded": {
+          "customer": "0.00",
+          "shop": "0.00"
+        }
+      },
+      "items": [],
+      "refund_shipping": false,
+      "quote_hash": "86ae5c8c9138301fe7c4bd8c392e441da0b003ae28114dcfc898c55e404f3590",
+      "payments": [
+        {
+          "parent_id": "gid://shopify/OrderTransaction/1",
+          "gateway": "shopify_payments",
+          "label": "Bank card",
+          "paid": "70.00"
+        },
+        {
+          "parent_id": "gid://shopify/OrderTransaction/2",
+          "gateway": "shopify_store_credit",
+          "label": "Store Credit",
+          "paid": "30.00"
+        }
+      ],
+      "channels": [
+        {
+          "parent_id": "gid://shopify/OrderTransaction/1",
+          "gateway": "shopify_payments",
+          "manual": false,
+          "label": "Bank card",
+          "maximum": "70.00",
+          "suggested": "70.00"
+        },
+        {
+          "parent_id": "gid://shopify/OrderTransaction/2",
+          "gateway": "shopify_store_credit",
+          "manual": false,
+          "label": "Store Credit",
+          "maximum": "30.00",
+          "suggested": "30.00"
+        }
+      ],
+      "recommended_amount": "100.00"
+    }
+  },
+  {
+    "name": "all to store credit",
+    "order": {
+      "id": "gid://shopify/Order/1",
+      "presentmentCurrencyCode": "EUR",
+      "taxesIncluded": false,
+      "withoutShipping": {
+        "amountSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        }
+      },
+      "customer": {
+        "id": "gid://shopify/Customer/2"
+      },
+      "totalPriceSet": {
+        "presentmentMoney": {
+          "amount": "100.00",
+          "currencyCode": "EUR"
+        },
+        "shopMoney": {
+          "amount": "110.00",
+          "currencyCode": "USD"
+        }
+      },
+      "totalReceivedSet": {
+        "presentmentMoney": {
+          "amount": "100.00",
+          "currencyCode": "EUR"
+        },
+        "shopMoney": {
+          "amount": "110.00",
+          "currencyCode": "USD"
+        }
+      },
+      "totalRefundedSet": {
+        "presentmentMoney": {
+          "amount": "0.00",
+          "currencyCode": "EUR"
+        },
+        "shopMoney": {
+          "amount": "0.00",
+          "currencyCode": "USD"
+        }
+      },
+      "transactionsCount": {
+        "count": 2,
+        "precision": "EXACT"
+      },
+      "transactions": [
+        {
+          "id": "gid://shopify/OrderTransaction/1",
+          "kind": "CAPTURE",
+          "status": "SUCCESS",
+          "gateway": "shopify_payments",
+          "amountSet": {
+            "presentmentMoney": {
+              "amount": "70.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "77.00",
+              "currencyCode": "USD"
+            }
+          },
+          "formattedGateway": "Bank card"
+        },
+        {
+          "id": "gid://shopify/OrderTransaction/2",
+          "kind": "SALE",
+          "status": "SUCCESS",
+          "gateway": "shopify_store_credit",
+          "amountSet": {
+            "presentmentMoney": {
+              "amount": "30.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "33.00",
+              "currencyCode": "USD"
+            }
+          },
+          "formattedGateway": "Store Credit"
+        }
+      ],
+      "full": {
+        "subtotalSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        },
+        "discountedSubtotalSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        },
+        "totalCartDiscountAmountSet": {
+          "presentmentMoney": {
+            "amount": "0.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "0.00",
+            "currencyCode": "USD"
+          }
+        },
+        "totalTaxSet": {
+          "presentmentMoney": {
+            "amount": "0.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "0.00",
+            "currencyCode": "USD"
+          }
+        },
+        "totalDutiesSet": {
+          "presentmentMoney": {
+            "amount": "0.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "0.00",
+            "currencyCode": "USD"
+          }
+        },
+        "shipping": {
+          "amountSet": {
+            "presentmentMoney": {
+              "amount": "0.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "0.00",
+              "currencyCode": "USD"
+            }
+          },
+          "taxSet": {
+            "presentmentMoney": {
+              "amount": "0.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "0.00",
+              "currencyCode": "USD"
+            }
+          },
+          "maximumRefundableSet": {
+            "presentmentMoney": {
+              "amount": "0.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "0.00",
+              "currencyCode": "USD"
+            }
+          }
+        },
+        "amountSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        },
+        "maximumRefundableSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        },
+        "suggestedTransactions": [
+          {
+            "kind": "SUGGESTED_REFUND",
+            "gateway": "shopify_payments",
+            "formattedGateway": "Bank card",
+            "parentTransaction": {
+              "id": "gid://shopify/OrderTransaction/1",
+              "kind": "CAPTURE",
+              "status": "SUCCESS",
+              "gateway": "shopify_payments"
+            },
+            "amountSet": {
+              "presentmentMoney": {
+                "amount": "70.00",
+                "currencyCode": "EUR"
+              },
+              "shopMoney": {
+                "amount": "77.00",
+                "currencyCode": "USD"
+              }
+            },
+            "maximumRefundableSet": {
+              "presentmentMoney": {
+                "amount": "70.00",
+                "currencyCode": "EUR"
+              },
+              "shopMoney": {
+                "amount": "77.00",
+                "currencyCode": "USD"
+              }
+            }
+          },
+          {
+            "kind": "SUGGESTED_REFUND",
+            "gateway": "shopify_store_credit",
+            "formattedGateway": "Store Credit",
+            "parentTransaction": {
+              "id": "gid://shopify/OrderTransaction/2",
+              "kind": "SALE",
+              "status": "SUCCESS",
+              "gateway": "shopify_store_credit"
+            },
+            "amountSet": {
+              "presentmentMoney": {
+                "amount": "30.00",
+                "currencyCode": "EUR"
+              },
+              "shopMoney": {
+                "amount": "33.00",
+                "currencyCode": "USD"
+              }
+            },
+            "maximumRefundableSet": {
+              "presentmentMoney": {
+                "amount": "30.00",
+                "currencyCode": "EUR"
+              },
+              "shopMoney": {
+                "amount": "33.00",
+                "currencyCode": "USD"
+              }
+            }
+          }
+        ]
+      },
+      "selected": {
+        "subtotalSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        },
+        "discountedSubtotalSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        },
+        "totalCartDiscountAmountSet": {
+          "presentmentMoney": {
+            "amount": "0.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "0.00",
+            "currencyCode": "USD"
+          }
+        },
+        "totalTaxSet": {
+          "presentmentMoney": {
+            "amount": "0.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "0.00",
+            "currencyCode": "USD"
+          }
+        },
+        "totalDutiesSet": {
+          "presentmentMoney": {
+            "amount": "0.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "0.00",
+            "currencyCode": "USD"
+          }
+        },
+        "shipping": {
+          "amountSet": {
+            "presentmentMoney": {
+              "amount": "0.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "0.00",
+              "currencyCode": "USD"
+            }
+          },
+          "taxSet": {
+            "presentmentMoney": {
+              "amount": "0.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "0.00",
+              "currencyCode": "USD"
+            }
+          },
+          "maximumRefundableSet": {
+            "presentmentMoney": {
+              "amount": "0.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "0.00",
+              "currencyCode": "USD"
+            }
+          }
+        },
+        "amountSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        },
+        "maximumRefundableSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        },
+        "suggestedTransactions": [
+          {
+            "kind": "SUGGESTED_REFUND",
+            "gateway": "shopify_payments",
+            "formattedGateway": "Bank card",
+            "parentTransaction": {
+              "id": "gid://shopify/OrderTransaction/1",
+              "kind": "CAPTURE",
+              "status": "SUCCESS",
+              "gateway": "shopify_payments"
+            },
+            "amountSet": {
+              "presentmentMoney": {
+                "amount": "70.00",
+                "currencyCode": "EUR"
+              },
+              "shopMoney": {
+                "amount": "77.00",
+                "currencyCode": "USD"
+              }
+            },
+            "maximumRefundableSet": {
+              "presentmentMoney": {
+                "amount": "70.00",
+                "currencyCode": "EUR"
+              },
+              "shopMoney": {
+                "amount": "77.00",
+                "currencyCode": "USD"
+              }
+            }
+          },
+          {
+            "kind": "SUGGESTED_REFUND",
+            "gateway": "shopify_store_credit",
+            "formattedGateway": "Store Credit",
+            "parentTransaction": {
+              "id": "gid://shopify/OrderTransaction/2",
+              "kind": "SALE",
+              "status": "SUCCESS",
+              "gateway": "shopify_store_credit"
+            },
+            "amountSet": {
+              "presentmentMoney": {
+                "amount": "30.00",
+                "currencyCode": "EUR"
+              },
+              "shopMoney": {
+                "amount": "33.00",
+                "currencyCode": "USD"
+              }
+            },
+            "maximumRefundableSet": {
+              "presentmentMoney": {
+                "amount": "30.00",
+                "currencyCode": "EUR"
+              },
+              "shopMoney": {
+                "amount": "33.00",
+                "currencyCode": "USD"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "params": {
+      "store": "fixture.myshopify.com",
+      "order_id": "gid://shopify/Order/1",
+      "target": "store_credit",
+      "amount": null,
+      "currency": null,
+      "items": [],
+      "refund_shipping": false,
+      "allocations": []
+    },
+    "expected": {
+      "version": 1,
+      "store": "fixture.myshopify.com",
+      "order_id": "gid://shopify/Order/1",
+      "target": "store_credit",
+      "currency": "EUR",
+      "amount": "100.00",
+      "paid": "100.00",
+      "refunded": "0.00",
+      "remaining": "100.00",
+      "customer_id": "gid://shopify/Customer/2",
+      "order_refund_amount": "100.00",
+      "bonus_credit_amount": "0.00",
+      "allocations": [],
+      "shipping_refund_amount": "0.00",
+      "shipping_refund_total": "0.00",
+      "calculation": {
+        "subtotal": {
+          "customer": "100.00",
+          "shop": "110.00"
+        },
+        "discounted_subtotal": {
+          "customer": "100.00",
+          "shop": "110.00"
+        },
+        "cart_discount": {
+          "customer": "0.00",
+          "shop": "0.00"
+        },
+        "tax": {
+          "customer": "0.00",
+          "shop": "0.00"
+        },
+        "duties": {
+          "customer": "0.00",
+          "shop": "0.00"
+        },
+        "recommended": {
+          "customer": "100.00",
+          "shop": "110.00"
+        },
+        "shipping": {
+          "customer": "0.00",
+          "shop": "0.00"
+        },
+        "shipping_tax": {
+          "customer": "0.00",
+          "shop": "0.00"
+        },
+        "shipping_maximum": {
+          "customer": "0.00",
+          "shop": "0.00"
+        }
+      },
+      "taxes_included": false,
+      "shop_currency": "USD",
+      "shop_money": {
+        "total": {
+          "customer": "100.00",
+          "shop": "110.00"
+        },
+        "paid": {
+          "customer": "100.00",
+          "shop": "110.00"
+        },
+        "refunded": {
+          "customer": "0.00",
+          "shop": "0.00"
+        }
+      },
+      "items": [],
+      "refund_shipping": false,
+      "quote_hash": "5a5c7c8dcef3419510ad72348fa499fbe423f4839f6af83de5e7bcb632341d83",
+      "payments": [
+        {
+          "parent_id": "gid://shopify/OrderTransaction/1",
+          "gateway": "shopify_payments",
+          "label": "Bank card",
+          "paid": "70.00"
+        },
+        {
+          "parent_id": "gid://shopify/OrderTransaction/2",
+          "gateway": "shopify_store_credit",
+          "label": "Store Credit",
+          "paid": "30.00"
+        }
+      ],
+      "channels": [
+        {
+          "parent_id": "gid://shopify/OrderTransaction/1",
+          "gateway": "shopify_payments",
+          "manual": false,
+          "label": "Bank card",
+          "maximum": "70.00",
+          "suggested": "70.00"
+        },
+        {
+          "parent_id": "gid://shopify/OrderTransaction/2",
+          "gateway": "shopify_store_credit",
+          "manual": false,
+          "label": "Store Credit",
+          "maximum": "30.00",
+          "suggested": "30.00"
+        }
+      ],
+      "recommended_amount": "100.00"
+    }
+  },
+  {
+    "name": "120 credit is 100 refund plus 20 bonus",
+    "order": {
+      "id": "gid://shopify/Order/1",
+      "presentmentCurrencyCode": "EUR",
+      "taxesIncluded": false,
+      "withoutShipping": {
+        "amountSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        }
+      },
+      "customer": {
+        "id": "gid://shopify/Customer/2"
+      },
+      "totalPriceSet": {
+        "presentmentMoney": {
+          "amount": "100.00",
+          "currencyCode": "EUR"
+        },
+        "shopMoney": {
+          "amount": "110.00",
+          "currencyCode": "USD"
+        }
+      },
+      "totalReceivedSet": {
+        "presentmentMoney": {
+          "amount": "100.00",
+          "currencyCode": "EUR"
+        },
+        "shopMoney": {
+          "amount": "110.00",
+          "currencyCode": "USD"
+        }
+      },
+      "totalRefundedSet": {
+        "presentmentMoney": {
+          "amount": "0.00",
+          "currencyCode": "EUR"
+        },
+        "shopMoney": {
+          "amount": "0.00",
+          "currencyCode": "USD"
+        }
+      },
+      "transactionsCount": {
+        "count": 2,
+        "precision": "EXACT"
+      },
+      "transactions": [
+        {
+          "id": "gid://shopify/OrderTransaction/1",
+          "kind": "CAPTURE",
+          "status": "SUCCESS",
+          "gateway": "shopify_payments",
+          "amountSet": {
+            "presentmentMoney": {
+              "amount": "70.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "77.00",
+              "currencyCode": "USD"
+            }
+          },
+          "formattedGateway": "Bank card"
+        },
+        {
+          "id": "gid://shopify/OrderTransaction/2",
+          "kind": "SALE",
+          "status": "SUCCESS",
+          "gateway": "shopify_store_credit",
+          "amountSet": {
+            "presentmentMoney": {
+              "amount": "30.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "33.00",
+              "currencyCode": "USD"
+            }
+          },
+          "formattedGateway": "Store Credit"
+        }
+      ],
+      "full": {
+        "subtotalSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        },
+        "discountedSubtotalSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        },
+        "totalCartDiscountAmountSet": {
+          "presentmentMoney": {
+            "amount": "0.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "0.00",
+            "currencyCode": "USD"
+          }
+        },
+        "totalTaxSet": {
+          "presentmentMoney": {
+            "amount": "0.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "0.00",
+            "currencyCode": "USD"
+          }
+        },
+        "totalDutiesSet": {
+          "presentmentMoney": {
+            "amount": "0.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "0.00",
+            "currencyCode": "USD"
+          }
+        },
+        "shipping": {
+          "amountSet": {
+            "presentmentMoney": {
+              "amount": "0.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "0.00",
+              "currencyCode": "USD"
+            }
+          },
+          "taxSet": {
+            "presentmentMoney": {
+              "amount": "0.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "0.00",
+              "currencyCode": "USD"
+            }
+          },
+          "maximumRefundableSet": {
+            "presentmentMoney": {
+              "amount": "0.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "0.00",
+              "currencyCode": "USD"
+            }
+          }
+        },
+        "amountSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        },
+        "maximumRefundableSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        },
+        "suggestedTransactions": [
+          {
+            "kind": "SUGGESTED_REFUND",
+            "gateway": "shopify_payments",
+            "formattedGateway": "Bank card",
+            "parentTransaction": {
+              "id": "gid://shopify/OrderTransaction/1",
+              "kind": "CAPTURE",
+              "status": "SUCCESS",
+              "gateway": "shopify_payments"
+            },
+            "amountSet": {
+              "presentmentMoney": {
+                "amount": "70.00",
+                "currencyCode": "EUR"
+              },
+              "shopMoney": {
+                "amount": "77.00",
+                "currencyCode": "USD"
+              }
+            },
+            "maximumRefundableSet": {
+              "presentmentMoney": {
+                "amount": "70.00",
+                "currencyCode": "EUR"
+              },
+              "shopMoney": {
+                "amount": "77.00",
+                "currencyCode": "USD"
+              }
+            }
+          },
+          {
+            "kind": "SUGGESTED_REFUND",
+            "gateway": "shopify_store_credit",
+            "formattedGateway": "Store Credit",
+            "parentTransaction": {
+              "id": "gid://shopify/OrderTransaction/2",
+              "kind": "SALE",
+              "status": "SUCCESS",
+              "gateway": "shopify_store_credit"
+            },
+            "amountSet": {
+              "presentmentMoney": {
+                "amount": "30.00",
+                "currencyCode": "EUR"
+              },
+              "shopMoney": {
+                "amount": "33.00",
+                "currencyCode": "USD"
+              }
+            },
+            "maximumRefundableSet": {
+              "presentmentMoney": {
+                "amount": "30.00",
+                "currencyCode": "EUR"
+              },
+              "shopMoney": {
+                "amount": "33.00",
+                "currencyCode": "USD"
+              }
+            }
+          }
+        ]
+      },
+      "selected": {
+        "subtotalSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        },
+        "discountedSubtotalSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        },
+        "totalCartDiscountAmountSet": {
+          "presentmentMoney": {
+            "amount": "0.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "0.00",
+            "currencyCode": "USD"
+          }
+        },
+        "totalTaxSet": {
+          "presentmentMoney": {
+            "amount": "0.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "0.00",
+            "currencyCode": "USD"
+          }
+        },
+        "totalDutiesSet": {
+          "presentmentMoney": {
+            "amount": "0.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "0.00",
+            "currencyCode": "USD"
+          }
+        },
+        "shipping": {
+          "amountSet": {
+            "presentmentMoney": {
+              "amount": "0.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "0.00",
+              "currencyCode": "USD"
+            }
+          },
+          "taxSet": {
+            "presentmentMoney": {
+              "amount": "0.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "0.00",
+              "currencyCode": "USD"
+            }
+          },
+          "maximumRefundableSet": {
+            "presentmentMoney": {
+              "amount": "0.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "0.00",
+              "currencyCode": "USD"
+            }
+          }
+        },
+        "amountSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        },
+        "maximumRefundableSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        },
+        "suggestedTransactions": [
+          {
+            "kind": "SUGGESTED_REFUND",
+            "gateway": "shopify_payments",
+            "formattedGateway": "Bank card",
+            "parentTransaction": {
+              "id": "gid://shopify/OrderTransaction/1",
+              "kind": "CAPTURE",
+              "status": "SUCCESS",
+              "gateway": "shopify_payments"
+            },
+            "amountSet": {
+              "presentmentMoney": {
+                "amount": "70.00",
+                "currencyCode": "EUR"
+              },
+              "shopMoney": {
+                "amount": "77.00",
+                "currencyCode": "USD"
+              }
+            },
+            "maximumRefundableSet": {
+              "presentmentMoney": {
+                "amount": "70.00",
+                "currencyCode": "EUR"
+              },
+              "shopMoney": {
+                "amount": "77.00",
+                "currencyCode": "USD"
+              }
+            }
+          },
+          {
+            "kind": "SUGGESTED_REFUND",
+            "gateway": "shopify_store_credit",
+            "formattedGateway": "Store Credit",
+            "parentTransaction": {
+              "id": "gid://shopify/OrderTransaction/2",
+              "kind": "SALE",
+              "status": "SUCCESS",
+              "gateway": "shopify_store_credit"
+            },
+            "amountSet": {
+              "presentmentMoney": {
+                "amount": "30.00",
+                "currencyCode": "EUR"
+              },
+              "shopMoney": {
+                "amount": "33.00",
+                "currencyCode": "USD"
+              }
+            },
+            "maximumRefundableSet": {
+              "presentmentMoney": {
+                "amount": "30.00",
+                "currencyCode": "EUR"
+              },
+              "shopMoney": {
+                "amount": "33.00",
+                "currencyCode": "USD"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "params": {
+      "store": "fixture.myshopify.com",
+      "order_id": "gid://shopify/Order/1",
+      "target": "store_credit",
+      "amount": "120",
+      "currency": null,
+      "items": [],
+      "refund_shipping": false,
+      "allocations": []
+    },
+    "expected": {
+      "version": 1,
+      "store": "fixture.myshopify.com",
+      "order_id": "gid://shopify/Order/1",
+      "target": "store_credit",
+      "currency": "EUR",
+      "amount": "120.00",
+      "paid": "100.00",
+      "refunded": "0.00",
+      "remaining": "100.00",
+      "customer_id": "gid://shopify/Customer/2",
+      "order_refund_amount": "100.00",
+      "bonus_credit_amount": "20.00",
+      "allocations": [],
+      "shipping_refund_amount": "0.00",
+      "shipping_refund_total": "0.00",
+      "calculation": {
+        "subtotal": {
+          "customer": "100.00",
+          "shop": "110.00"
+        },
+        "discounted_subtotal": {
+          "customer": "100.00",
+          "shop": "110.00"
+        },
+        "cart_discount": {
+          "customer": "0.00",
+          "shop": "0.00"
+        },
+        "tax": {
+          "customer": "0.00",
+          "shop": "0.00"
+        },
+        "duties": {
+          "customer": "0.00",
+          "shop": "0.00"
+        },
+        "recommended": {
+          "customer": "100.00",
+          "shop": "110.00"
+        },
+        "shipping": {
+          "customer": "0.00",
+          "shop": "0.00"
+        },
+        "shipping_tax": {
+          "customer": "0.00",
+          "shop": "0.00"
+        },
+        "shipping_maximum": {
+          "customer": "0.00",
+          "shop": "0.00"
+        }
+      },
+      "taxes_included": false,
+      "shop_currency": "USD",
+      "shop_money": {
+        "total": {
+          "customer": "100.00",
+          "shop": "110.00"
+        },
+        "paid": {
+          "customer": "100.00",
+          "shop": "110.00"
+        },
+        "refunded": {
+          "customer": "0.00",
+          "shop": "0.00"
+        }
+      },
+      "items": [],
+      "refund_shipping": false,
+      "quote_hash": "29b7e01d0861649fa5cb053f0a55984eba491dacd6d1f8b7549efab84e19c5a3",
+      "payments": [
+        {
+          "parent_id": "gid://shopify/OrderTransaction/1",
+          "gateway": "shopify_payments",
+          "label": "Bank card",
+          "paid": "70.00"
+        },
+        {
+          "parent_id": "gid://shopify/OrderTransaction/2",
+          "gateway": "shopify_store_credit",
+          "label": "Store Credit",
+          "paid": "30.00"
+        }
+      ],
+      "channels": [
+        {
+          "parent_id": "gid://shopify/OrderTransaction/1",
+          "gateway": "shopify_payments",
+          "manual": false,
+          "label": "Bank card",
+          "maximum": "70.00",
+          "suggested": "70.00"
+        },
+        {
+          "parent_id": "gid://shopify/OrderTransaction/2",
+          "gateway": "shopify_store_credit",
+          "manual": false,
+          "label": "Store Credit",
+          "maximum": "30.00",
+          "suggested": "30.00"
+        }
+      ],
+      "recommended_amount": "100.00"
+    }
+  },
+  {
+    "name": "prior refund per parent",
+    "order": {
+      "id": "gid://shopify/Order/1",
+      "presentmentCurrencyCode": "EUR",
+      "taxesIncluded": false,
+      "withoutShipping": {
+        "amountSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        }
+      },
+      "customer": {
+        "id": "gid://shopify/Customer/2"
+      },
+      "totalPriceSet": {
+        "presentmentMoney": {
+          "amount": "100.00",
+          "currencyCode": "EUR"
+        },
+        "shopMoney": {
+          "amount": "110.00",
+          "currencyCode": "USD"
+        }
+      },
+      "totalReceivedSet": {
+        "presentmentMoney": {
+          "amount": "100.00",
+          "currencyCode": "EUR"
+        },
+        "shopMoney": {
+          "amount": "110.00",
+          "currencyCode": "USD"
+        }
+      },
+      "totalRefundedSet": {
+        "presentmentMoney": {
+          "amount": "40.00",
+          "currencyCode": "EUR"
+        },
+        "shopMoney": {
+          "amount": "44.00",
+          "currencyCode": "USD"
+        }
+      },
+      "transactionsCount": {
+        "count": 2,
+        "precision": "EXACT"
+      },
+      "transactions": [
+        {
+          "id": "gid://shopify/OrderTransaction/1",
+          "kind": "CAPTURE",
+          "status": "SUCCESS",
+          "gateway": "shopify_payments",
+          "amountSet": {
+            "presentmentMoney": {
+              "amount": "70.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "77.00",
+              "currencyCode": "USD"
+            }
+          },
+          "formattedGateway": "Bank card"
+        },
+        {
+          "id": "gid://shopify/OrderTransaction/2",
+          "kind": "SALE",
+          "status": "SUCCESS",
+          "gateway": "shopify_store_credit",
+          "amountSet": {
+            "presentmentMoney": {
+              "amount": "30.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "33.00",
+              "currencyCode": "USD"
+            }
+          },
+          "formattedGateway": "Store Credit"
+        }
+      ],
+      "full": {
+        "subtotalSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        },
+        "discountedSubtotalSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        },
+        "totalCartDiscountAmountSet": {
+          "presentmentMoney": {
+            "amount": "0.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "0.00",
+            "currencyCode": "USD"
+          }
+        },
+        "totalTaxSet": {
+          "presentmentMoney": {
+            "amount": "0.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "0.00",
+            "currencyCode": "USD"
+          }
+        },
+        "totalDutiesSet": {
+          "presentmentMoney": {
+            "amount": "0.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "0.00",
+            "currencyCode": "USD"
+          }
+        },
+        "shipping": {
+          "amountSet": {
+            "presentmentMoney": {
+              "amount": "0.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "0.00",
+              "currencyCode": "USD"
+            }
+          },
+          "taxSet": {
+            "presentmentMoney": {
+              "amount": "0.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "0.00",
+              "currencyCode": "USD"
+            }
+          },
+          "maximumRefundableSet": {
+            "presentmentMoney": {
+              "amount": "0.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "0.00",
+              "currencyCode": "USD"
+            }
+          }
+        },
+        "amountSet": {
+          "presentmentMoney": {
+            "amount": "60.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "66.00",
+            "currencyCode": "USD"
+          }
+        },
+        "maximumRefundableSet": {
+          "presentmentMoney": {
+            "amount": "60.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "66.00",
+            "currencyCode": "USD"
+          }
+        },
+        "suggestedTransactions": [
+          {
+            "kind": "SUGGESTED_REFUND",
+            "gateway": "shopify_payments",
+            "formattedGateway": "Bank card",
+            "parentTransaction": {
+              "id": "gid://shopify/OrderTransaction/1",
+              "kind": "CAPTURE",
+              "status": "SUCCESS",
+              "gateway": "shopify_payments"
+            },
+            "amountSet": {
+              "presentmentMoney": {
+                "amount": "30.00",
+                "currencyCode": "EUR"
+              },
+              "shopMoney": {
+                "amount": "33.00",
+                "currencyCode": "USD"
+              }
+            },
+            "maximumRefundableSet": {
+              "presentmentMoney": {
+                "amount": "30.00",
+                "currencyCode": "EUR"
+              },
+              "shopMoney": {
+                "amount": "33.00",
+                "currencyCode": "USD"
+              }
+            }
+          },
+          {
+            "kind": "SUGGESTED_REFUND",
+            "gateway": "shopify_store_credit",
+            "formattedGateway": "Store Credit",
+            "parentTransaction": {
+              "id": "gid://shopify/OrderTransaction/2",
+              "kind": "SALE",
+              "status": "SUCCESS",
+              "gateway": "shopify_store_credit"
+            },
+            "amountSet": {
+              "presentmentMoney": {
+                "amount": "30.00",
+                "currencyCode": "EUR"
+              },
+              "shopMoney": {
+                "amount": "33.00",
+                "currencyCode": "USD"
+              }
+            },
+            "maximumRefundableSet": {
+              "presentmentMoney": {
+                "amount": "30.00",
+                "currencyCode": "EUR"
+              },
+              "shopMoney": {
+                "amount": "33.00",
+                "currencyCode": "USD"
+              }
+            }
+          }
+        ]
+      },
+      "selected": {
+        "subtotalSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        },
+        "discountedSubtotalSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        },
+        "totalCartDiscountAmountSet": {
+          "presentmentMoney": {
+            "amount": "0.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "0.00",
+            "currencyCode": "USD"
+          }
+        },
+        "totalTaxSet": {
+          "presentmentMoney": {
+            "amount": "0.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "0.00",
+            "currencyCode": "USD"
+          }
+        },
+        "totalDutiesSet": {
+          "presentmentMoney": {
+            "amount": "0.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "0.00",
+            "currencyCode": "USD"
+          }
+        },
+        "shipping": {
+          "amountSet": {
+            "presentmentMoney": {
+              "amount": "0.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "0.00",
+              "currencyCode": "USD"
+            }
+          },
+          "taxSet": {
+            "presentmentMoney": {
+              "amount": "0.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "0.00",
+              "currencyCode": "USD"
+            }
+          },
+          "maximumRefundableSet": {
+            "presentmentMoney": {
+              "amount": "0.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "0.00",
+              "currencyCode": "USD"
+            }
+          }
+        },
+        "amountSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        },
+        "maximumRefundableSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        },
+        "suggestedTransactions": [
+          {
+            "kind": "SUGGESTED_REFUND",
+            "gateway": "shopify_payments",
+            "formattedGateway": "Bank card",
+            "parentTransaction": {
+              "id": "gid://shopify/OrderTransaction/1",
+              "kind": "CAPTURE",
+              "status": "SUCCESS",
+              "gateway": "shopify_payments"
+            },
+            "amountSet": {
+              "presentmentMoney": {
+                "amount": "30.00",
+                "currencyCode": "EUR"
+              },
+              "shopMoney": {
+                "amount": "33.00",
+                "currencyCode": "USD"
+              }
+            },
+            "maximumRefundableSet": {
+              "presentmentMoney": {
+                "amount": "30.00",
+                "currencyCode": "EUR"
+              },
+              "shopMoney": {
+                "amount": "33.00",
+                "currencyCode": "USD"
+              }
+            }
+          },
+          {
+            "kind": "SUGGESTED_REFUND",
+            "gateway": "shopify_store_credit",
+            "formattedGateway": "Store Credit",
+            "parentTransaction": {
+              "id": "gid://shopify/OrderTransaction/2",
+              "kind": "SALE",
+              "status": "SUCCESS",
+              "gateway": "shopify_store_credit"
+            },
+            "amountSet": {
+              "presentmentMoney": {
+                "amount": "30.00",
+                "currencyCode": "EUR"
+              },
+              "shopMoney": {
+                "amount": "33.00",
+                "currencyCode": "USD"
+              }
+            },
+            "maximumRefundableSet": {
+              "presentmentMoney": {
+                "amount": "30.00",
+                "currencyCode": "EUR"
+              },
+              "shopMoney": {
+                "amount": "33.00",
+                "currencyCode": "USD"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "params": {
+      "store": "fixture.myshopify.com",
+      "order_id": "gid://shopify/Order/1",
+      "target": "original",
+      "amount": null,
+      "currency": null,
+      "items": [],
+      "refund_shipping": false,
+      "allocations": []
+    },
+    "expected": {
+      "version": 1,
+      "store": "fixture.myshopify.com",
+      "order_id": "gid://shopify/Order/1",
+      "target": "original",
+      "currency": "EUR",
+      "amount": "60.00",
+      "paid": "100.00",
+      "refunded": "40.00",
+      "remaining": "60.00",
+      "customer_id": "gid://shopify/Customer/2",
+      "order_refund_amount": "60.00",
+      "bonus_credit_amount": "0.00",
+      "allocations": [
+        {
+          "parent_id": "gid://shopify/OrderTransaction/1",
+          "gateway": "shopify_payments",
+          "manual": false,
+          "label": "Bank card",
+          "maximum": "30.00",
+          "suggested": "30.00",
+          "amount": "30.00"
+        },
+        {
+          "parent_id": "gid://shopify/OrderTransaction/2",
+          "gateway": "shopify_store_credit",
+          "manual": false,
+          "label": "Store Credit",
+          "maximum": "30.00",
+          "suggested": "30.00",
+          "amount": "30.00"
+        }
+      ],
+      "shipping_refund_amount": "0.00",
+      "shipping_refund_total": "0.00",
+      "calculation": {
+        "subtotal": {
+          "customer": "100.00",
+          "shop": "110.00"
+        },
+        "discounted_subtotal": {
+          "customer": "100.00",
+          "shop": "110.00"
+        },
+        "cart_discount": {
+          "customer": "0.00",
+          "shop": "0.00"
+        },
+        "tax": {
+          "customer": "0.00",
+          "shop": "0.00"
+        },
+        "duties": {
+          "customer": "0.00",
+          "shop": "0.00"
+        },
+        "recommended": {
+          "customer": "60.00",
+          "shop": "66.00"
+        },
+        "shipping": {
+          "customer": "0.00",
+          "shop": "0.00"
+        },
+        "shipping_tax": {
+          "customer": "0.00",
+          "shop": "0.00"
+        },
+        "shipping_maximum": {
+          "customer": "0.00",
+          "shop": "0.00"
+        }
+      },
+      "taxes_included": false,
+      "shop_currency": "USD",
+      "shop_money": {
+        "total": {
+          "customer": "100.00",
+          "shop": "110.00"
+        },
+        "paid": {
+          "customer": "100.00",
+          "shop": "110.00"
+        },
+        "refunded": {
+          "customer": "40.00",
+          "shop": "44.00"
+        }
+      },
+      "items": [],
+      "refund_shipping": false,
+      "quote_hash": "36abc5017f4a83ad51b74e947a43ba81c5d3bb3afe790fc2e10393aa8a5bba83",
+      "payments": [
+        {
+          "parent_id": "gid://shopify/OrderTransaction/1",
+          "gateway": "shopify_payments",
+          "label": "Bank card",
+          "paid": "70.00"
+        },
+        {
+          "parent_id": "gid://shopify/OrderTransaction/2",
+          "gateway": "shopify_store_credit",
+          "label": "Store Credit",
+          "paid": "30.00"
+        }
+      ],
+      "channels": [
+        {
+          "parent_id": "gid://shopify/OrderTransaction/1",
+          "gateway": "shopify_payments",
+          "manual": false,
+          "label": "Bank card",
+          "maximum": "30.00",
+          "suggested": "30.00"
+        },
+        {
+          "parent_id": "gid://shopify/OrderTransaction/2",
+          "gateway": "shopify_store_credit",
+          "manual": false,
+          "label": "Store Credit",
+          "maximum": "30.00",
+          "suggested": "30.00"
+        }
+      ],
+      "recommended_amount": "60.00"
+    }
+  },
+  {
+    "name": "full balance with selected item",
+    "order": {
+      "id": "gid://shopify/Order/1",
+      "presentmentCurrencyCode": "EUR",
+      "taxesIncluded": false,
+      "withoutShipping": {
+        "amountSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        }
+      },
+      "customer": {
+        "id": "gid://shopify/Customer/2"
+      },
+      "totalPriceSet": {
+        "presentmentMoney": {
+          "amount": "100.00",
+          "currencyCode": "EUR"
+        },
+        "shopMoney": {
+          "amount": "110.00",
+          "currencyCode": "USD"
+        }
+      },
+      "totalReceivedSet": {
+        "presentmentMoney": {
+          "amount": "100.00",
+          "currencyCode": "EUR"
+        },
+        "shopMoney": {
+          "amount": "110.00",
+          "currencyCode": "USD"
+        }
+      },
+      "totalRefundedSet": {
+        "presentmentMoney": {
+          "amount": "0.00",
+          "currencyCode": "EUR"
+        },
+        "shopMoney": {
+          "amount": "0.00",
+          "currencyCode": "USD"
+        }
+      },
+      "transactionsCount": {
+        "count": 2,
+        "precision": "EXACT"
+      },
+      "transactions": [
+        {
+          "id": "gid://shopify/OrderTransaction/1",
+          "kind": "CAPTURE",
+          "status": "SUCCESS",
+          "gateway": "shopify_payments",
+          "amountSet": {
+            "presentmentMoney": {
+              "amount": "70.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "77.00",
+              "currencyCode": "USD"
+            }
+          },
+          "formattedGateway": "Bank card"
+        },
+        {
+          "id": "gid://shopify/OrderTransaction/2",
+          "kind": "SALE",
+          "status": "SUCCESS",
+          "gateway": "shopify_store_credit",
+          "amountSet": {
+            "presentmentMoney": {
+              "amount": "30.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "33.00",
+              "currencyCode": "USD"
+            }
+          },
+          "formattedGateway": "Store Credit"
+        }
+      ],
+      "full": {
+        "subtotalSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        },
+        "discountedSubtotalSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        },
+        "totalCartDiscountAmountSet": {
+          "presentmentMoney": {
+            "amount": "0.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "0.00",
+            "currencyCode": "USD"
+          }
+        },
+        "totalTaxSet": {
+          "presentmentMoney": {
+            "amount": "0.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "0.00",
+            "currencyCode": "USD"
+          }
+        },
+        "totalDutiesSet": {
+          "presentmentMoney": {
+            "amount": "0.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "0.00",
+            "currencyCode": "USD"
+          }
+        },
+        "shipping": {
+          "amountSet": {
+            "presentmentMoney": {
+              "amount": "0.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "0.00",
+              "currencyCode": "USD"
+            }
+          },
+          "taxSet": {
+            "presentmentMoney": {
+              "amount": "0.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "0.00",
+              "currencyCode": "USD"
+            }
+          },
+          "maximumRefundableSet": {
+            "presentmentMoney": {
+              "amount": "0.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "0.00",
+              "currencyCode": "USD"
+            }
+          }
+        },
+        "amountSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        },
+        "maximumRefundableSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        },
+        "suggestedTransactions": [
+          {
+            "kind": "SUGGESTED_REFUND",
+            "gateway": "shopify_payments",
+            "formattedGateway": "Bank card",
+            "parentTransaction": {
+              "id": "gid://shopify/OrderTransaction/1",
+              "kind": "CAPTURE",
+              "status": "SUCCESS",
+              "gateway": "shopify_payments"
+            },
+            "amountSet": {
+              "presentmentMoney": {
+                "amount": "70.00",
+                "currencyCode": "EUR"
+              },
+              "shopMoney": {
+                "amount": "77.00",
+                "currencyCode": "USD"
+              }
+            },
+            "maximumRefundableSet": {
+              "presentmentMoney": {
+                "amount": "70.00",
+                "currencyCode": "EUR"
+              },
+              "shopMoney": {
+                "amount": "77.00",
+                "currencyCode": "USD"
+              }
+            }
+          },
+          {
+            "kind": "SUGGESTED_REFUND",
+            "gateway": "shopify_store_credit",
+            "formattedGateway": "Store Credit",
+            "parentTransaction": {
+              "id": "gid://shopify/OrderTransaction/2",
+              "kind": "SALE",
+              "status": "SUCCESS",
+              "gateway": "shopify_store_credit"
+            },
+            "amountSet": {
+              "presentmentMoney": {
+                "amount": "30.00",
+                "currencyCode": "EUR"
+              },
+              "shopMoney": {
+                "amount": "33.00",
+                "currencyCode": "USD"
+              }
+            },
+            "maximumRefundableSet": {
+              "presentmentMoney": {
+                "amount": "30.00",
+                "currencyCode": "EUR"
+              },
+              "shopMoney": {
+                "amount": "33.00",
+                "currencyCode": "USD"
+              }
+            }
+          }
+        ]
+      },
+      "selected": {
+        "subtotalSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        },
+        "discountedSubtotalSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        },
+        "totalCartDiscountAmountSet": {
+          "presentmentMoney": {
+            "amount": "0.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "0.00",
+            "currencyCode": "USD"
+          }
+        },
+        "totalTaxSet": {
+          "presentmentMoney": {
+            "amount": "0.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "0.00",
+            "currencyCode": "USD"
+          }
+        },
+        "totalDutiesSet": {
+          "presentmentMoney": {
+            "amount": "0.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "0.00",
+            "currencyCode": "USD"
+          }
+        },
+        "shipping": {
+          "amountSet": {
+            "presentmentMoney": {
+              "amount": "0.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "0.00",
+              "currencyCode": "USD"
+            }
+          },
+          "taxSet": {
+            "presentmentMoney": {
+              "amount": "0.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "0.00",
+              "currencyCode": "USD"
+            }
+          },
+          "maximumRefundableSet": {
+            "presentmentMoney": {
+              "amount": "0.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "0.00",
+              "currencyCode": "USD"
+            }
+          }
+        },
+        "amountSet": {
+          "presentmentMoney": {
+            "amount": "20.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "22.00",
+            "currencyCode": "USD"
+          }
+        },
+        "maximumRefundableSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        },
+        "suggestedTransactions": []
+      }
+    },
+    "params": {
+      "store": "fixture.myshopify.com",
+      "order_id": "gid://shopify/Order/1",
+      "target": "original",
+      "amount": "100",
+      "currency": null,
+      "items": [
+        {
+          "line_item_id": "gid://shopify/LineItem/1",
+          "quantity": 1
+        }
+      ],
+      "refund_shipping": false,
+      "allocations": []
+    },
+    "expected": {
+      "version": 1,
+      "store": "fixture.myshopify.com",
+      "order_id": "gid://shopify/Order/1",
+      "target": "original",
+      "currency": "EUR",
+      "amount": "100.00",
+      "paid": "100.00",
+      "refunded": "0.00",
+      "remaining": "100.00",
+      "customer_id": "gid://shopify/Customer/2",
+      "order_refund_amount": "100.00",
+      "bonus_credit_amount": "0.00",
+      "allocations": [
+        {
+          "parent_id": "gid://shopify/OrderTransaction/1",
+          "gateway": "shopify_payments",
+          "manual": false,
+          "label": "Bank card",
+          "maximum": "70.00",
+          "suggested": "70.00",
+          "amount": "70.00"
+        },
+        {
+          "parent_id": "gid://shopify/OrderTransaction/2",
+          "gateway": "shopify_store_credit",
+          "manual": false,
+          "label": "Store Credit",
+          "maximum": "30.00",
+          "suggested": "30.00",
+          "amount": "30.00"
+        }
+      ],
+      "shipping_refund_amount": "0.00",
+      "shipping_refund_total": "0.00",
+      "calculation": {
+        "subtotal": {
+          "customer": "100.00",
+          "shop": "110.00"
+        },
+        "discounted_subtotal": {
+          "customer": "100.00",
+          "shop": "110.00"
+        },
+        "cart_discount": {
+          "customer": "0.00",
+          "shop": "0.00"
+        },
+        "tax": {
+          "customer": "0.00",
+          "shop": "0.00"
+        },
+        "duties": {
+          "customer": "0.00",
+          "shop": "0.00"
+        },
+        "recommended": {
+          "customer": "20.00",
+          "shop": "22.00"
+        },
+        "shipping": {
+          "customer": "0.00",
+          "shop": "0.00"
+        },
+        "shipping_tax": {
+          "customer": "0.00",
+          "shop": "0.00"
+        },
+        "shipping_maximum": {
+          "customer": "0.00",
+          "shop": "0.00"
+        }
+      },
+      "taxes_included": false,
+      "shop_currency": "USD",
+      "shop_money": {
+        "total": {
+          "customer": "100.00",
+          "shop": "110.00"
+        },
+        "paid": {
+          "customer": "100.00",
+          "shop": "110.00"
+        },
+        "refunded": {
+          "customer": "0.00",
+          "shop": "0.00"
+        }
+      },
+      "items": [
+        {
+          "line_item_id": "gid://shopify/LineItem/1",
+          "quantity": 1
+        }
+      ],
+      "refund_shipping": false,
+      "quote_hash": "bb44a06163bb34ab4be3155aa9e84a4730908c09bd4772283084404e5e4ad0db",
+      "payments": [
+        {
+          "parent_id": "gid://shopify/OrderTransaction/1",
+          "gateway": "shopify_payments",
+          "label": "Bank card",
+          "paid": "70.00"
+        },
+        {
+          "parent_id": "gid://shopify/OrderTransaction/2",
+          "gateway": "shopify_store_credit",
+          "label": "Store Credit",
+          "paid": "30.00"
+        }
+      ],
+      "channels": [
+        {
+          "parent_id": "gid://shopify/OrderTransaction/1",
+          "gateway": "shopify_payments",
+          "manual": false,
+          "label": "Bank card",
+          "maximum": "70.00",
+          "suggested": "70.00"
+        },
+        {
+          "parent_id": "gid://shopify/OrderTransaction/2",
+          "gateway": "shopify_store_credit",
+          "manual": false,
+          "label": "Store Credit",
+          "maximum": "30.00",
+          "suggested": "30.00"
+        }
+      ],
+      "recommended_amount": "20.00"
+    }
+  },
+  {
+    "name": "selected discounted goods and taxes",
+    "order": {
+      "id": "gid://shopify/Order/1",
+      "presentmentCurrencyCode": "EUR",
+      "taxesIncluded": false,
+      "withoutShipping": {
+        "amountSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        }
+      },
+      "customer": {
+        "id": "gid://shopify/Customer/2"
+      },
+      "totalPriceSet": {
+        "presentmentMoney": {
+          "amount": "100.00",
+          "currencyCode": "EUR"
+        },
+        "shopMoney": {
+          "amount": "110.00",
+          "currencyCode": "USD"
+        }
+      },
+      "totalReceivedSet": {
+        "presentmentMoney": {
+          "amount": "100.00",
+          "currencyCode": "EUR"
+        },
+        "shopMoney": {
+          "amount": "110.00",
+          "currencyCode": "USD"
+        }
+      },
+      "totalRefundedSet": {
+        "presentmentMoney": {
+          "amount": "0.00",
+          "currencyCode": "EUR"
+        },
+        "shopMoney": {
+          "amount": "0.00",
+          "currencyCode": "USD"
+        }
+      },
+      "transactionsCount": {
+        "count": 2,
+        "precision": "EXACT"
+      },
+      "transactions": [
+        {
+          "id": "gid://shopify/OrderTransaction/1",
+          "kind": "CAPTURE",
+          "status": "SUCCESS",
+          "gateway": "shopify_payments",
+          "amountSet": {
+            "presentmentMoney": {
+              "amount": "70.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "77.00",
+              "currencyCode": "USD"
+            }
+          },
+          "formattedGateway": "Bank card"
+        },
+        {
+          "id": "gid://shopify/OrderTransaction/2",
+          "kind": "SALE",
+          "status": "SUCCESS",
+          "gateway": "shopify_store_credit",
+          "amountSet": {
+            "presentmentMoney": {
+              "amount": "30.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "33.00",
+              "currencyCode": "USD"
+            }
+          },
+          "formattedGateway": "Store Credit"
+        }
+      ],
+      "full": {
+        "subtotalSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        },
+        "discountedSubtotalSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        },
+        "totalCartDiscountAmountSet": {
+          "presentmentMoney": {
+            "amount": "0.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "0.00",
+            "currencyCode": "USD"
+          }
+        },
+        "totalTaxSet": {
+          "presentmentMoney": {
+            "amount": "0.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "0.00",
+            "currencyCode": "USD"
+          }
+        },
+        "totalDutiesSet": {
+          "presentmentMoney": {
+            "amount": "0.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "0.00",
+            "currencyCode": "USD"
+          }
+        },
+        "shipping": {
+          "amountSet": {
+            "presentmentMoney": {
+              "amount": "0.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "0.00",
+              "currencyCode": "USD"
+            }
+          },
+          "taxSet": {
+            "presentmentMoney": {
+              "amount": "0.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "0.00",
+              "currencyCode": "USD"
+            }
+          },
+          "maximumRefundableSet": {
+            "presentmentMoney": {
+              "amount": "0.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "0.00",
+              "currencyCode": "USD"
+            }
+          }
+        },
+        "amountSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        },
+        "maximumRefundableSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        },
+        "suggestedTransactions": [
+          {
+            "kind": "SUGGESTED_REFUND",
+            "gateway": "shopify_payments",
+            "formattedGateway": "Bank card",
+            "parentTransaction": {
+              "id": "gid://shopify/OrderTransaction/1",
+              "kind": "CAPTURE",
+              "status": "SUCCESS",
+              "gateway": "shopify_payments"
+            },
+            "amountSet": {
+              "presentmentMoney": {
+                "amount": "70.00",
+                "currencyCode": "EUR"
+              },
+              "shopMoney": {
+                "amount": "77.00",
+                "currencyCode": "USD"
+              }
+            },
+            "maximumRefundableSet": {
+              "presentmentMoney": {
+                "amount": "70.00",
+                "currencyCode": "EUR"
+              },
+              "shopMoney": {
+                "amount": "77.00",
+                "currencyCode": "USD"
+              }
+            }
+          },
+          {
+            "kind": "SUGGESTED_REFUND",
+            "gateway": "shopify_store_credit",
+            "formattedGateway": "Store Credit",
+            "parentTransaction": {
+              "id": "gid://shopify/OrderTransaction/2",
+              "kind": "SALE",
+              "status": "SUCCESS",
+              "gateway": "shopify_store_credit"
+            },
+            "amountSet": {
+              "presentmentMoney": {
+                "amount": "30.00",
+                "currencyCode": "EUR"
+              },
+              "shopMoney": {
+                "amount": "33.00",
+                "currencyCode": "USD"
+              }
+            },
+            "maximumRefundableSet": {
+              "presentmentMoney": {
+                "amount": "30.00",
+                "currencyCode": "EUR"
+              },
+              "shopMoney": {
+                "amount": "33.00",
+                "currencyCode": "USD"
+              }
+            }
+          }
+        ]
+      },
+      "selected": {
+        "subtotalSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        },
+        "discountedSubtotalSet": {
+          "presentmentMoney": {
+            "amount": "32.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "35.20",
+            "currencyCode": "USD"
+          }
+        },
+        "totalCartDiscountAmountSet": {
+          "presentmentMoney": {
+            "amount": "0.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "0.00",
+            "currencyCode": "USD"
+          }
+        },
+        "totalTaxSet": {
+          "presentmentMoney": {
+            "amount": "6.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "6.60",
+            "currencyCode": "USD"
+          }
+        },
+        "totalDutiesSet": {
+          "presentmentMoney": {
+            "amount": "2.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "2.20",
+            "currencyCode": "USD"
+          }
+        },
+        "shipping": {
+          "amountSet": {
+            "presentmentMoney": {
+              "amount": "0.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "0.00",
+              "currencyCode": "USD"
+            }
+          },
+          "taxSet": {
+            "presentmentMoney": {
+              "amount": "0.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "0.00",
+              "currencyCode": "USD"
+            }
+          },
+          "maximumRefundableSet": {
+            "presentmentMoney": {
+              "amount": "0.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "0.00",
+              "currencyCode": "USD"
+            }
+          }
+        },
+        "amountSet": {
+          "presentmentMoney": {
+            "amount": "40.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "44.00",
+            "currencyCode": "USD"
+          }
+        },
+        "maximumRefundableSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        },
+        "suggestedTransactions": [
+          {
+            "kind": "SUGGESTED_REFUND",
+            "gateway": "shopify_payments",
+            "formattedGateway": "Bank card",
+            "parentTransaction": {
+              "id": "gid://shopify/OrderTransaction/1",
+              "kind": "CAPTURE",
+              "status": "SUCCESS",
+              "gateway": "shopify_payments"
+            },
+            "amountSet": {
+              "presentmentMoney": {
+                "amount": "28.00",
+                "currencyCode": "EUR"
+              },
+              "shopMoney": {
+                "amount": "30.80",
+                "currencyCode": "USD"
+              }
+            },
+            "maximumRefundableSet": {
+              "presentmentMoney": {
+                "amount": "70.00",
+                "currencyCode": "EUR"
+              },
+              "shopMoney": {
+                "amount": "77.00",
+                "currencyCode": "USD"
+              }
+            }
+          },
+          {
+            "kind": "SUGGESTED_REFUND",
+            "gateway": "shopify_store_credit",
+            "formattedGateway": "Store Credit",
+            "parentTransaction": {
+              "id": "gid://shopify/OrderTransaction/2",
+              "kind": "SALE",
+              "status": "SUCCESS",
+              "gateway": "shopify_store_credit"
+            },
+            "amountSet": {
+              "presentmentMoney": {
+                "amount": "12.00",
+                "currencyCode": "EUR"
+              },
+              "shopMoney": {
+                "amount": "13.20",
+                "currencyCode": "USD"
+              }
+            },
+            "maximumRefundableSet": {
+              "presentmentMoney": {
+                "amount": "30.00",
+                "currencyCode": "EUR"
+              },
+              "shopMoney": {
+                "amount": "33.00",
+                "currencyCode": "USD"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "params": {
+      "store": "fixture.myshopify.com",
+      "order_id": "gid://shopify/Order/1",
+      "target": "original",
+      "amount": null,
+      "currency": null,
+      "items": [
+        {
+          "line_item_id": "gid://shopify/LineItem/1",
+          "quantity": 1
+        }
+      ],
+      "refund_shipping": false,
+      "allocations": []
+    },
+    "expected": {
+      "version": 1,
+      "store": "fixture.myshopify.com",
+      "order_id": "gid://shopify/Order/1",
+      "target": "original",
+      "currency": "EUR",
+      "amount": "40.00",
+      "paid": "100.00",
+      "refunded": "0.00",
+      "remaining": "100.00",
+      "customer_id": "gid://shopify/Customer/2",
+      "order_refund_amount": "40.00",
+      "bonus_credit_amount": "0.00",
+      "allocations": [
+        {
+          "parent_id": "gid://shopify/OrderTransaction/1",
+          "gateway": "shopify_payments",
+          "manual": false,
+          "label": "Bank card",
+          "maximum": "70.00",
+          "suggested": "70.00",
+          "amount": "28.00"
+        },
+        {
+          "parent_id": "gid://shopify/OrderTransaction/2",
+          "gateway": "shopify_store_credit",
+          "manual": false,
+          "label": "Store Credit",
+          "maximum": "30.00",
+          "suggested": "30.00",
+          "amount": "12.00"
+        }
+      ],
+      "shipping_refund_amount": "0.00",
+      "shipping_refund_total": "0.00",
+      "calculation": {
+        "subtotal": {
+          "customer": "100.00",
+          "shop": "110.00"
+        },
+        "discounted_subtotal": {
+          "customer": "32.00",
+          "shop": "35.20"
+        },
+        "cart_discount": {
+          "customer": "0.00",
+          "shop": "0.00"
+        },
+        "tax": {
+          "customer": "6.00",
+          "shop": "6.60"
+        },
+        "duties": {
+          "customer": "2.00",
+          "shop": "2.20"
+        },
+        "recommended": {
+          "customer": "40.00",
+          "shop": "44.00"
+        },
+        "shipping": {
+          "customer": "0.00",
+          "shop": "0.00"
+        },
+        "shipping_tax": {
+          "customer": "0.00",
+          "shop": "0.00"
+        },
+        "shipping_maximum": {
+          "customer": "0.00",
+          "shop": "0.00"
+        }
+      },
+      "taxes_included": false,
+      "shop_currency": "USD",
+      "shop_money": {
+        "total": {
+          "customer": "100.00",
+          "shop": "110.00"
+        },
+        "paid": {
+          "customer": "100.00",
+          "shop": "110.00"
+        },
+        "refunded": {
+          "customer": "0.00",
+          "shop": "0.00"
+        }
+      },
+      "items": [
+        {
+          "line_item_id": "gid://shopify/LineItem/1",
+          "quantity": 1
+        }
+      ],
+      "refund_shipping": false,
+      "quote_hash": "6c0f4c449450e9fab50f88ac39a4181a0d32cf875faf37b873f03820137679ee",
+      "payments": [
+        {
+          "parent_id": "gid://shopify/OrderTransaction/1",
+          "gateway": "shopify_payments",
+          "label": "Bank card",
+          "paid": "70.00"
+        },
+        {
+          "parent_id": "gid://shopify/OrderTransaction/2",
+          "gateway": "shopify_store_credit",
+          "label": "Store Credit",
+          "paid": "30.00"
+        }
+      ],
+      "channels": [
+        {
+          "parent_id": "gid://shopify/OrderTransaction/1",
+          "gateway": "shopify_payments",
+          "manual": false,
+          "label": "Bank card",
+          "maximum": "70.00",
+          "suggested": "70.00"
+        },
+        {
+          "parent_id": "gid://shopify/OrderTransaction/2",
+          "gateway": "shopify_store_credit",
+          "manual": false,
+          "label": "Store Credit",
+          "maximum": "30.00",
+          "suggested": "30.00"
+        }
+      ],
+      "recommended_amount": "40.00"
+    }
+  },
+  {
+    "name": "shipping with tax excluded",
+    "order": {
+      "id": "gid://shopify/Order/1",
+      "presentmentCurrencyCode": "EUR",
+      "taxesIncluded": false,
+      "withoutShipping": {
+        "amountSet": {
+          "presentmentMoney": {
+            "amount": "90.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "99.00",
+            "currencyCode": "USD"
+          }
+        }
+      },
+      "customer": {
+        "id": "gid://shopify/Customer/2"
+      },
+      "totalPriceSet": {
+        "presentmentMoney": {
+          "amount": "100.00",
+          "currencyCode": "EUR"
+        },
+        "shopMoney": {
+          "amount": "110.00",
+          "currencyCode": "USD"
+        }
+      },
+      "totalReceivedSet": {
+        "presentmentMoney": {
+          "amount": "100.00",
+          "currencyCode": "EUR"
+        },
+        "shopMoney": {
+          "amount": "110.00",
+          "currencyCode": "USD"
+        }
+      },
+      "totalRefundedSet": {
+        "presentmentMoney": {
+          "amount": "0.00",
+          "currencyCode": "EUR"
+        },
+        "shopMoney": {
+          "amount": "0.00",
+          "currencyCode": "USD"
+        }
+      },
+      "transactionsCount": {
+        "count": 2,
+        "precision": "EXACT"
+      },
+      "transactions": [
+        {
+          "id": "gid://shopify/OrderTransaction/1",
+          "kind": "CAPTURE",
+          "status": "SUCCESS",
+          "gateway": "shopify_payments",
+          "amountSet": {
+            "presentmentMoney": {
+              "amount": "70.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "77.00",
+              "currencyCode": "USD"
+            }
+          },
+          "formattedGateway": "Bank card"
+        },
+        {
+          "id": "gid://shopify/OrderTransaction/2",
+          "kind": "SALE",
+          "status": "SUCCESS",
+          "gateway": "shopify_store_credit",
+          "amountSet": {
+            "presentmentMoney": {
+              "amount": "30.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "33.00",
+              "currencyCode": "USD"
+            }
+          },
+          "formattedGateway": "Store Credit"
+        }
+      ],
+      "full": {
+        "subtotalSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        },
+        "discountedSubtotalSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        },
+        "totalCartDiscountAmountSet": {
+          "presentmentMoney": {
+            "amount": "0.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "0.00",
+            "currencyCode": "USD"
+          }
+        },
+        "totalTaxSet": {
+          "presentmentMoney": {
+            "amount": "0.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "0.00",
+            "currencyCode": "USD"
+          }
+        },
+        "totalDutiesSet": {
+          "presentmentMoney": {
+            "amount": "0.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "0.00",
+            "currencyCode": "USD"
+          }
+        },
+        "shipping": {
+          "amountSet": {
+            "presentmentMoney": {
+              "amount": "9.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "9.90",
+              "currencyCode": "USD"
+            }
+          },
+          "taxSet": {
+            "presentmentMoney": {
+              "amount": "1.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "1.10",
+              "currencyCode": "USD"
+            }
+          },
+          "maximumRefundableSet": {
+            "presentmentMoney": {
+              "amount": "0.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "0.00",
+              "currencyCode": "USD"
+            }
+          }
+        },
+        "amountSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        },
+        "maximumRefundableSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        },
+        "suggestedTransactions": [
+          {
+            "kind": "SUGGESTED_REFUND",
+            "gateway": "shopify_payments",
+            "formattedGateway": "Bank card",
+            "parentTransaction": {
+              "id": "gid://shopify/OrderTransaction/1",
+              "kind": "CAPTURE",
+              "status": "SUCCESS",
+              "gateway": "shopify_payments"
+            },
+            "amountSet": {
+              "presentmentMoney": {
+                "amount": "70.00",
+                "currencyCode": "EUR"
+              },
+              "shopMoney": {
+                "amount": "77.00",
+                "currencyCode": "USD"
+              }
+            },
+            "maximumRefundableSet": {
+              "presentmentMoney": {
+                "amount": "70.00",
+                "currencyCode": "EUR"
+              },
+              "shopMoney": {
+                "amount": "77.00",
+                "currencyCode": "USD"
+              }
+            }
+          },
+          {
+            "kind": "SUGGESTED_REFUND",
+            "gateway": "shopify_store_credit",
+            "formattedGateway": "Store Credit",
+            "parentTransaction": {
+              "id": "gid://shopify/OrderTransaction/2",
+              "kind": "SALE",
+              "status": "SUCCESS",
+              "gateway": "shopify_store_credit"
+            },
+            "amountSet": {
+              "presentmentMoney": {
+                "amount": "30.00",
+                "currencyCode": "EUR"
+              },
+              "shopMoney": {
+                "amount": "33.00",
+                "currencyCode": "USD"
+              }
+            },
+            "maximumRefundableSet": {
+              "presentmentMoney": {
+                "amount": "30.00",
+                "currencyCode": "EUR"
+              },
+              "shopMoney": {
+                "amount": "33.00",
+                "currencyCode": "USD"
+              }
+            }
+          }
+        ]
+      },
+      "selected": {
+        "subtotalSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        },
+        "discountedSubtotalSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        },
+        "totalCartDiscountAmountSet": {
+          "presentmentMoney": {
+            "amount": "0.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "0.00",
+            "currencyCode": "USD"
+          }
+        },
+        "totalTaxSet": {
+          "presentmentMoney": {
+            "amount": "0.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "0.00",
+            "currencyCode": "USD"
+          }
+        },
+        "totalDutiesSet": {
+          "presentmentMoney": {
+            "amount": "0.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "0.00",
+            "currencyCode": "USD"
+          }
+        },
+        "shipping": {
+          "amountSet": {
+            "presentmentMoney": {
+              "amount": "0.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "0.00",
+              "currencyCode": "USD"
+            }
+          },
+          "taxSet": {
+            "presentmentMoney": {
+              "amount": "0.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "0.00",
+              "currencyCode": "USD"
+            }
+          },
+          "maximumRefundableSet": {
+            "presentmentMoney": {
+              "amount": "0.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "0.00",
+              "currencyCode": "USD"
+            }
+          }
+        },
+        "amountSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        },
+        "maximumRefundableSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        },
+        "suggestedTransactions": [
+          {
+            "kind": "SUGGESTED_REFUND",
+            "gateway": "shopify_payments",
+            "formattedGateway": "Bank card",
+            "parentTransaction": {
+              "id": "gid://shopify/OrderTransaction/1",
+              "kind": "CAPTURE",
+              "status": "SUCCESS",
+              "gateway": "shopify_payments"
+            },
+            "amountSet": {
+              "presentmentMoney": {
+                "amount": "70.00",
+                "currencyCode": "EUR"
+              },
+              "shopMoney": {
+                "amount": "77.00",
+                "currencyCode": "USD"
+              }
+            },
+            "maximumRefundableSet": {
+              "presentmentMoney": {
+                "amount": "70.00",
+                "currencyCode": "EUR"
+              },
+              "shopMoney": {
+                "amount": "77.00",
+                "currencyCode": "USD"
+              }
+            }
+          },
+          {
+            "kind": "SUGGESTED_REFUND",
+            "gateway": "shopify_store_credit",
+            "formattedGateway": "Store Credit",
+            "parentTransaction": {
+              "id": "gid://shopify/OrderTransaction/2",
+              "kind": "SALE",
+              "status": "SUCCESS",
+              "gateway": "shopify_store_credit"
+            },
+            "amountSet": {
+              "presentmentMoney": {
+                "amount": "30.00",
+                "currencyCode": "EUR"
+              },
+              "shopMoney": {
+                "amount": "33.00",
+                "currencyCode": "USD"
+              }
+            },
+            "maximumRefundableSet": {
+              "presentmentMoney": {
+                "amount": "30.00",
+                "currencyCode": "EUR"
+              },
+              "shopMoney": {
+                "amount": "33.00",
+                "currencyCode": "USD"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "params": {
+      "store": "fixture.myshopify.com",
+      "order_id": "gid://shopify/Order/1",
+      "target": "original",
+      "amount": null,
+      "currency": null,
+      "items": [],
+      "refund_shipping": true,
+      "allocations": []
+    },
+    "expected": {
+      "version": 1,
+      "store": "fixture.myshopify.com",
+      "order_id": "gid://shopify/Order/1",
+      "target": "original",
+      "currency": "EUR",
+      "amount": "100.00",
+      "paid": "100.00",
+      "refunded": "0.00",
+      "remaining": "100.00",
+      "customer_id": "gid://shopify/Customer/2",
+      "order_refund_amount": "100.00",
+      "bonus_credit_amount": "0.00",
+      "allocations": [
+        {
+          "parent_id": "gid://shopify/OrderTransaction/1",
+          "gateway": "shopify_payments",
+          "manual": false,
+          "label": "Bank card",
+          "maximum": "70.00",
+          "suggested": "70.00",
+          "amount": "70.00"
+        },
+        {
+          "parent_id": "gid://shopify/OrderTransaction/2",
+          "gateway": "shopify_store_credit",
+          "manual": false,
+          "label": "Store Credit",
+          "maximum": "30.00",
+          "suggested": "30.00",
+          "amount": "30.00"
+        }
+      ],
+      "shipping_refund_amount": "9.00",
+      "shipping_refund_total": "10.00",
+      "calculation": {
+        "subtotal": {
+          "customer": "100.00",
+          "shop": "110.00"
+        },
+        "discounted_subtotal": {
+          "customer": "100.00",
+          "shop": "110.00"
+        },
+        "cart_discount": {
+          "customer": "0.00",
+          "shop": "0.00"
+        },
+        "tax": {
+          "customer": "0.00",
+          "shop": "0.00"
+        },
+        "duties": {
+          "customer": "0.00",
+          "shop": "0.00"
+        },
+        "recommended": {
+          "customer": "100.00",
+          "shop": "110.00"
+        },
+        "shipping": {
+          "customer": "9.00",
+          "shop": "9.90"
+        },
+        "shipping_tax": {
+          "customer": "1.00",
+          "shop": "1.10"
+        },
+        "shipping_maximum": {
+          "customer": "0.00",
+          "shop": "0.00"
+        }
+      },
+      "taxes_included": false,
+      "shop_currency": "USD",
+      "shop_money": {
+        "total": {
+          "customer": "100.00",
+          "shop": "110.00"
+        },
+        "paid": {
+          "customer": "100.00",
+          "shop": "110.00"
+        },
+        "refunded": {
+          "customer": "0.00",
+          "shop": "0.00"
+        }
+      },
+      "items": [],
+      "refund_shipping": true,
+      "quote_hash": "12348166fbf158f37cc3f483724c2d1335b7367fddebaf482ebf3a6e6002bde8",
+      "payments": [
+        {
+          "parent_id": "gid://shopify/OrderTransaction/1",
+          "gateway": "shopify_payments",
+          "label": "Bank card",
+          "paid": "70.00"
+        },
+        {
+          "parent_id": "gid://shopify/OrderTransaction/2",
+          "gateway": "shopify_store_credit",
+          "label": "Store Credit",
+          "paid": "30.00"
+        }
+      ],
+      "channels": [
+        {
+          "parent_id": "gid://shopify/OrderTransaction/1",
+          "gateway": "shopify_payments",
+          "manual": false,
+          "label": "Bank card",
+          "maximum": "70.00",
+          "suggested": "70.00"
+        },
+        {
+          "parent_id": "gid://shopify/OrderTransaction/2",
+          "gateway": "shopify_store_credit",
+          "manual": false,
+          "label": "Store Credit",
+          "maximum": "30.00",
+          "suggested": "30.00"
+        }
+      ],
+      "recommended_amount": "100.00"
+    }
+  },
+  {
+    "name": "shipping tax included once",
+    "order": {
+      "id": "gid://shopify/Order/1",
+      "presentmentCurrencyCode": "EUR",
+      "taxesIncluded": true,
+      "withoutShipping": {
+        "amountSet": {
+          "presentmentMoney": {
+            "amount": "91.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "100.10",
+            "currencyCode": "USD"
+          }
+        }
+      },
+      "customer": {
+        "id": "gid://shopify/Customer/2"
+      },
+      "totalPriceSet": {
+        "presentmentMoney": {
+          "amount": "100.00",
+          "currencyCode": "EUR"
+        },
+        "shopMoney": {
+          "amount": "110.00",
+          "currencyCode": "USD"
+        }
+      },
+      "totalReceivedSet": {
+        "presentmentMoney": {
+          "amount": "100.00",
+          "currencyCode": "EUR"
+        },
+        "shopMoney": {
+          "amount": "110.00",
+          "currencyCode": "USD"
+        }
+      },
+      "totalRefundedSet": {
+        "presentmentMoney": {
+          "amount": "0.00",
+          "currencyCode": "EUR"
+        },
+        "shopMoney": {
+          "amount": "0.00",
+          "currencyCode": "USD"
+        }
+      },
+      "transactionsCount": {
+        "count": 2,
+        "precision": "EXACT"
+      },
+      "transactions": [
+        {
+          "id": "gid://shopify/OrderTransaction/1",
+          "kind": "CAPTURE",
+          "status": "SUCCESS",
+          "gateway": "shopify_payments",
+          "amountSet": {
+            "presentmentMoney": {
+              "amount": "70.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "77.00",
+              "currencyCode": "USD"
+            }
+          },
+          "formattedGateway": "Bank card"
+        },
+        {
+          "id": "gid://shopify/OrderTransaction/2",
+          "kind": "SALE",
+          "status": "SUCCESS",
+          "gateway": "shopify_store_credit",
+          "amountSet": {
+            "presentmentMoney": {
+              "amount": "30.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "33.00",
+              "currencyCode": "USD"
+            }
+          },
+          "formattedGateway": "Store Credit"
+        }
+      ],
+      "full": {
+        "subtotalSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        },
+        "discountedSubtotalSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        },
+        "totalCartDiscountAmountSet": {
+          "presentmentMoney": {
+            "amount": "0.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "0.00",
+            "currencyCode": "USD"
+          }
+        },
+        "totalTaxSet": {
+          "presentmentMoney": {
+            "amount": "0.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "0.00",
+            "currencyCode": "USD"
+          }
+        },
+        "totalDutiesSet": {
+          "presentmentMoney": {
+            "amount": "0.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "0.00",
+            "currencyCode": "USD"
+          }
+        },
+        "shipping": {
+          "amountSet": {
+            "presentmentMoney": {
+              "amount": "9.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "9.90",
+              "currencyCode": "USD"
+            }
+          },
+          "taxSet": {
+            "presentmentMoney": {
+              "amount": "1.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "1.10",
+              "currencyCode": "USD"
+            }
+          },
+          "maximumRefundableSet": {
+            "presentmentMoney": {
+              "amount": "0.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "0.00",
+              "currencyCode": "USD"
+            }
+          }
+        },
+        "amountSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        },
+        "maximumRefundableSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        },
+        "suggestedTransactions": [
+          {
+            "kind": "SUGGESTED_REFUND",
+            "gateway": "shopify_payments",
+            "formattedGateway": "Bank card",
+            "parentTransaction": {
+              "id": "gid://shopify/OrderTransaction/1",
+              "kind": "CAPTURE",
+              "status": "SUCCESS",
+              "gateway": "shopify_payments"
+            },
+            "amountSet": {
+              "presentmentMoney": {
+                "amount": "70.00",
+                "currencyCode": "EUR"
+              },
+              "shopMoney": {
+                "amount": "77.00",
+                "currencyCode": "USD"
+              }
+            },
+            "maximumRefundableSet": {
+              "presentmentMoney": {
+                "amount": "70.00",
+                "currencyCode": "EUR"
+              },
+              "shopMoney": {
+                "amount": "77.00",
+                "currencyCode": "USD"
+              }
+            }
+          },
+          {
+            "kind": "SUGGESTED_REFUND",
+            "gateway": "shopify_store_credit",
+            "formattedGateway": "Store Credit",
+            "parentTransaction": {
+              "id": "gid://shopify/OrderTransaction/2",
+              "kind": "SALE",
+              "status": "SUCCESS",
+              "gateway": "shopify_store_credit"
+            },
+            "amountSet": {
+              "presentmentMoney": {
+                "amount": "30.00",
+                "currencyCode": "EUR"
+              },
+              "shopMoney": {
+                "amount": "33.00",
+                "currencyCode": "USD"
+              }
+            },
+            "maximumRefundableSet": {
+              "presentmentMoney": {
+                "amount": "30.00",
+                "currencyCode": "EUR"
+              },
+              "shopMoney": {
+                "amount": "33.00",
+                "currencyCode": "USD"
+              }
+            }
+          }
+        ]
+      },
+      "selected": {
+        "subtotalSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        },
+        "discountedSubtotalSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        },
+        "totalCartDiscountAmountSet": {
+          "presentmentMoney": {
+            "amount": "0.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "0.00",
+            "currencyCode": "USD"
+          }
+        },
+        "totalTaxSet": {
+          "presentmentMoney": {
+            "amount": "0.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "0.00",
+            "currencyCode": "USD"
+          }
+        },
+        "totalDutiesSet": {
+          "presentmentMoney": {
+            "amount": "0.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "0.00",
+            "currencyCode": "USD"
+          }
+        },
+        "shipping": {
+          "amountSet": {
+            "presentmentMoney": {
+              "amount": "0.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "0.00",
+              "currencyCode": "USD"
+            }
+          },
+          "taxSet": {
+            "presentmentMoney": {
+              "amount": "0.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "0.00",
+              "currencyCode": "USD"
+            }
+          },
+          "maximumRefundableSet": {
+            "presentmentMoney": {
+              "amount": "0.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "0.00",
+              "currencyCode": "USD"
+            }
+          }
+        },
+        "amountSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        },
+        "maximumRefundableSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        },
+        "suggestedTransactions": [
+          {
+            "kind": "SUGGESTED_REFUND",
+            "gateway": "shopify_payments",
+            "formattedGateway": "Bank card",
+            "parentTransaction": {
+              "id": "gid://shopify/OrderTransaction/1",
+              "kind": "CAPTURE",
+              "status": "SUCCESS",
+              "gateway": "shopify_payments"
+            },
+            "amountSet": {
+              "presentmentMoney": {
+                "amount": "70.00",
+                "currencyCode": "EUR"
+              },
+              "shopMoney": {
+                "amount": "77.00",
+                "currencyCode": "USD"
+              }
+            },
+            "maximumRefundableSet": {
+              "presentmentMoney": {
+                "amount": "70.00",
+                "currencyCode": "EUR"
+              },
+              "shopMoney": {
+                "amount": "77.00",
+                "currencyCode": "USD"
+              }
+            }
+          },
+          {
+            "kind": "SUGGESTED_REFUND",
+            "gateway": "shopify_store_credit",
+            "formattedGateway": "Store Credit",
+            "parentTransaction": {
+              "id": "gid://shopify/OrderTransaction/2",
+              "kind": "SALE",
+              "status": "SUCCESS",
+              "gateway": "shopify_store_credit"
+            },
+            "amountSet": {
+              "presentmentMoney": {
+                "amount": "30.00",
+                "currencyCode": "EUR"
+              },
+              "shopMoney": {
+                "amount": "33.00",
+                "currencyCode": "USD"
+              }
+            },
+            "maximumRefundableSet": {
+              "presentmentMoney": {
+                "amount": "30.00",
+                "currencyCode": "EUR"
+              },
+              "shopMoney": {
+                "amount": "33.00",
+                "currencyCode": "USD"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "params": {
+      "store": "fixture.myshopify.com",
+      "order_id": "gid://shopify/Order/1",
+      "target": "store_credit",
+      "amount": "9.00",
+      "currency": null,
+      "items": [],
+      "refund_shipping": true,
+      "allocations": []
+    },
+    "expected": {
+      "version": 1,
+      "store": "fixture.myshopify.com",
+      "order_id": "gid://shopify/Order/1",
+      "target": "store_credit",
+      "currency": "EUR",
+      "amount": "9.00",
+      "paid": "100.00",
+      "refunded": "0.00",
+      "remaining": "100.00",
+      "customer_id": "gid://shopify/Customer/2",
+      "order_refund_amount": "9.00",
+      "bonus_credit_amount": "0.00",
+      "allocations": [],
+      "shipping_refund_amount": "9.00",
+      "shipping_refund_total": "9.00",
+      "calculation": {
+        "subtotal": {
+          "customer": "100.00",
+          "shop": "110.00"
+        },
+        "discounted_subtotal": {
+          "customer": "100.00",
+          "shop": "110.00"
+        },
+        "cart_discount": {
+          "customer": "0.00",
+          "shop": "0.00"
+        },
+        "tax": {
+          "customer": "0.00",
+          "shop": "0.00"
+        },
+        "duties": {
+          "customer": "0.00",
+          "shop": "0.00"
+        },
+        "recommended": {
+          "customer": "100.00",
+          "shop": "110.00"
+        },
+        "shipping": {
+          "customer": "9.00",
+          "shop": "9.90"
+        },
+        "shipping_tax": {
+          "customer": "1.00",
+          "shop": "1.10"
+        },
+        "shipping_maximum": {
+          "customer": "0.00",
+          "shop": "0.00"
+        }
+      },
+      "taxes_included": true,
+      "shop_currency": "USD",
+      "shop_money": {
+        "total": {
+          "customer": "100.00",
+          "shop": "110.00"
+        },
+        "paid": {
+          "customer": "100.00",
+          "shop": "110.00"
+        },
+        "refunded": {
+          "customer": "0.00",
+          "shop": "0.00"
+        }
+      },
+      "items": [],
+      "refund_shipping": true,
+      "quote_hash": "6400f8bf233e17d4efa5d155f7f3f24547236e3cdea81457a7c2754708dc31a5",
+      "payments": [
+        {
+          "parent_id": "gid://shopify/OrderTransaction/1",
+          "gateway": "shopify_payments",
+          "label": "Bank card",
+          "paid": "70.00"
+        },
+        {
+          "parent_id": "gid://shopify/OrderTransaction/2",
+          "gateway": "shopify_store_credit",
+          "label": "Store Credit",
+          "paid": "30.00"
+        }
+      ],
+      "channels": [
+        {
+          "parent_id": "gid://shopify/OrderTransaction/1",
+          "gateway": "shopify_payments",
+          "manual": false,
+          "label": "Bank card",
+          "maximum": "70.00",
+          "suggested": "70.00"
+        },
+        {
+          "parent_id": "gid://shopify/OrderTransaction/2",
+          "gateway": "shopify_store_credit",
+          "manual": false,
+          "label": "Store Credit",
+          "maximum": "30.00",
+          "suggested": "30.00"
+        }
+      ],
+      "recommended_amount": "100.00"
+    }
+  },
+  {
+    "name": "zero remaining context",
+    "order": {
+      "id": "gid://shopify/Order/1",
+      "presentmentCurrencyCode": "EUR",
+      "taxesIncluded": false,
+      "withoutShipping": {
+        "amountSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        }
+      },
+      "customer": {
+        "id": "gid://shopify/Customer/2"
+      },
+      "totalPriceSet": {
+        "presentmentMoney": {
+          "amount": "100.00",
+          "currencyCode": "EUR"
+        },
+        "shopMoney": {
+          "amount": "110.00",
+          "currencyCode": "USD"
+        }
+      },
+      "totalReceivedSet": {
+        "presentmentMoney": {
+          "amount": "100.00",
+          "currencyCode": "EUR"
+        },
+        "shopMoney": {
+          "amount": "110.00",
+          "currencyCode": "USD"
+        }
+      },
+      "totalRefundedSet": {
+        "presentmentMoney": {
+          "amount": "100.00",
+          "currencyCode": "EUR"
+        },
+        "shopMoney": {
+          "amount": "110.00",
+          "currencyCode": "USD"
+        }
+      },
+      "transactionsCount": {
+        "count": 2,
+        "precision": "EXACT"
+      },
+      "transactions": [
+        {
+          "id": "gid://shopify/OrderTransaction/1",
+          "kind": "CAPTURE",
+          "status": "SUCCESS",
+          "gateway": "shopify_payments",
+          "amountSet": {
+            "presentmentMoney": {
+              "amount": "70.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "77.00",
+              "currencyCode": "USD"
+            }
+          },
+          "formattedGateway": "Bank card"
+        },
+        {
+          "id": "gid://shopify/OrderTransaction/2",
+          "kind": "SALE",
+          "status": "SUCCESS",
+          "gateway": "shopify_store_credit",
+          "amountSet": {
+            "presentmentMoney": {
+              "amount": "30.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "33.00",
+              "currencyCode": "USD"
+            }
+          },
+          "formattedGateway": "Store Credit"
+        }
+      ],
+      "full": {
+        "subtotalSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        },
+        "discountedSubtotalSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        },
+        "totalCartDiscountAmountSet": {
+          "presentmentMoney": {
+            "amount": "0.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "0.00",
+            "currencyCode": "USD"
+          }
+        },
+        "totalTaxSet": {
+          "presentmentMoney": {
+            "amount": "0.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "0.00",
+            "currencyCode": "USD"
+          }
+        },
+        "totalDutiesSet": {
+          "presentmentMoney": {
+            "amount": "0.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "0.00",
+            "currencyCode": "USD"
+          }
+        },
+        "shipping": {
+          "amountSet": {
+            "presentmentMoney": {
+              "amount": "0.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "0.00",
+              "currencyCode": "USD"
+            }
+          },
+          "taxSet": {
+            "presentmentMoney": {
+              "amount": "0.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "0.00",
+              "currencyCode": "USD"
+            }
+          },
+          "maximumRefundableSet": {
+            "presentmentMoney": {
+              "amount": "0.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "0.00",
+              "currencyCode": "USD"
+            }
+          }
+        },
+        "amountSet": {
+          "presentmentMoney": {
+            "amount": "0.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "0.00",
+            "currencyCode": "USD"
+          }
+        },
+        "maximumRefundableSet": {
+          "presentmentMoney": {
+            "amount": "0.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "0.00",
+            "currencyCode": "USD"
+          }
+        },
+        "suggestedTransactions": []
+      },
+      "selected": {
+        "subtotalSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        },
+        "discountedSubtotalSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        },
+        "totalCartDiscountAmountSet": {
+          "presentmentMoney": {
+            "amount": "0.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "0.00",
+            "currencyCode": "USD"
+          }
+        },
+        "totalTaxSet": {
+          "presentmentMoney": {
+            "amount": "0.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "0.00",
+            "currencyCode": "USD"
+          }
+        },
+        "totalDutiesSet": {
+          "presentmentMoney": {
+            "amount": "0.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "0.00",
+            "currencyCode": "USD"
+          }
+        },
+        "shipping": {
+          "amountSet": {
+            "presentmentMoney": {
+              "amount": "0.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "0.00",
+              "currencyCode": "USD"
+            }
+          },
+          "taxSet": {
+            "presentmentMoney": {
+              "amount": "0.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "0.00",
+              "currencyCode": "USD"
+            }
+          },
+          "maximumRefundableSet": {
+            "presentmentMoney": {
+              "amount": "0.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "0.00",
+              "currencyCode": "USD"
+            }
+          }
+        },
+        "amountSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        },
+        "maximumRefundableSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        },
+        "suggestedTransactions": [
+          {
+            "kind": "SUGGESTED_REFUND",
+            "gateway": "shopify_payments",
+            "formattedGateway": "Bank card",
+            "parentTransaction": {
+              "id": "gid://shopify/OrderTransaction/1",
+              "kind": "CAPTURE",
+              "status": "SUCCESS",
+              "gateway": "shopify_payments"
+            },
+            "amountSet": {
+              "presentmentMoney": {
+                "amount": "70.00",
+                "currencyCode": "EUR"
+              },
+              "shopMoney": {
+                "amount": "77.00",
+                "currencyCode": "USD"
+              }
+            },
+            "maximumRefundableSet": {
+              "presentmentMoney": {
+                "amount": "70.00",
+                "currencyCode": "EUR"
+              },
+              "shopMoney": {
+                "amount": "77.00",
+                "currencyCode": "USD"
+              }
+            }
+          },
+          {
+            "kind": "SUGGESTED_REFUND",
+            "gateway": "shopify_store_credit",
+            "formattedGateway": "Store Credit",
+            "parentTransaction": {
+              "id": "gid://shopify/OrderTransaction/2",
+              "kind": "SALE",
+              "status": "SUCCESS",
+              "gateway": "shopify_store_credit"
+            },
+            "amountSet": {
+              "presentmentMoney": {
+                "amount": "30.00",
+                "currencyCode": "EUR"
+              },
+              "shopMoney": {
+                "amount": "33.00",
+                "currencyCode": "USD"
+              }
+            },
+            "maximumRefundableSet": {
+              "presentmentMoney": {
+                "amount": "30.00",
+                "currencyCode": "EUR"
+              },
+              "shopMoney": {
+                "amount": "33.00",
+                "currencyCode": "USD"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "params": {
+      "store": "fixture.myshopify.com",
+      "order_id": "gid://shopify/Order/1",
+      "target": "original",
+      "amount": null,
+      "currency": null,
+      "items": [],
+      "refund_shipping": false,
+      "allocations": []
+    },
+    "expected": {
+      "version": 1,
+      "store": "fixture.myshopify.com",
+      "order_id": "gid://shopify/Order/1",
+      "target": "original",
+      "currency": "EUR",
+      "amount": "0.00",
+      "paid": "100.00",
+      "refunded": "100.00",
+      "remaining": "0.00",
+      "customer_id": "gid://shopify/Customer/2",
+      "order_refund_amount": "0.00",
+      "bonus_credit_amount": "0.00",
+      "allocations": [],
+      "shipping_refund_amount": "0.00",
+      "shipping_refund_total": "0.00",
+      "calculation": {
+        "subtotal": {
+          "customer": "100.00",
+          "shop": "110.00"
+        },
+        "discounted_subtotal": {
+          "customer": "100.00",
+          "shop": "110.00"
+        },
+        "cart_discount": {
+          "customer": "0.00",
+          "shop": "0.00"
+        },
+        "tax": {
+          "customer": "0.00",
+          "shop": "0.00"
+        },
+        "duties": {
+          "customer": "0.00",
+          "shop": "0.00"
+        },
+        "recommended": {
+          "customer": "0.00",
+          "shop": "0.00"
+        },
+        "shipping": {
+          "customer": "0.00",
+          "shop": "0.00"
+        },
+        "shipping_tax": {
+          "customer": "0.00",
+          "shop": "0.00"
+        },
+        "shipping_maximum": {
+          "customer": "0.00",
+          "shop": "0.00"
+        }
+      },
+      "taxes_included": false,
+      "shop_currency": "USD",
+      "shop_money": {
+        "total": {
+          "customer": "100.00",
+          "shop": "110.00"
+        },
+        "paid": {
+          "customer": "100.00",
+          "shop": "110.00"
+        },
+        "refunded": {
+          "customer": "100.00",
+          "shop": "110.00"
+        }
+      },
+      "items": [],
+      "refund_shipping": false,
+      "quote_hash": "ea5f093994ccc90f568bad8bb1478f7c02e76db066e30c13e407b4c577ac2ce0",
+      "payments": [
+        {
+          "parent_id": "gid://shopify/OrderTransaction/1",
+          "gateway": "shopify_payments",
+          "label": "Bank card",
+          "paid": "70.00"
+        },
+        {
+          "parent_id": "gid://shopify/OrderTransaction/2",
+          "gateway": "shopify_store_credit",
+          "label": "Store Credit",
+          "paid": "30.00"
+        }
+      ],
+      "channels": [],
+      "recommended_amount": "0.00"
+    }
+  },
+  {
+    "name": "bonus only after full refund",
+    "order": {
+      "id": "gid://shopify/Order/1",
+      "presentmentCurrencyCode": "EUR",
+      "taxesIncluded": false,
+      "withoutShipping": {
+        "amountSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        }
+      },
+      "customer": {
+        "id": "gid://shopify/Customer/2"
+      },
+      "totalPriceSet": {
+        "presentmentMoney": {
+          "amount": "100.00",
+          "currencyCode": "EUR"
+        },
+        "shopMoney": {
+          "amount": "110.00",
+          "currencyCode": "USD"
+        }
+      },
+      "totalReceivedSet": {
+        "presentmentMoney": {
+          "amount": "100.00",
+          "currencyCode": "EUR"
+        },
+        "shopMoney": {
+          "amount": "110.00",
+          "currencyCode": "USD"
+        }
+      },
+      "totalRefundedSet": {
+        "presentmentMoney": {
+          "amount": "100.00",
+          "currencyCode": "EUR"
+        },
+        "shopMoney": {
+          "amount": "110.00",
+          "currencyCode": "USD"
+        }
+      },
+      "transactionsCount": {
+        "count": 2,
+        "precision": "EXACT"
+      },
+      "transactions": [
+        {
+          "id": "gid://shopify/OrderTransaction/1",
+          "kind": "CAPTURE",
+          "status": "SUCCESS",
+          "gateway": "shopify_payments",
+          "amountSet": {
+            "presentmentMoney": {
+              "amount": "70.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "77.00",
+              "currencyCode": "USD"
+            }
+          },
+          "formattedGateway": "Bank card"
+        },
+        {
+          "id": "gid://shopify/OrderTransaction/2",
+          "kind": "SALE",
+          "status": "SUCCESS",
+          "gateway": "shopify_store_credit",
+          "amountSet": {
+            "presentmentMoney": {
+              "amount": "30.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "33.00",
+              "currencyCode": "USD"
+            }
+          },
+          "formattedGateway": "Store Credit"
+        }
+      ],
+      "full": {
+        "subtotalSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        },
+        "discountedSubtotalSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        },
+        "totalCartDiscountAmountSet": {
+          "presentmentMoney": {
+            "amount": "0.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "0.00",
+            "currencyCode": "USD"
+          }
+        },
+        "totalTaxSet": {
+          "presentmentMoney": {
+            "amount": "0.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "0.00",
+            "currencyCode": "USD"
+          }
+        },
+        "totalDutiesSet": {
+          "presentmentMoney": {
+            "amount": "0.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "0.00",
+            "currencyCode": "USD"
+          }
+        },
+        "shipping": {
+          "amountSet": {
+            "presentmentMoney": {
+              "amount": "0.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "0.00",
+              "currencyCode": "USD"
+            }
+          },
+          "taxSet": {
+            "presentmentMoney": {
+              "amount": "0.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "0.00",
+              "currencyCode": "USD"
+            }
+          },
+          "maximumRefundableSet": {
+            "presentmentMoney": {
+              "amount": "0.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "0.00",
+              "currencyCode": "USD"
+            }
+          }
+        },
+        "amountSet": {
+          "presentmentMoney": {
+            "amount": "0.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "0.00",
+            "currencyCode": "USD"
+          }
+        },
+        "maximumRefundableSet": {
+          "presentmentMoney": {
+            "amount": "0.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "0.00",
+            "currencyCode": "USD"
+          }
+        },
+        "suggestedTransactions": []
+      },
+      "selected": {
+        "subtotalSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        },
+        "discountedSubtotalSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        },
+        "totalCartDiscountAmountSet": {
+          "presentmentMoney": {
+            "amount": "0.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "0.00",
+            "currencyCode": "USD"
+          }
+        },
+        "totalTaxSet": {
+          "presentmentMoney": {
+            "amount": "0.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "0.00",
+            "currencyCode": "USD"
+          }
+        },
+        "totalDutiesSet": {
+          "presentmentMoney": {
+            "amount": "0.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "0.00",
+            "currencyCode": "USD"
+          }
+        },
+        "shipping": {
+          "amountSet": {
+            "presentmentMoney": {
+              "amount": "0.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "0.00",
+              "currencyCode": "USD"
+            }
+          },
+          "taxSet": {
+            "presentmentMoney": {
+              "amount": "0.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "0.00",
+              "currencyCode": "USD"
+            }
+          },
+          "maximumRefundableSet": {
+            "presentmentMoney": {
+              "amount": "0.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "0.00",
+              "currencyCode": "USD"
+            }
+          }
+        },
+        "amountSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        },
+        "maximumRefundableSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        },
+        "suggestedTransactions": [
+          {
+            "kind": "SUGGESTED_REFUND",
+            "gateway": "shopify_payments",
+            "formattedGateway": "Bank card",
+            "parentTransaction": {
+              "id": "gid://shopify/OrderTransaction/1",
+              "kind": "CAPTURE",
+              "status": "SUCCESS",
+              "gateway": "shopify_payments"
+            },
+            "amountSet": {
+              "presentmentMoney": {
+                "amount": "70.00",
+                "currencyCode": "EUR"
+              },
+              "shopMoney": {
+                "amount": "77.00",
+                "currencyCode": "USD"
+              }
+            },
+            "maximumRefundableSet": {
+              "presentmentMoney": {
+                "amount": "70.00",
+                "currencyCode": "EUR"
+              },
+              "shopMoney": {
+                "amount": "77.00",
+                "currencyCode": "USD"
+              }
+            }
+          },
+          {
+            "kind": "SUGGESTED_REFUND",
+            "gateway": "shopify_store_credit",
+            "formattedGateway": "Store Credit",
+            "parentTransaction": {
+              "id": "gid://shopify/OrderTransaction/2",
+              "kind": "SALE",
+              "status": "SUCCESS",
+              "gateway": "shopify_store_credit"
+            },
+            "amountSet": {
+              "presentmentMoney": {
+                "amount": "30.00",
+                "currencyCode": "EUR"
+              },
+              "shopMoney": {
+                "amount": "33.00",
+                "currencyCode": "USD"
+              }
+            },
+            "maximumRefundableSet": {
+              "presentmentMoney": {
+                "amount": "30.00",
+                "currencyCode": "EUR"
+              },
+              "shopMoney": {
+                "amount": "33.00",
+                "currencyCode": "USD"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "params": {
+      "store": "fixture.myshopify.com",
+      "order_id": "gid://shopify/Order/1",
+      "target": "store_credit",
+      "amount": "20.00",
+      "currency": null,
+      "items": [],
+      "refund_shipping": false,
+      "allocations": []
+    },
+    "expected": {
+      "version": 1,
+      "store": "fixture.myshopify.com",
+      "order_id": "gid://shopify/Order/1",
+      "target": "store_credit",
+      "currency": "EUR",
+      "amount": "20.00",
+      "paid": "100.00",
+      "refunded": "100.00",
+      "remaining": "0.00",
+      "customer_id": "gid://shopify/Customer/2",
+      "order_refund_amount": "0.00",
+      "bonus_credit_amount": "20.00",
+      "allocations": [],
+      "shipping_refund_amount": "0.00",
+      "shipping_refund_total": "0.00",
+      "calculation": {
+        "subtotal": {
+          "customer": "100.00",
+          "shop": "110.00"
+        },
+        "discounted_subtotal": {
+          "customer": "100.00",
+          "shop": "110.00"
+        },
+        "cart_discount": {
+          "customer": "0.00",
+          "shop": "0.00"
+        },
+        "tax": {
+          "customer": "0.00",
+          "shop": "0.00"
+        },
+        "duties": {
+          "customer": "0.00",
+          "shop": "0.00"
+        },
+        "recommended": {
+          "customer": "0.00",
+          "shop": "0.00"
+        },
+        "shipping": {
+          "customer": "0.00",
+          "shop": "0.00"
+        },
+        "shipping_tax": {
+          "customer": "0.00",
+          "shop": "0.00"
+        },
+        "shipping_maximum": {
+          "customer": "0.00",
+          "shop": "0.00"
+        }
+      },
+      "taxes_included": false,
+      "shop_currency": "USD",
+      "shop_money": {
+        "total": {
+          "customer": "100.00",
+          "shop": "110.00"
+        },
+        "paid": {
+          "customer": "100.00",
+          "shop": "110.00"
+        },
+        "refunded": {
+          "customer": "100.00",
+          "shop": "110.00"
+        }
+      },
+      "items": [],
+      "refund_shipping": false,
+      "quote_hash": "dc58aedd64e1c74e983a00826366e8cc933b58316c9ae9556c2e86c19c507aa1",
+      "payments": [
+        {
+          "parent_id": "gid://shopify/OrderTransaction/1",
+          "gateway": "shopify_payments",
+          "label": "Bank card",
+          "paid": "70.00"
+        },
+        {
+          "parent_id": "gid://shopify/OrderTransaction/2",
+          "gateway": "shopify_store_credit",
+          "label": "Store Credit",
+          "paid": "30.00"
+        }
+      ],
+      "channels": [],
+      "recommended_amount": "0.00"
+    }
+  },
+  {
+    "name": "Unicode labels keep same hash",
+    "order": {
+      "id": "gid://shopify/Order/1",
+      "presentmentCurrencyCode": "EUR",
+      "taxesIncluded": false,
+      "withoutShipping": {
+        "amountSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        }
+      },
+      "customer": {
+        "id": "gid://shopify/Customer/2"
+      },
+      "totalPriceSet": {
+        "presentmentMoney": {
+          "amount": "100.00",
+          "currencyCode": "EUR"
+        },
+        "shopMoney": {
+          "amount": "110.00",
+          "currencyCode": "USD"
+        }
+      },
+      "totalReceivedSet": {
+        "presentmentMoney": {
+          "amount": "100.00",
+          "currencyCode": "EUR"
+        },
+        "shopMoney": {
+          "amount": "110.00",
+          "currencyCode": "USD"
+        }
+      },
+      "totalRefundedSet": {
+        "presentmentMoney": {
+          "amount": "0.00",
+          "currencyCode": "EUR"
+        },
+        "shopMoney": {
+          "amount": "0.00",
+          "currencyCode": "USD"
+        }
+      },
+      "transactionsCount": {
+        "count": 2,
+        "precision": "EXACT"
+      },
+      "transactions": [
+        {
+          "id": "gid://shopify/OrderTransaction/1",
+          "kind": "CAPTURE",
+          "status": "SUCCESS",
+          "gateway": "shopify_payments",
+          "amountSet": {
+            "presentmentMoney": {
+              "amount": "70.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "77.00",
+              "currencyCode": "USD"
+            }
+          },
+          "formattedGateway": "Bank card"
+        },
+        {
+          "id": "gid://shopify/OrderTransaction/2",
+          "kind": "SALE",
+          "status": "SUCCESS",
+          "gateway": "shopify_store_credit",
+          "amountSet": {
+            "presentmentMoney": {
+              "amount": "30.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "33.00",
+              "currencyCode": "USD"
+            }
+          },
+          "formattedGateway": "Store Credit"
+        }
+      ],
+      "full": {
+        "subtotalSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        },
+        "discountedSubtotalSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        },
+        "totalCartDiscountAmountSet": {
+          "presentmentMoney": {
+            "amount": "0.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "0.00",
+            "currencyCode": "USD"
+          }
+        },
+        "totalTaxSet": {
+          "presentmentMoney": {
+            "amount": "0.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "0.00",
+            "currencyCode": "USD"
+          }
+        },
+        "totalDutiesSet": {
+          "presentmentMoney": {
+            "amount": "0.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "0.00",
+            "currencyCode": "USD"
+          }
+        },
+        "shipping": {
+          "amountSet": {
+            "presentmentMoney": {
+              "amount": "0.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "0.00",
+              "currencyCode": "USD"
+            }
+          },
+          "taxSet": {
+            "presentmentMoney": {
+              "amount": "0.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "0.00",
+              "currencyCode": "USD"
+            }
+          },
+          "maximumRefundableSet": {
+            "presentmentMoney": {
+              "amount": "0.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "0.00",
+              "currencyCode": "USD"
+            }
+          }
+        },
+        "amountSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        },
+        "maximumRefundableSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        },
+        "suggestedTransactions": [
+          {
+            "kind": "SUGGESTED_REFUND",
+            "gateway": "shopify_payments",
+            "formattedGateway": "银行卡（尾号 1234）",
+            "parentTransaction": {
+              "id": "gid://shopify/OrderTransaction/1",
+              "kind": "CAPTURE",
+              "status": "SUCCESS",
+              "gateway": "shopify_payments"
+            },
+            "amountSet": {
+              "presentmentMoney": {
+                "amount": "70.00",
+                "currencyCode": "EUR"
+              },
+              "shopMoney": {
+                "amount": "77.00",
+                "currencyCode": "USD"
+              }
+            },
+            "maximumRefundableSet": {
+              "presentmentMoney": {
+                "amount": "70.00",
+                "currencyCode": "EUR"
+              },
+              "shopMoney": {
+                "amount": "77.00",
+                "currencyCode": "USD"
+              }
+            }
+          },
+          {
+            "kind": "SUGGESTED_REFUND",
+            "gateway": "shopify_store_credit",
+            "formattedGateway": "店铺 Credit",
+            "parentTransaction": {
+              "id": "gid://shopify/OrderTransaction/2",
+              "kind": "SALE",
+              "status": "SUCCESS",
+              "gateway": "shopify_store_credit"
+            },
+            "amountSet": {
+              "presentmentMoney": {
+                "amount": "30.00",
+                "currencyCode": "EUR"
+              },
+              "shopMoney": {
+                "amount": "33.00",
+                "currencyCode": "USD"
+              }
+            },
+            "maximumRefundableSet": {
+              "presentmentMoney": {
+                "amount": "30.00",
+                "currencyCode": "EUR"
+              },
+              "shopMoney": {
+                "amount": "33.00",
+                "currencyCode": "USD"
+              }
+            }
+          }
+        ]
+      },
+      "selected": {
+        "subtotalSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        },
+        "discountedSubtotalSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        },
+        "totalCartDiscountAmountSet": {
+          "presentmentMoney": {
+            "amount": "0.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "0.00",
+            "currencyCode": "USD"
+          }
+        },
+        "totalTaxSet": {
+          "presentmentMoney": {
+            "amount": "0.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "0.00",
+            "currencyCode": "USD"
+          }
+        },
+        "totalDutiesSet": {
+          "presentmentMoney": {
+            "amount": "0.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "0.00",
+            "currencyCode": "USD"
+          }
+        },
+        "shipping": {
+          "amountSet": {
+            "presentmentMoney": {
+              "amount": "0.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "0.00",
+              "currencyCode": "USD"
+            }
+          },
+          "taxSet": {
+            "presentmentMoney": {
+              "amount": "0.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "0.00",
+              "currencyCode": "USD"
+            }
+          },
+          "maximumRefundableSet": {
+            "presentmentMoney": {
+              "amount": "0.00",
+              "currencyCode": "EUR"
+            },
+            "shopMoney": {
+              "amount": "0.00",
+              "currencyCode": "USD"
+            }
+          }
+        },
+        "amountSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        },
+        "maximumRefundableSet": {
+          "presentmentMoney": {
+            "amount": "100.00",
+            "currencyCode": "EUR"
+          },
+          "shopMoney": {
+            "amount": "110.00",
+            "currencyCode": "USD"
+          }
+        },
+        "suggestedTransactions": [
+          {
+            "kind": "SUGGESTED_REFUND",
+            "gateway": "shopify_payments",
+            "formattedGateway": "银行卡（尾号 1234）",
+            "parentTransaction": {
+              "id": "gid://shopify/OrderTransaction/1",
+              "kind": "CAPTURE",
+              "status": "SUCCESS",
+              "gateway": "shopify_payments"
+            },
+            "amountSet": {
+              "presentmentMoney": {
+                "amount": "70.00",
+                "currencyCode": "EUR"
+              },
+              "shopMoney": {
+                "amount": "77.00",
+                "currencyCode": "USD"
+              }
+            },
+            "maximumRefundableSet": {
+              "presentmentMoney": {
+                "amount": "70.00",
+                "currencyCode": "EUR"
+              },
+              "shopMoney": {
+                "amount": "77.00",
+                "currencyCode": "USD"
+              }
+            }
+          },
+          {
+            "kind": "SUGGESTED_REFUND",
+            "gateway": "shopify_store_credit",
+            "formattedGateway": "店铺 Credit",
+            "parentTransaction": {
+              "id": "gid://shopify/OrderTransaction/2",
+              "kind": "SALE",
+              "status": "SUCCESS",
+              "gateway": "shopify_store_credit"
+            },
+            "amountSet": {
+              "presentmentMoney": {
+                "amount": "30.00",
+                "currencyCode": "EUR"
+              },
+              "shopMoney": {
+                "amount": "33.00",
+                "currencyCode": "USD"
+              }
+            },
+            "maximumRefundableSet": {
+              "presentmentMoney": {
+                "amount": "30.00",
+                "currencyCode": "EUR"
+              },
+              "shopMoney": {
+                "amount": "33.00",
+                "currencyCode": "USD"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "params": {
+      "store": "fixture.myshopify.com",
+      "order_id": "gid://shopify/Order/1",
+      "target": "original",
+      "amount": null,
+      "currency": null,
+      "items": [],
+      "refund_shipping": false,
+      "allocations": []
+    },
+    "expected": {
+      "version": 1,
+      "store": "fixture.myshopify.com",
+      "order_id": "gid://shopify/Order/1",
+      "target": "original",
+      "currency": "EUR",
+      "amount": "100.00",
+      "paid": "100.00",
+      "refunded": "0.00",
+      "remaining": "100.00",
+      "customer_id": "gid://shopify/Customer/2",
+      "order_refund_amount": "100.00",
+      "bonus_credit_amount": "0.00",
+      "allocations": [
+        {
+          "parent_id": "gid://shopify/OrderTransaction/1",
+          "gateway": "shopify_payments",
+          "manual": false,
+          "label": "银行卡（尾号 1234）",
+          "maximum": "70.00",
+          "suggested": "70.00",
+          "amount": "70.00"
+        },
+        {
+          "parent_id": "gid://shopify/OrderTransaction/2",
+          "gateway": "shopify_store_credit",
+          "manual": false,
+          "label": "店铺 Credit",
+          "maximum": "30.00",
+          "suggested": "30.00",
+          "amount": "30.00"
+        }
+      ],
+      "shipping_refund_amount": "0.00",
+      "shipping_refund_total": "0.00",
+      "calculation": {
+        "subtotal": {
+          "customer": "100.00",
+          "shop": "110.00"
+        },
+        "discounted_subtotal": {
+          "customer": "100.00",
+          "shop": "110.00"
+        },
+        "cart_discount": {
+          "customer": "0.00",
+          "shop": "0.00"
+        },
+        "tax": {
+          "customer": "0.00",
+          "shop": "0.00"
+        },
+        "duties": {
+          "customer": "0.00",
+          "shop": "0.00"
+        },
+        "recommended": {
+          "customer": "100.00",
+          "shop": "110.00"
+        },
+        "shipping": {
+          "customer": "0.00",
+          "shop": "0.00"
+        },
+        "shipping_tax": {
+          "customer": "0.00",
+          "shop": "0.00"
+        },
+        "shipping_maximum": {
+          "customer": "0.00",
+          "shop": "0.00"
+        }
+      },
+      "taxes_included": false,
+      "shop_currency": "USD",
+      "shop_money": {
+        "total": {
+          "customer": "100.00",
+          "shop": "110.00"
+        },
+        "paid": {
+          "customer": "100.00",
+          "shop": "110.00"
+        },
+        "refunded": {
+          "customer": "0.00",
+          "shop": "0.00"
+        }
+      },
+      "items": [],
+      "refund_shipping": false,
+      "quote_hash": "b7f874d39e5b187c0090c4ba315c1c1cdd3d4c5e05d63abfed09e28a2448bbfb",
+      "payments": [
+        {
+          "parent_id": "gid://shopify/OrderTransaction/1",
+          "gateway": "shopify_payments",
+          "label": "Bank card",
+          "paid": "70.00"
+        },
+        {
+          "parent_id": "gid://shopify/OrderTransaction/2",
+          "gateway": "shopify_store_credit",
+          "label": "Store Credit",
+          "paid": "30.00"
+        }
+      ],
+      "channels": [
+        {
+          "parent_id": "gid://shopify/OrderTransaction/1",
+          "gateway": "shopify_payments",
+          "manual": false,
+          "label": "银行卡（尾号 1234）",
+          "maximum": "70.00",
+          "suggested": "70.00"
+        },
+        {
+          "parent_id": "gid://shopify/OrderTransaction/2",
+          "gateway": "shopify_store_credit",
+          "manual": false,
+          "label": "店铺 Credit",
+          "maximum": "30.00",
+          "suggested": "30.00"
+        }
+      ],
+      "recommended_amount": "100.00"
+    }
+  }
+]

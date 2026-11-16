@@ -13,6 +13,10 @@ public final class ParameterRules {
 
   public static Map<String, Object> normalize(String key, Map<String, Object> input) {
     var p = new LinkedHashMap<>(input);
+    if (Set.of(
+            "shopify.refunds.quote", "shopify.refunds.execute_plan", "shopify.store_credit.credit")
+        .contains(key))
+      p.replaceAll((field, value) -> value instanceof String s ? s.strip() : value);
     if (key.startsWith("wecom.") && p.containsKey("credential_profile")) {
       if (p.containsKey("app")) throw GatewayException.invalid("app 与 credential_profile 只能提供一个");
       p.put("app", p.remove("credential_profile"));
@@ -124,7 +128,9 @@ public final class ParameterRules {
         && p.get("note") == null
         && p.get("tags") == null
         && p.get("shipping_address") == null) throw GatewayException.invalid("至少提供一项订单变更");
-    if (key.equals("shopify.refunds.create")) {
+    if (Set.of(
+            "shopify.refunds.create", "shopify.refunds.execute_plan", "shopify.store_credit.credit")
+        .contains(key)) {
       if (!JsonUtils.bool(p.get("confirm"))) throw GatewayException.invalid("退款必须 confirm=true");
       try {
         if (new BigDecimal(JsonUtils.str(p, "amount")).signum() <= 0)
@@ -145,8 +151,10 @@ public final class ParameterRules {
    * was picked. Rejecting here means the caller never spends money on a malformed order.
    */
   private static void validateWinitReturn(String key, Map<String, Object> p) {
-    if (key.equals("winit.returns.list") || key.equals("winit.returns.items")
-        || key.equals("winit.returns.psc") || key.equals("winit.returns.label")) return;
+    if (key.equals("winit.returns.list")
+        || key.equals("winit.returns.items")
+        || key.equals("winit.returns.psc")
+        || key.equals("winit.returns.label")) return;
     if (!JsonUtils.bool(p.get("confirm")))
       throw GatewayException.invalid(
           key.equals("winit.returns.create")
@@ -161,12 +169,18 @@ public final class ParameterRules {
       if ("WI".equals(JsonUtils.str(item, "handleMethod"))
           && (JsonUtils.str(item, "goodMethod").isBlank()
               || JsonUtils.str(item, "defectiveMethod").isBlank()))
-        throw GatewayException.invalid("商品 " + product + " 退货策略=WI 时 goodMethod / defectiveMethod 都必填");
+        throw GatewayException.invalid(
+            "商品 " + product + " 退货策略=WI 时 goodMethod / defectiveMethod 都必填");
       List<Object> codes = JsonUtils.list(item.get("itemCodes"));
       if (!codes.isEmpty() && codes.size() != JsonUtils.integer(item.get("productNum"), 0))
         throw GatewayException.invalid(
-            "商品 " + product + " 的单品条码数量（" + codes.size() + "）必须等于退货数量（"
-                + JsonUtils.str(item, "productNum") + "）");
+            "商品 "
+                + product
+                + " 的单品条码数量（"
+                + codes.size()
+                + "）必须等于退货数量（"
+                + JsonUtils.str(item, "productNum")
+                + "）");
     }
     if ("Y".equals(JsonUtils.str(p, "isWinitOutbound"))) {
       if (JsonUtils.str(p, "outboundOrderNo").isBlank())
@@ -175,7 +189,8 @@ public final class ParameterRules {
         throw GatewayException.invalid("userInfoSource=IRI 时必须提供退货人姓名 name");
       return;
     }
-    // Non-Winit outbound only supports the ReturnLabel service, and the parcel box must be declared.
+    // Non-Winit outbound only supports the ReturnLabel service, and the parcel box must be
+    // declared.
     if (JsonUtils.str(p, "winitProductCode").isBlank())
       throw GatewayException.invalid(
           "非万邑通出库（isWinitOutbound=N）必须指定退货渠道 PSC（winitProductCode），面单只能走 ReturnLabel");

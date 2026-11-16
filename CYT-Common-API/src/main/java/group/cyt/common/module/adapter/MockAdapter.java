@@ -334,6 +334,12 @@ public class MockAdapter {
       return JsonUtils.obj("ok", true, "deleted", action.startsWith("delete"), "mock", true);
     }
     if (op.platform().equals("shopify")) {
+      if (Set.of(
+              "shopify.refunds.quote",
+              "shopify.refunds.execute_plan",
+              "shopify.store_credit.credit")
+          .contains(key))
+        return JsonUtils.obj("ok", false, "mock", true, "message", "模拟模式不生成真实退款方案或资金凭证");
       if (action.equals("get"))
         return JsonUtils.obj(
             key.contains("orders") ? "order" : "product",

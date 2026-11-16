@@ -587,5 +587,93 @@
       "max_items": 200,
       "max_pages": 10
     }
+  },
+  {
+    "operation": "shopify.refunds.quote",
+    "params": {
+      "store": "fixture.myshopify.com",
+      "order_id": "gid://shopify/Order/1"
+    },
+    "normalized": {
+      "store": "fixture.myshopify.com",
+      "order_id": "gid://shopify/Order/1",
+      "target": "original",
+      "amount": null,
+      "currency": null,
+      "items": [],
+      "refund_shipping": false,
+      "allocations": []
+    }
+  },
+  {
+    "operation": "shopify.refunds.execute_plan",
+    "params": {
+      "store": "fixture.myshopify.com",
+      "order_id": "gid://shopify/Order/1",
+      "amount": "100.00",
+      "currency": "EUR",
+      "quote_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+      "confirm": true,
+      "idempotency_key": "fixture-refund"
+    },
+    "normalized": {
+      "store": "fixture.myshopify.com",
+      "order_id": "gid://shopify/Order/1",
+      "target": "original",
+      "amount": "100.00",
+      "currency": "EUR",
+      "items": [],
+      "refund_shipping": false,
+      "allocations": [],
+      "quote_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+      "confirm": true,
+      "idempotency_key": "fixture-refund",
+      "note": "",
+      "notify": false
+    }
+  },
+  {
+    "operation": "shopify.store_credit.credit",
+    "params": {
+      "store": "fixture.myshopify.com",
+      "order_id": "gid://shopify/Order/1",
+      "customer_id": "gid://shopify/Customer/2",
+      "amount": "20.00",
+      "currency": "EUR",
+      "confirm": true
+    },
+    "normalized": {
+      "store": "fixture.myshopify.com",
+      "order_id": "gid://shopify/Order/1",
+      "amount": "20.00",
+      "currency": "EUR",
+      "customer_id": "gid://shopify/Customer/2",
+      "confirm": true
+    }
+  },
+  {
+    "operation": "wecom.hr.get_fields",
+    "params": {},
+    "normalized": {}
+  },
+  {
+    "operation": "wecom.hr.get_staff_info",
+    "params": {
+      "userid": "fixture-staff",
+      "fieldids": [
+        {
+          "fieldid": 101
+        }
+      ]
+    },
+    "normalized": {
+      "userid": "fixture-staff",
+      "fieldids": [
+        {
+          "fieldid": 101,
+          "sub_idx": 0
+        }
+      ]
+    }
   }
 ]

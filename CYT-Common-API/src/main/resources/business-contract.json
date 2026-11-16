@@ -3449,6 +3449,400 @@
           "fieldids"
         ]
       }
+    },
+    {
+      "key": "shopify.refunds.quote",
+      "platform": "shopify",
+      "summary": "预览原币退款和混合支付分配",
+      "description": "与 Python common-api a65dedb 保持同一原币退款方案、参数契约和独立 Credit 凭证；写操作禁止自动重试。",
+      "quota": "60/min",
+      "sensitive": false,
+      "idempotent": false,
+      "timeout_s": 30,
+      "retry_max": 1,
+      "since": "2026-11",
+      "deprecated": false,
+      "tags": [
+        "read"
+      ],
+      "category": "退款",
+      "sort_order": 30,
+      "path": "/integrations/shopify/refunds/quote",
+      "schema": {
+        "$defs": {
+          "Allocation": {
+            "additionalProperties": false,
+            "properties": {
+              "parent_id": {
+                "pattern": "^gid://shopify/OrderTransaction/[0-9]+$",
+                "title": "Parent Id",
+                "type": "string"
+              },
+              "amount": {
+                "title": "Amount",
+                "type": "string"
+              }
+            },
+            "required": [
+              "parent_id",
+              "amount"
+            ],
+            "title": "Allocation",
+            "type": "object"
+          },
+          "Line": {
+            "additionalProperties": false,
+            "properties": {
+              "line_item_id": {
+                "pattern": "^gid://shopify/LineItem/[0-9]+$",
+                "title": "Line Item Id",
+                "type": "string"
+              },
+              "quantity": {
+                "maximum": 10000,
+                "minimum": 1,
+                "title": "Quantity",
+                "type": "integer"
+              }
+            },
+            "required": [
+              "line_item_id",
+              "quantity"
+            ],
+            "title": "Line",
+            "type": "object"
+          }
+        },
+        "additionalProperties": false,
+        "properties": {
+          "store": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Store",
+            "type": "string"
+          },
+          "order_id": {
+            "pattern": "^gid://shopify/Order/[0-9]+$",
+            "title": "Order Id",
+            "type": "string"
+          },
+          "target": {
+            "default": "original",
+            "enum": [
+              "original",
+              "store_credit"
+            ],
+            "title": "Target",
+            "type": "string"
+          },
+          "amount": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Amount"
+          },
+          "currency": {
+            "anyOf": [
+              {
+                "pattern": "^[A-Z]{3}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Currency"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/$defs/Line"
+            },
+            "maxItems": 100,
+            "title": "Items",
+            "type": "array",
+            "default": []
+          },
+          "refund_shipping": {
+            "default": false,
+            "title": "Refund Shipping",
+            "type": "boolean"
+          },
+          "allocations": {
+            "items": {
+              "$ref": "#/$defs/Allocation"
+            },
+            "maxItems": 250,
+            "title": "Allocations",
+            "type": "array",
+            "default": []
+          }
+        },
+        "required": [
+          "store",
+          "order_id"
+        ],
+        "title": "QuoteParams",
+        "type": "object",
+        "examples": [
+          {
+            "store": "fixture.myshopify.com",
+            "order_id": "gid://shopify/Order/1"
+          }
+        ]
+      },
+      "official_docs": "https://shopify.dev/docs/api/admin-graphql/2026-07/mutations/refundCreate"
+    },
+    {
+      "key": "shopify.refunds.execute_plan",
+      "platform": "shopify",
+      "summary": "执行已确认的原币退款方案",
+      "description": "与 Python common-api a65dedb 保持同一原币退款方案、参数契约和独立 Credit 凭证；写操作禁止自动重试。",
+      "quota": "30/min",
+      "sensitive": true,
+      "idempotent": true,
+      "timeout_s": 30,
+      "retry_max": 0,
+      "since": "2026-11",
+      "deprecated": false,
+      "tags": [
+        "write",
+        "money"
+      ],
+      "category": "退款",
+      "sort_order": 30,
+      "path": "/integrations/shopify/refunds/execute-plan",
+      "schema": {
+        "$defs": {
+          "Allocation": {
+            "additionalProperties": false,
+            "properties": {
+              "parent_id": {
+                "pattern": "^gid://shopify/OrderTransaction/[0-9]+$",
+                "title": "Parent Id",
+                "type": "string"
+              },
+              "amount": {
+                "title": "Amount",
+                "type": "string"
+              }
+            },
+            "required": [
+              "parent_id",
+              "amount"
+            ],
+            "title": "Allocation",
+            "type": "object"
+          },
+          "Line": {
+            "additionalProperties": false,
+            "properties": {
+              "line_item_id": {
+                "pattern": "^gid://shopify/LineItem/[0-9]+$",
+                "title": "Line Item Id",
+                "type": "string"
+              },
+              "quantity": {
+                "maximum": 10000,
+                "minimum": 1,
+                "title": "Quantity",
+                "type": "integer"
+              }
+            },
+            "required": [
+              "line_item_id",
+              "quantity"
+            ],
+            "title": "Line",
+            "type": "object"
+          }
+        },
+        "additionalProperties": false,
+        "properties": {
+          "store": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Store",
+            "type": "string"
+          },
+          "order_id": {
+            "pattern": "^gid://shopify/Order/[0-9]+$",
+            "title": "Order Id",
+            "type": "string"
+          },
+          "target": {
+            "default": "original",
+            "enum": [
+              "original",
+              "store_credit"
+            ],
+            "title": "Target",
+            "type": "string"
+          },
+          "amount": {
+            "title": "Amount",
+            "type": "string"
+          },
+          "currency": {
+            "pattern": "^[A-Z]{3}$",
+            "title": "Currency",
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/$defs/Line"
+            },
+            "maxItems": 100,
+            "title": "Items",
+            "type": "array",
+            "default": []
+          },
+          "refund_shipping": {
+            "default": false,
+            "title": "Refund Shipping",
+            "type": "boolean"
+          },
+          "allocations": {
+            "items": {
+              "$ref": "#/$defs/Allocation"
+            },
+            "maxItems": 250,
+            "title": "Allocations",
+            "type": "array",
+            "default": []
+          },
+          "quote_hash": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Quote Hash",
+            "type": "string"
+          },
+          "confirm": {
+            "default": false,
+            "title": "Confirm",
+            "type": "boolean"
+          },
+          "idempotency_key": {
+            "pattern": "^[A-Za-z0-9_-]{1,64}$",
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "note": {
+            "default": "",
+            "maxLength": 255,
+            "title": "Note",
+            "type": "string"
+          },
+          "notify": {
+            "default": false,
+            "title": "Notify",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "store",
+          "order_id",
+          "amount",
+          "currency",
+          "quote_hash",
+          "idempotency_key"
+        ],
+        "title": "ExecuteParams",
+        "type": "object",
+        "examples": [
+          {
+            "store": "fixture.myshopify.com",
+            "order_id": "gid://shopify/Order/1",
+            "amount": "100.00",
+            "currency": "EUR",
+            "quote_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+            "confirm": true,
+            "idempotency_key": "fixture-refund"
+          }
+        ]
+      },
+      "official_docs": "https://shopify.dev/docs/api/admin-graphql/2026-07/mutations/refundCreate"
+    },
+    {
+      "key": "shopify.store_credit.credit",
+      "platform": "shopify",
+      "summary": "向订单客户额外发放店铺 Credit",
+      "description": "与 Python common-api a65dedb 保持同一原币退款方案、参数契约和独立 Credit 凭证；写操作禁止自动重试。",
+      "quota": "30/min",
+      "sensitive": true,
+      "idempotent": true,
+      "timeout_s": 30,
+      "retry_max": 0,
+      "since": "2026-11",
+      "deprecated": false,
+      "tags": [
+        "write",
+        "money",
+        "idempotency_required"
+      ],
+      "category": "退款",
+      "sort_order": 30,
+      "path": "/integrations/shopify/store-credit/credit",
+      "schema": {
+        "additionalProperties": false,
+        "properties": {
+          "store": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Store",
+            "type": "string"
+          },
+          "order_id": {
+            "pattern": "^gid://shopify/Order/[0-9]+$",
+            "title": "Order Id",
+            "type": "string"
+          },
+          "amount": {
+            "title": "Amount",
+            "type": "string"
+          },
+          "currency": {
+            "pattern": "^[A-Z]{3}$",
+            "title": "Currency",
+            "type": "string"
+          },
+          "customer_id": {
+            "pattern": "^gid://shopify/Customer/[0-9]+$",
+            "title": "Customer Id",
+            "type": "string"
+          },
+          "confirm": {
+            "default": false,
+            "title": "Confirm",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "store",
+          "order_id",
+          "amount",
+          "currency",
+          "customer_id"
+        ],
+        "title": "CreditParams",
+        "type": "object",
+        "examples": [
+          {
+            "store": "fixture.myshopify.com",
+            "order_id": "gid://shopify/Order/1",
+            "customer_id": "gid://shopify/Customer/2",
+            "amount": "20.00",
+            "currency": "EUR",
+            "confirm": true
+          }
+        ]
+      },
+      "official_docs": "https://shopify.dev/docs/api/admin-graphql/2026-07/mutations/refundCreate"
     }
   ],
   "native_extensions": [

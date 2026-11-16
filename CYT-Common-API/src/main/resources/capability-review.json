@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-11-11",
-  "scope": "逐项核对全部 164 个内置操作的实际代码；新增业务接口和推荐标签均不自动视为深度封装。",
+  "generated_at": "2026-11-16",
+  "scope": "逐项核对全部 169 个内置操作的实际代码；新增业务接口和推荐标签均不自动视为深度封装。",
   "references": [
     {
       "title": "企微审批：模板详情",
@@ -32,18 +32,18 @@
     }
   ],
   "depth_summary": {
-    "total": 164,
+    "total": 169,
     "counts": {
       "enhanced": 81,
-      "deep": 28,
+      "deep": 31,
       "test_only": 1,
-      "basic": 49,
+      "basic": 51,
       "supporting": 5
     },
     "all_deep": false,
     "conclusion": "当前没有全部完成深度二次封装。推荐调用、business 标签和测试通过均不能替代逐项业务深度判断。",
     "basis": "静态代码逐项审阅；只评价实际已实现的语义转换、关联补齐与流程编排，不评价供应商真实账号验收。",
-    "scope": "当前检查 164 个注册内置业务操作；本地运行目录未检测到自定义 HTTP 定义。管理端 CRUD 不作为业务深封完成项。",
+    "scope": "当前检查 169 个注册内置业务操作；本地运行目录未检测到自定义 HTTP 定义。管理端 CRUD 不作为业务深封完成项。",
     "levels": [
       {
         "key": "deep",
@@ -3935,6 +3935,111 @@
           "path": "src/main/java/group/cyt/common/module/adapter/source/CustomerSourcesAdapter.java",
           "line": 158,
           "anchor": "private Map<String, Object> judgemeReply("
+        }
+      ]
+    },
+    {
+      "key": "wecom.hr.get_fields",
+      "platform": "wecom",
+      "summary": "读取企微花名册字段配置",
+      "source": "src/main/java/group/cyt/common/module/adapter/wecom/WecomAdapter.java",
+      "current": "读取企业微信原生人事字段或指定员工人事信息，复用现有凭据及错误处理。",
+      "proposal": "业务侧按已有权限选择字段及员工范围，保持个人信息最小披露。",
+      "caveat": "需要人事助手凭据与企业微信应用授权范围。",
+      "assessment": "enhance",
+      "recommended_operations": [],
+      "depth": "basic",
+      "depth_reason": "读取企业微信原生人事字段或指定员工人事信息，复用现有凭据及错误处理。",
+      "remaining_gap": "现有原生读取封装，不包含人事字段的业务映射与范围编排。",
+      "evidence": [
+        {
+          "path": "src/main/java/group/cyt/common/module/adapter/wecom/WecomAdapter.java",
+          "line": 66,
+          "anchor": "key.equals(\"hr.get_fields\")"
+        }
+      ]
+    },
+    {
+      "key": "wecom.hr.get_staff_info",
+      "platform": "wecom",
+      "summary": "读取员工指定花名册字段",
+      "source": "src/main/java/group/cyt/common/module/adapter/wecom/WecomAdapter.java",
+      "current": "读取企业微信原生人事字段或指定员工人事信息，复用现有凭据及错误处理。",
+      "proposal": "业务侧按已有权限选择字段及员工范围，保持个人信息最小披露。",
+      "caveat": "需要人事助手凭据与企业微信应用授权范围。",
+      "assessment": "enhance",
+      "recommended_operations": [],
+      "depth": "basic",
+      "depth_reason": "读取企业微信原生人事字段或指定员工人事信息，复用现有凭据及错误处理。",
+      "remaining_gap": "现有原生读取封装，不包含人事字段的业务映射与范围编排。",
+      "evidence": [
+        {
+          "path": "src/main/java/group/cyt/common/module/adapter/wecom/WecomAdapter.java",
+          "line": 68,
+          "anchor": "key.equals(\"hr.get_staff_info\")"
+        }
+      ]
+    },
+    {
+      "key": "shopify.refunds.quote",
+      "platform": "shopify",
+      "summary": "预览原币退款和混合支付分配",
+      "source": "src/main/java/group/cyt/common/module/adapter/shopify/ShopifyRefundMethods.java",
+      "current": "按客户原币及本位币预计算折扣、税费、运费、支付渠道和余额，生成可跨 Java/Python 校验的方案指纹。",
+      "proposal": "业务侧保持不可变审批及唯一资金执行方，核对原支付和分步骤真实资金回执。",
+      "caveat": "正式店铺资金操作需要精确授权和真实账号联调。",
+      "assessment": "enhance",
+      "recommended_operations": [],
+      "depth": "deep",
+      "depth_reason": "按客户原币及本位币预计算折扣、税费、运费、支付渠道和余额，生成可跨 Java/Python 校验的方案指纹。",
+      "remaining_gap": "业务审批和正式财务通道联调由调用方完成；本地模拟不代表真实出款验收。",
+      "evidence": [
+        {
+          "path": "src/main/java/group/cyt/common/module/adapter/shopify/ShopifyRefundMethods.java",
+          "line": 36,
+          "anchor": "public Map<String, Object> quote("
+        }
+      ]
+    },
+    {
+      "key": "shopify.refunds.execute_plan",
+      "platform": "shopify",
+      "summary": "执行已确认的原币退款方案",
+      "source": "src/main/java/group/cyt/common/module/adapter/shopify/ShopifyRefundMethods.java",
+      "current": "执行前复核原币、余额与方案指纹，按原支付分配或全部转店铺 Credit，回传资金和运费原始回执。",
+      "proposal": "业务侧保持不可变审批及唯一资金执行方，核对原支付和分步骤真实资金回执。",
+      "caveat": "正式店铺资金操作需要精确授权和真实账号联调。",
+      "assessment": "enhance",
+      "recommended_operations": [],
+      "depth": "deep",
+      "depth_reason": "执行前复核原币、余额与方案指纹，按原支付分配或全部转店铺 Credit，回传资金和运费原始回执。",
+      "remaining_gap": "业务审批和正式财务通道联调由调用方完成；本地模拟不代表真实出款验收。",
+      "evidence": [
+        {
+          "path": "src/main/java/group/cyt/common/module/adapter/shopify/ShopifyRefundMethods.java",
+          "line": 69,
+          "anchor": "public Map<String, Object> execute("
+        }
+      ]
+    },
+    {
+      "key": "shopify.store_credit.credit",
+      "platform": "shopify",
+      "summary": "向订单客户额外发放店铺 Credit",
+      "source": "src/main/java/group/cyt/common/module/adapter/shopify/ShopifyRefundMethods.java",
+      "current": "独立发放额外店铺 Credit，关联订单客户和原币；核心执行器先持久化占位，结果未知时阻止重发。",
+      "proposal": "业务侧保持不可变审批及唯一资金执行方，核对原支付和分步骤真实资金回执。",
+      "caveat": "正式店铺资金操作需要精确授权和真实账号联调。",
+      "assessment": "enhance",
+      "recommended_operations": [],
+      "depth": "deep",
+      "depth_reason": "独立发放额外店铺 Credit，关联订单客户和原币；核心执行器先持久化占位，结果未知时阻止重发。",
+      "remaining_gap": "业务审批和正式财务通道联调由调用方完成；本地模拟不代表真实出款验收。",
+      "evidence": [
+        {
+          "path": "src/main/java/group/cyt/common/module/adapter/shopify/ShopifyRefundMethods.java",
+          "line": 134,
+          "anchor": "public Map<String, Object> credit("
         }
       ]
     }
