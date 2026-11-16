@@ -49,6 +49,7 @@ services:
       POSTGRES_URL: "jdbc:postgresql://db:5432/${POSTGRES_DATABASE:-cyt_common}"
       POSTGRES_USERNAME: ${POSTGRES_USERNAME:-cyt_gateway}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?请在 .env 里配置 POSTGRES_PASSWORD}
+      CORS_ALLOW_ORIGINS: ${CORS_ALLOW_ORIGINS:-http://localhost:8190,http://127.0.0.1:8190}
       # ── 测试服行为：模拟上游，空库可初始化演示数据 ──
       # 两个开关都由 .env 决定：切到真上游时 MOCK_ALL=false，调用方沿用 X-System-Id 免密钥时 GATEWAY_DEV_MODE=true
       MOCK_ALL: ${MOCK_ALL:-true}

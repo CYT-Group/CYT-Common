@@ -8,6 +8,8 @@
 4. 本测试编排显式开启启动期 Flyway；生产 `prod` profile 默认关闭自动迁移，使用独立数据库升级流程。
 5. `/health` 应返回 `database=postgresql`。测试 compose 的环境默认为 `test`，上游模拟与调用身份沿用 `.env` 的显式设置。
 
+Jenkins 的 `SKIP_DEPLOY=true` 仅构建并推送带源码 SHA 的候选镜像，不重启服务；`1` 也保持兼容。构建与发布通过 `COMMON_JAVA_IMAGE` 使用同一镜像。公网来源通过 `.env` 的 `CORS_ALLOW_ORIGINS` 传入容器，切换时应保留现有精确域名。
+
 编排不公开数据库端口。修改源码或部署文件并不等于已部署；本次验收只创建本机临时 PG 实例，没有修改测试服或生产数据。
 
 新旧网关能力与 SQL 变更见 [PG 修正记录](../../docs/postgresql-main-correction.md) 和 [数据迁移](../../docs/migration.md)。

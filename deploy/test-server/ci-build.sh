@@ -10,16 +10,20 @@ cd "$ROOT"
 echo "==> 工作区: $ROOT"
 # 源码由 git-hub.sh 以 tarball 形式取回，没有 .git；版本记在 .deploy-sha
 if [[ -f "$ROOT/.deploy-sha" ]]; then
-  echo "==> 源码提交: $(cut -c1-12 "$ROOT/.deploy-sha")"
+  revision="$(cat "$ROOT/.deploy-sha")"
+  echo "==> 源码提交: ${revision:0:12}"
 else
+  revision="$(git rev-parse HEAD)"
   echo "==> 分支: $(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo '(非 git)')  提交: $(git rev-parse --short HEAD 2>/dev/null || echo '-')"
 fi
+[[ "$revision" =~ ^[a-f0-9]{40}$ ]] || { echo "ERROR: 源码提交号无效" >&2; exit 2; }
+export COMMON_JAVA_IMAGE="${COMMON_JAVA_IMAGE:-${REGISTRY:-192.168.1.182:5000}/cyt-common-java:sha-${revision:0:12}}"
 
 echo "==> 1/2 构建镜像并推送"
 bash "$ROOT/deploy/test-server/build-on-server.sh" "$ROOT"
 
-if [[ "${SKIP_DEPLOY:-0}" == "1" ]]; then
-  echo "==> SKIP_DEPLOY=1，跳过重启，容器仍在跑旧镜像"
+if [[ "${SKIP_DEPLOY:-0}" == "1" || "${SKIP_DEPLOY:-0}" == "true" ]]; then
+  echo "==> SKIP_DEPLOY，跳过重启，容器仍在跑旧镜像；候选镜像：$COMMON_JAVA_IMAGE"
   exit 0
 fi
 

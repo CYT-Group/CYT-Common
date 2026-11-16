@@ -11,7 +11,7 @@ set -Eeuo pipefail
 
 SRC_DIR="${1:-$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)}"
 REGISTRY="${REGISTRY:-192.168.1.182:5000}"
-IMAGE="$REGISTRY/cyt-common-java:latest"
+IMAGE="${COMMON_JAVA_IMAGE:-$REGISTRY/cyt-common-java:latest}"
 BASE_REGISTRY="${BASE_REGISTRY:-}"
 NPM_REGISTRY="${NPM_REGISTRY:-https://registry.npmmirror.com}"
 NO_PUSH="${NO_PUSH:-0}"
