@@ -42,9 +42,31 @@ class CredentialImportTest(unittest.TestCase):
             self.assertEqual('7', result['bindings'][0]['version'])
 
     def test_non_loopback_database_is_rejected_before_connecting(self):
-        with patch('pymysql.connect') as connect:
+        with patch('psycopg.connect') as connect:
             with self.assertRaises(tool.ImportFailure):
-                tool.local_connection({'spring.datasource.url': 'jdbc:mysql://remote.example/cyt_common_api'})
+                tool.local_connection({'spring.datasource.url': 'jdbc:postgresql://remote.example/cyt_common_api'})
+            connect.assert_not_called()
+
+    def test_postgres_environment_overrides_and_spring_placeholders_are_resolved(self):
+        config = {'spring.datasource.url': '${POSTGRES_URL:jdbc:postgresql://127.0.0.1:5432/cyt_common_api_java}',
+                  'spring.datasource.username': '${POSTGRES_USERNAME:cyt_gateway}',
+                  'spring.datasource.password': '${POSTGRES_PASSWORD:}'}
+        with patch.dict(tool.os.environ, {}, clear=True), patch('psycopg.connect') as connect:
+            tool.local_connection(config)
+            self.assertEqual('cyt_gateway', connect.call_args.kwargs['user'])
+            self.assertEqual('', connect.call_args.kwargs['password'])
+        with patch.dict(tool.os.environ, {'POSTGRES_URL': 'jdbc:postgresql://localhost:55432/cyt_common_test',
+                                        'POSTGRES_USERNAME': 'unit-user', 'POSTGRES_PASSWORD': 'unit-password'}), patch('psycopg.connect') as connect:
+            tool.local_connection(config)
+            self.assertEqual(55432, connect.call_args.kwargs['port'])
+            self.assertEqual('cyt_common_test', connect.call_args.kwargs['dbname'])
+            self.assertEqual('unit-user', connect.call_args.kwargs['user'])
+            self.assertEqual('unit-password', connect.call_args.kwargs['password'])
+
+    def test_mysql_local_database_is_rejected_after_backend_migration(self):
+        with patch('psycopg.connect') as connect:
+            with self.assertRaises(tool.ImportFailure):
+                tool.local_connection({'spring.datasource.url': 'jdbc:mysql://127.0.0.1/cyt_common_api'})
             connect.assert_not_called()
 
     def test_production_partition_requires_matching_plan_and_explicit_target(self):

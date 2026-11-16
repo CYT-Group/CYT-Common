@@ -6,7 +6,6 @@ import group.cyt.common.core.util.JsonUtils;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.*;
-import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 
 /** Commit the inbox and resume position in one transaction while holding the listener lease. */
@@ -30,14 +29,11 @@ public class DiscordEvents {
   }
 
   public boolean claim(String bot, String owner) {
-    try {
-      store.update(
-          "INSERT INTO gateway_discord_session(env,bot_id,updated_at) VALUES(?,?,?)",
-          settings.current(),
-          bot,
-          GatewayStore.now());
-    } catch (DuplicateKeyException ignored) {
-    }
+    store.update(
+        "INSERT INTO gateway_discord_session(env,bot_id,updated_at) VALUES(?,?,?) ON CONFLICT DO NOTHING",
+        settings.current(),
+        bot,
+        GatewayStore.now());
     return renew(bot, owner);
   }
 

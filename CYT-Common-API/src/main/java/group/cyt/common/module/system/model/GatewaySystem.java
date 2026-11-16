@@ -1,20 +1,20 @@
 package group.cyt.common.module.system.model;
 
 import com.baomidou.mybatisplus.annotation.*;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 @TableName("gateway_system")
 public class GatewaySystem {
   @TableId(type = IdType.AUTO)
   private Long id;
 
-  @TableField("`key`")
+  @TableField("key")
   private String key;
 
   private String displayName;
   private String description;
   private Boolean enabled;
-  private LocalDateTime createdAt;
+  private OffsetDateTime createdAt;
 
   public Long getId() {
     return id;
@@ -56,11 +56,11 @@ public class GatewaySystem {
     this.enabled = enabled;
   }
 
-  public LocalDateTime getCreatedAt() {
+  public OffsetDateTime getCreatedAt() {
     return createdAt;
   }
 
-  public void setCreatedAt(LocalDateTime createdAt) {
+  public void setCreatedAt(OffsetDateTime createdAt) {
     this.createdAt = createdAt;
   }
 }

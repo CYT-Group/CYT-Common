@@ -37,7 +37,7 @@ public class DocumentationContracts {
   private Map<String, Object> custom(OperationDefinition op) {
     if (builtins.contains(op.key())) return null;
     return store.one(
-        "SELECT a.response_schema_json,m.service_kind FROM gateway_custom_api a LEFT JOIN gateway_module m ON a.module_key=m.`key` WHERE a.`key`=?",
+        "SELECT a.response_schema_json,m.service_kind FROM gateway_custom_api a LEFT JOIN gateway_module m ON a.module_key=m.key WHERE a.key=?",
         op.key());
   }
 
@@ -53,7 +53,7 @@ public class DocumentationContracts {
     var internal = new HashSet<String>();
     for (var row :
         store.rows(
-            "SELECT a.`key` FROM gateway_custom_api a JOIN gateway_module m ON a.module_key=m.`key` WHERE m.service_kind='internal'"))
+            "SELECT a.key FROM gateway_custom_api a JOIN gateway_module m ON a.module_key=m.key WHERE m.service_kind='internal'"))
       internal.add(JsonUtils.str(row, "key"));
     return operations.stream()
         .filter(op -> internal.contains(op.key()) == direction.equals("internal"))

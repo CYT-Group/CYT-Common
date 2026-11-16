@@ -40,6 +40,7 @@ public class GatewayStore {
                       .toInstant()
                       .toString();
             else if (v instanceof LocalDateTime time) v = time.toInstant(ZoneOffset.UTC).toString();
+            else if (v instanceof OffsetDateTime time) v = time.toInstant().toString();
             m.put(md.getColumnLabel(i).toLowerCase(Locale.ROOT), v);
           }
           return m;
@@ -65,20 +66,17 @@ public class GatewayStore {
     identifier(table);
     fields.keySet().forEach(GatewayStore::identifier);
     String sql =
-        "INSERT INTO `"
+        "INSERT INTO "
             + table
-            + "` ("
-            + fields.keySet().stream()
-                .map(k -> "`" + k + "`")
-                .reduce((a, b) -> a + "," + b)
-                .orElseThrow()
+            + " ("
+            + fields.keySet().stream().reduce((a, b) -> a + "," + b).orElseThrow()
             + ") VALUES ("
             + String.join(",", Collections.nCopies(fields.size(), "?"))
             + ")";
     KeyHolder kh = new GeneratedKeyHolder();
     jdbc.update(
         c -> {
-          PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+          PreparedStatement ps = c.prepareStatement(sql, new String[] {"id"});
           int i = 1;
           for (Object v : fields.values()) ps.setObject(i++, v);
           return ps;
@@ -95,11 +93,11 @@ public class GatewayStore {
     List<Object> a = new ArrayList<>(fields.values());
     a.add(id);
     update(
-        "UPDATE `"
+        "UPDATE "
             + table
-            + "` SET "
+            + " SET "
             + fields.keySet().stream()
-                .map(k -> "`" + k + "`=?")
+                .map(k -> k + "=?")
                 .reduce((x, y) -> x + "," + y)
                 .orElseThrow()
             + " WHERE id=?",

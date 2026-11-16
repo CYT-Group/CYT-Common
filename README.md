@@ -8,8 +8,8 @@ CYT-Common/
 │  ├─ src/main/java/group/cyt/common/
 │  │  ├─ core/                 配置、异常、HTTP、持久化与公共工具
 │  │  └─ module/               按业务领域拆分的 controller / service / model
-│  ├─ src/main/resources/db/    Flyway MySQL 迁移
-│  ├─ src/test/                参数契约、签名和真实 MySQL 集成测试
+│  ├─ src/main/resources/db/    Flyway PostgreSQL 迁移
+│  ├─ src/test/                参数契约、签名和真实 PostgreSQL 集成测试
 │  └─ tools/                   开发期契约导出与数据迁移工具
 ├─ CYT-Common-Frontend/         Vue 管理前端
 │  ├─ src/pages/               按路由懒加载的业务页面
@@ -23,7 +23,7 @@ CYT-Common/
 
 ## 技术栈
 
-- 后端：Java 21、Spring Boot 3.5.16、MyBatis Plus 3.5.12、Spring JDBC、Flyway、MySQL 8.0.13+ / 8.4。
+- 后端：Java 21、Spring Boot 3.5.16、MyBatis Plus 3.5.12、Spring JDBC、Flyway、PostgreSQL 17 / 18。
 - 前端：Vue 3、TypeScript、Vite、Element Plus、Pinia、Vue Router、Axios、按需加载的 ECharts。
 - 配额：进程内滑动窗口，可配置 Redis 跨实例共享。
 - 凭据：兼容原 Python Fernet 密文格式，按环境和调用系统解析。
@@ -32,9 +32,9 @@ CYT-Common/
 
 ## 本地启动
 
-准备 JDK 21、Maven 3.9+、Node.js 22.12+ 和 pnpm 11.25.0，以及一个**独立 MySQL 数据库**。
+准备 JDK 21、Maven 3.9+、Node.js 22.12+ 和 pnpm 11.25.0，以及一个**独立 PostgreSQL 数据库**。
 
-1. 创建数据库及独立应用账号，字符集使用 `utf8mb4`，排序规则使用 `utf8mb4_bin`。
+1. 创建数据库及独立应用账号，使用 UTF-8 编码并将数据库会话固定为 UTC。
 2. 复制 `CYT-Common-API/application-local.properties.example` 为同目录下 `application-local.properties`，填写新库连接。文件已忽略，不提交真实配置。
 3. 在后端目录执行 `mvn spring-boot:run`，默认端口为 **8189**。Flyway 自动建表。
 4. 在前端目录执行 `pnpm install --frozen-lockfile`，再执行 `pnpm dev`，访问 **http://127.0.0.1:8190**，开发代理默认连接后端 **8189**。构建后的 `pnpm preview` 也使用 **8190**。
@@ -101,3 +101,6 @@ Discord 已增加 11 个原生接口、加密凭据登记、持久化实时监�
 ## 新旧网关第三方 API 能力对齐
 
 2026-11-16：Java 与 Python 两版各自独立实现 17 个平台、171 项公开操作，包含 Shopify 原币退款、Store Credit 和混合支付。新增能力、写入策略、Python 审批迁移与验证方法见[第三方 API 对齐说明](docs/third-party-api-parity.md)。
+
+
+数据库配置使用 `POSTGRES_URL`、`POSTGRES_USERNAME`、`POSTGRES_PASSWORD`。默认 `local` profile 可自动运行 Flyway；`prod` profile 不加载本地 properties，需先独立升级数据库。PG 验收与部署边界见[PostgreSQL 修正记录](docs/postgresql-main-correction.md)。

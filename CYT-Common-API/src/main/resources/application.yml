@@ -6,22 +6,28 @@ server:
 spring:
   application:
     name: cyt-common-api-java
-  config:
-    import:
-      - optional:file:./application-local.properties
-      - optional:file:./CYT-Common-API/application-local.properties
+  profiles:
+    default: local
   threads:
     virtual:
       enabled: true
   datasource:
-    url: ${MYSQL_URL:jdbc:mysql://127.0.0.1:3306/cyt_common_api_java?connectionTimeZone=UTC&forceConnectionTimeZoneToSession=true&useUnicode=true&characterEncoding=UTF-8}
-    username: ${MYSQL_USERNAME:cyt_gateway}
-    password: ${MYSQL_PASSWORD:}
+    driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 15
       connection-timeout: 5000
+      connection-init-sql: SET TIME ZONE 'UTC'
   flyway:
     enabled: true
+    locations: classpath:db/migration
+    clean-disabled: true
+    baseline-on-migrate: false
+    validate-on-migrate: true
+    validate-migration-naming: true
+    fail-on-missing-locations: true
+    out-of-order: false
+    ignore-migration-patterns: []
+    placeholder-replacement: false
   jackson:
     time-zone: UTC
   web:

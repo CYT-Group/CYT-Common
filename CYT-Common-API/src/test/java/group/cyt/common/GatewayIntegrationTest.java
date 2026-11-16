@@ -18,43 +18,40 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.*;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@EnabledIfEnvironmentVariable(named = "TEST_MYSQL_URL", matches = ".+")
+@ActiveProfiles("test")
+@EnabledIfEnvironmentVariable(named = "TEST_PG_URL", matches = ".+")
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class GatewayIntegrationTest {
   private static final String DATABASE =
       "cyt_common_check_" + UUID.randomUUID().toString().replace("-", "").substring(0, 12);
-  private static final String BASE = System.getenv("TEST_MYSQL_URL");
+  private static final String BASE = System.getenv("TEST_PG_URL");
   private static String jdbcUrl;
 
   @DynamicPropertySource
   static void properties(DynamicPropertyRegistry p) throws Exception {
-    if (!BASE.matches("jdbc:mysql://(?:127\\.0\\.0\\.1|localhost):[0-9]+/?"))
+    if (!BASE.matches("jdbc:postgresql://(?:127\\.0\\.0\\.1|localhost):[0-9]+/?"))
       throw new IllegalStateException(
-          "Tests require an explicit loopback MySQL server URL without database");
+          "Tests require an explicit loopback PostgreSQL server URL without database");
     try (Connection c =
             DriverManager.getConnection(
-                BASE + (BASE.endsWith("/") ? "" : "/") + "mysql",
-                System.getenv().getOrDefault("TEST_MYSQL_USERNAME", "root"),
-                System.getenv().getOrDefault("TEST_MYSQL_PASSWORD", ""));
+                BASE + (BASE.endsWith("/") ? "" : "/") + "postgres",
+                System.getenv().getOrDefault("TEST_PG_USERNAME", "postgres"),
+                System.getenv().getOrDefault("TEST_PG_PASSWORD", ""));
         Statement s = c.createStatement()) {
-      s.execute("CREATE DATABASE `" + DATABASE + "` CHARACTER SET utf8mb4 COLLATE utf8mb4_bin");
+      s.execute("CREATE DATABASE " + DATABASE + " ENCODING 'UTF8' TEMPLATE template0");
     }
-    jdbcUrl =
-        BASE
-            + (BASE.endsWith("/") ? "" : "/")
-            + DATABASE
-            + "?connectionTimeZone=UTC&forceConnectionTimeZoneToSession=true";
+    jdbcUrl = BASE + (BASE.endsWith("/") ? "" : "/") + DATABASE;
     p.add("spring.datasource.url", () -> jdbcUrl);
+    p.add("spring.datasource.driver-class-name", () -> "org.postgresql.Driver");
     p.add(
         "spring.datasource.username",
-        () -> System.getenv().getOrDefault("TEST_MYSQL_USERNAME", "root"));
-    p.add(
-        "spring.datasource.password",
-        () -> System.getenv().getOrDefault("TEST_MYSQL_PASSWORD", ""));
+        () -> System.getenv().getOrDefault("TEST_PG_USERNAME", "postgres"));
+    p.add("spring.datasource.password", () -> System.getenv().getOrDefault("TEST_PG_PASSWORD", ""));
     p.add("ENV", () -> "local");
     p.add("MOCK_ALL", () -> "true");
     p.add("GATEWAY_DEV_MODE", () -> "false");
@@ -144,7 +141,7 @@ class GatewayIntegrationTest {
     assertEquals(1, JsonUtils.list(conflict.get("blocking_rules")).size());
     assertNotNull(
         JsonUtils.map(JsonUtils.list(conflict.get("blocking_rules")).getFirst()).get("id"));
-    assertEquals(2, store.count("SELECT COUNT(*) FROM gateway_grant WHERE `system`=?", system));
+    assertEquals(2, store.count("SELECT COUNT(*) FROM gateway_grant WHERE system=?", system));
     body.put("revision", plan.get("revision"));
     assertEquals(
         422,
@@ -159,7 +156,7 @@ class GatewayIntegrationTest {
         request(HttpMethod.POST, "/admin/api/grants/batch", body, token).getStatusCode().value());
     var saved =
         store.one(
-            "SELECT * FROM gateway_grant WHERE `system`=? AND operation_pattern='gmail.profile.get'",
+            "SELECT * FROM gateway_grant WHERE system=? AND operation_pattern='gmail.profile.get'",
             system);
     assertEquals("allow", saved.get("effect"));
     assertEquals("31/min", saved.get("quota"));
@@ -168,7 +165,7 @@ class GatewayIntegrationTest {
     assertEquals(
         0,
         store.count(
-            "SELECT COUNT(*) FROM gateway_grant WHERE `system`=? AND operation_pattern='gdrive.files.list'",
+            "SELECT COUNT(*) FROM gateway_grant WHERE system=? AND operation_pattern='gdrive.files.list'",
             system));
     assertEquals(
         409,
@@ -239,9 +236,8 @@ class GatewayIntegrationTest {
     assertEquals(
         422,
         request(HttpMethod.POST, "/admin/api/grants/batch", body, token).getStatusCode().value());
-    assertEquals(1, store.count("SELECT COUNT(*) FROM gateway_grant WHERE `system`=?", system));
-    assertEquals(
-        0, store.count("SELECT COUNT(*) FROM gateway_grant_audit WHERE `system`=?", system));
+    assertEquals(1, store.count("SELECT COUNT(*) FROM gateway_grant WHERE system=?", system));
+    assertEquals(0, store.count("SELECT COUNT(*) FROM gateway_grant_audit WHERE system=?", system));
   }
 
   @Test
@@ -332,7 +328,7 @@ class GatewayIntegrationTest {
     assertEquals(
         "internal",
         store
-            .one("SELECT service_kind FROM gateway_module WHERE `key`='internal_fixture'")
+            .one("SELECT service_kind FROM gateway_module WHERE key='internal_fixture'")
             .get("service_kind"));
     var api =
         request(
@@ -357,7 +353,7 @@ class GatewayIntegrationTest {
     assertEquals(200, api.getStatusCode().value());
     var inherited =
         store.one(
-            "SELECT base_url,headers_json,pagination_json FROM gateway_custom_api WHERE `key`='internal_fixture.orders.get'");
+            "SELECT base_url,headers_json,pagination_json FROM gateway_custom_api WHERE key='internal_fixture.orders.get'");
     assertEquals("", inherited.get("base_url"));
     assertEquals("{}", inherited.get("headers_json"));
     body.put("key", "invalid_kind_fixture");
@@ -365,7 +361,7 @@ class GatewayIntegrationTest {
     assertEquals(
         422, request(HttpMethod.POST, "/admin/api/modules", body, token).getStatusCode().value());
     assertEquals(
-        0, store.count("SELECT COUNT(*) FROM gateway_module WHERE `key`='invalid_kind_fixture'"));
+        0, store.count("SELECT COUNT(*) FROM gateway_module WHERE key='invalid_kind_fixture'"));
   }
 
   @Test
@@ -483,14 +479,12 @@ class GatewayIntegrationTest {
   @Order(1)
   void flywayCreatesBusinessAndApprovalTablesAndIndexes() {
     assertEquals(
-        17,
+        19,
         store.count(
-            "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema=? AND table_name LIKE 'gateway_%'",
-            DATABASE));
+            "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema=current_schema() AND table_name LIKE 'gateway_%'"));
     assertTrue(
         store.count(
-                "SELECT COUNT(*) FROM information_schema.statistics WHERE table_schema=? AND index_name='ix_calls_system_time'",
-                DATABASE)
+                "SELECT COUNT(*) FROM pg_indexes WHERE schemaname=current_schema() AND indexname='ix_calls_system_time'")
             > 0);
   }
 
@@ -532,7 +526,7 @@ class GatewayIntegrationTest {
         request(HttpMethod.POST, "/integrations/gmail/profile/get", Map.of(), key)
             .getStatusCode()
             .value());
-    store.update("UPDATE gateway_system_apikey SET revoked=true WHERE `system`='test_deny'");
+    store.update("UPDATE gateway_system_apikey SET revoked=true WHERE system='test_deny'");
     assertEquals(
         401,
         request(HttpMethod.POST, "/integrations/gmail/profile/get", Map.of(), key)
@@ -592,7 +586,7 @@ class GatewayIntegrationTest {
         request(HttpMethod.POST, "/integrations/gmail/profile/get", Map.of(), key)
             .getStatusCode()
             .value());
-    store.update("UPDATE gateway_system SET enabled=false WHERE `key`='test_expiry'");
+    store.update("UPDATE gateway_system SET enabled=false WHERE key='test_expiry'");
     assertEquals(
         403,
         request(HttpMethod.POST, "/integrations/gmail/profile/get", Map.of(), key)
@@ -693,12 +687,11 @@ class GatewayIntegrationTest {
       for (var r : responses) assertTrue(Set.of(200, 409).contains(r.get()));
     }
     assertEquals(
-        1,
-        store.count("SELECT COUNT(*) FROM gateway_idempotency WHERE `system`='test_concurrency'"));
+        1, store.count("SELECT COUNT(*) FROM gateway_idempotency WHERE system='test_concurrency'"));
   }
 
   @Test
-  void all82PublicRoutesExecuteInExplicitMockMode() throws Exception {
+  void publicRoutesRespectExplicitMockAndReadOnlyPolicies() throws Exception {
     String system = "test_contract", key = createSystem(system, true);
     for (var op : registry.operations())
       if (op.sensitive())
@@ -717,6 +710,12 @@ class GatewayIntegrationTest {
       var p = new LinkedHashMap<>(JsonUtils.map(item.get("params")));
       if (p.containsKey("envelope_id")) p.put("envelope_id", envelope);
       var response = request(HttpMethod.POST, OperationRegistry.path(operation), p, key);
+      if (Set.of("lingxing.refund.create", "lingxing.workorder.add", "lingxing.workorder.audit")
+          .contains(operation)) {
+        assertEquals(403, response.getStatusCode().value(), operation + ": " + response.getBody());
+        assertEquals("forbidden", JsonUtils.map(response.getBody().get("error")).get("type"));
+        continue;
+      }
       assertEquals(200, response.getStatusCode().value(), operation + ": " + response.getBody());
       assertEquals(true, JsonUtils.map(response.getBody().get("meta")).get("mock"), operation);
       if (operation.equals("docusign.envelopes.create"))
@@ -1044,7 +1043,7 @@ class GatewayIntegrationTest {
     logs.flush();
     var row =
         store.one(
-            "SELECT called_at FROM gateway_call_log WHERE `system`='test_utc' ORDER BY id DESC LIMIT 1");
+            "SELECT called_at FROM gateway_call_log WHERE system='test_utc' ORDER BY id DESC LIMIT 1");
     assertTrue(
         Math.abs(
                 java.time.Duration.between(
@@ -1094,7 +1093,7 @@ class GatewayIntegrationTest {
             key);
     assertEquals(false, JsonUtils.map(invalid.getBody().get("data")).get("valid"));
     assertEquals(
-        0, store.count("SELECT COUNT(*) FROM gateway_wecom_submission WHERE `system`=?", system));
+        0, store.count("SELECT COUNT(*) FROM gateway_wecom_submission WHERE system=?", system));
     var body =
         JsonUtils.obj(
             "template",
@@ -1129,7 +1128,7 @@ class GatewayIntegrationTest {
     assertEquals(200, replay.getStatusCode().value());
     assertEquals(true, JsonUtils.map(replay.getBody().get("meta")).get("idempotent_replay"));
     assertEquals(
-        1, store.count("SELECT COUNT(*) FROM gateway_wecom_submission WHERE `system`=?", system));
+        1, store.count("SELECT COUNT(*) FROM gateway_wecom_submission WHERE system=?", system));
     var different = new LinkedHashMap<>(body);
     different.put("fields", JsonUtils.obj("reason", "不同的申请", "amount", "50"));
     assertEquals(
@@ -1161,7 +1160,7 @@ class GatewayIntegrationTest {
     logs.flush();
     var logged =
         store.one(
-            "SELECT request_summary FROM gateway_call_log WHERE `system`=? AND operation='wecom.approvals.submit' AND status='ok' ORDER BY id LIMIT 1",
+            "SELECT request_summary FROM gateway_call_log WHERE system=? AND operation='wecom.approvals.submit' AND status='ok' ORDER BY id LIMIT 1",
             system);
     assertFalse(logged.get("request_summary").toString().contains("采购"));
   }
@@ -1252,13 +1251,12 @@ class GatewayIntegrationTest {
       assertEquals(200, response.getStatusCode().value(), response.getBody());
       assertEquals("success", response.getBody());
     }
-    assertEquals(
-        1, store.count("SELECT COUNT(*) FROM gateway_wecom_event WHERE `system`=?", owner));
+    assertEquals(1, store.count("SELECT COUNT(*) FROM gateway_wecom_event WHERE system=?", owner));
     assertEquals(
         0,
         store.count(
-            "SELECT COUNT(*) FROM gateway_wecom_event WHERE `system` IN (?,?)", source, other));
-    var row = store.one("SELECT * FROM gateway_wecom_event WHERE `system`=?", owner);
+            "SELECT COUNT(*) FROM gateway_wecom_event WHERE system IN (?,?)", source, other));
+    var row = store.one("SELECT * FROM gateway_wecom_event WHERE system=?", owner);
     assertEquals("202611050001", row.get("approval_no"));
     assertFalse(row.get("payload_ciphertext").toString().contains("202611050001"));
     var decoded = JsonUtils.read(credentials.decrypt(row.get("payload_ciphertext").toString()));
@@ -1276,7 +1274,7 @@ class GatewayIntegrationTest {
         new group.cyt.common.module.adapter.wecom.approval.WecomApprovalEvents(
             store, approvalClient, credentials, settings, fakeCallbacks);
     store.update(
-        "UPDATE gateway_wecom_event SET next_attempt_at=UTC_TIMESTAMP(6),delivery_state='pending' WHERE id=?",
+        "UPDATE gateway_wecom_event SET next_attempt_at=CURRENT_TIMESTAMP,delivery_state='pending' WHERE id=?",
         row.get("id"));
     events.deliverPending();
     var failed = store.one("SELECT * FROM gateway_wecom_event WHERE id=?", row.get("id"));
@@ -1290,7 +1288,7 @@ class GatewayIntegrationTest {
                 org.mockito.ArgumentMatchers.anyString()))
         .thenReturn(JsonUtils.obj("delivered", true));
     store.update(
-        "UPDATE gateway_wecom_event SET next_attempt_at=UTC_TIMESTAMP(6) WHERE id=?",
+        "UPDATE gateway_wecom_event SET next_attempt_at=CURRENT_TIMESTAMP WHERE id=?",
         row.get("id"));
     events.deliverPending();
     assertEquals(
@@ -1360,19 +1358,46 @@ class GatewayIntegrationTest {
             .value());
   }
 
+  @Test
+  void discordLeaseCheckpointAndInboxDeduplicationUseRealPostgresTransactions() {
+    var events = new group.cyt.common.module.adapter.discord.DiscordEvents(store, settings);
+    String bot = "987654321098765432", owner = "postgres-fixture";
+    assertTrue(events.claim(bot, owner));
+    assertFalse(events.claim(bot, "other-owner"));
+    events.checkpoint(
+        bot, owner, "fixture-session", 1, "wss://gateway.discord.gg", "MESSAGE_CREATE", Map.of());
+    events.checkpoint(
+        bot, owner, "fixture-session", 1, "wss://gateway.discord.gg", "MESSAGE_CREATE", Map.of());
+    assertEquals(1, JsonUtils.list(events.poll(bot, 0, 100, Map.of()).get("items")).size());
+    assertThrows(
+        IllegalStateException.class,
+        () ->
+            events.checkpoint(
+                bot,
+                "other-owner",
+                "fixture-session",
+                2,
+                "wss://gateway.discord.gg",
+                "READY",
+                Map.of()));
+    assertEquals(1L, ((Number) events.session(bot).get("sequence_no")).longValue());
+    events.release(bot, owner);
+    assertTrue(events.claim(bot, "next-owner"));
+  }
+
   @AfterAll
   static void cleanup(@Autowired CallLogService logs) throws Exception {
     logs.flush();
     if (jdbcUrl == null) return;
     try (Connection c =
             DriverManager.getConnection(
-                BASE + (BASE.endsWith("/") ? "" : "/") + "mysql",
-                System.getenv().getOrDefault("TEST_MYSQL_USERNAME", "root"),
-                System.getenv().getOrDefault("TEST_MYSQL_PASSWORD", ""));
+                BASE + (BASE.endsWith("/") ? "" : "/") + "postgres",
+                System.getenv().getOrDefault("TEST_PG_USERNAME", "postgres"),
+                System.getenv().getOrDefault("TEST_PG_PASSWORD", ""));
         Statement s = c.createStatement()) {
       if (!DATABASE.matches("cyt_common_check_[a-f0-9]{12}"))
         throw new IllegalStateException("Unexpected test database");
-      s.execute("DROP DATABASE `" + DATABASE + "`");
+      s.execute("DROP DATABASE " + DATABASE + " WITH (FORCE)");
     }
   }
 }

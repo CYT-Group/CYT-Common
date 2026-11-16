@@ -51,7 +51,7 @@ public class MonitoringController {
         "service",
         "cyt-common-api-java",
         "database",
-        "mysql",
+        "postgresql",
         "quota_backend",
         quota.backend(),
         "env",
@@ -80,7 +80,7 @@ public class MonitoringController {
         "custom_operation_count",
         store.count("SELECT COUNT(*) FROM gateway_custom_api WHERE enabled=true"),
         "systems",
-        store.rows("SELECT `key` FROM gateway_system WHERE enabled=true").stream()
+        store.rows("SELECT key FROM gateway_system WHERE enabled=true").stream()
             .map(s -> s.get("key"))
             .toList(),
         "platforms",
@@ -107,8 +107,7 @@ public class MonitoringController {
           String defaultAccount = credentials.raw(spec.path("default_account_var").asText());
           if (defaultAccount.isBlank()) defaultAccount = spec.path("account_fallback").asText();
           for (String account : (accountNames + "," + defaultAccount).split(","))
-            if (!account.isBlank())
-              accounts.add(CredentialService.accountKey(account.trim()));
+            if (!account.isBlank()) accounts.add(CredentialService.accountKey(account.trim()));
           for (var variable : spec.path("vars")) {
             if (!variable.path("required").asBoolean(true)) continue;
             String name = variable.path("name").asText();

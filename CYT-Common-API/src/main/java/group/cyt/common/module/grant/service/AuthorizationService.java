@@ -23,7 +23,7 @@ public class AuthorizationService {
   public String check(String system, OperationDefinition operation) {
     List<Map<String, Object>> grants;
     try {
-      grants = store.rows("SELECT * FROM gateway_grant WHERE `system`=?", system);
+      grants = store.rows("SELECT * FROM gateway_grant WHERE system=?", system);
     } catch (org.springframework.dao.DataAccessException e) {
       throw GatewayException.forbidden("授权策略暂不可用，已拒绝调用");
     }
@@ -98,7 +98,7 @@ public class AuthorizationService {
   }
 
   public Object effective(String system) {
-    var grants = store.rows("SELECT * FROM gateway_grant WHERE `system`=?", system);
+    var grants = store.rows("SELECT * FROM gateway_grant WHERE system=?", system);
     return JsonUtils.obj(
         "system",
         system,
@@ -117,7 +117,7 @@ public class AuthorizationService {
         ops.size(),
         "systems",
         store
-            .rows("SELECT `key`,display_name FROM gateway_system WHERE enabled=true ORDER BY id")
+            .rows("SELECT key,display_name FROM gateway_system WHERE enabled=true ORDER BY id")
             .stream()
             .map(
                 s ->
@@ -146,7 +146,7 @@ public class AuthorizationService {
     String system = JsonUtils.str(body, "system"),
         pattern = JsonUtils.str(body, "operation_pattern"),
         effect = JsonUtils.str(body, "effect", "allow");
-    if (store.one("SELECT id FROM gateway_system WHERE `key`=? FOR UPDATE", system) == null)
+    if (store.one("SELECT id FROM gateway_system WHERE key=? FOR UPDATE", system) == null)
       throw GatewayException.invalid("系统不存在");
     if (!Set.of("allow", "deny").contains(effect)
         || !pattern.matches("\\*|[a-z][a-z0-9_]*(?:\\.[a-z][a-z0-9_]*)*(?:\\.\\*)?"))
@@ -180,9 +180,7 @@ public class AuthorizationService {
       throw GatewayException.invalid("授权字段过长");
     var old =
         store.one(
-            "SELECT id FROM gateway_grant WHERE `system`=? AND operation_pattern=?",
-            system,
-            pattern);
+            "SELECT id FROM gateway_grant WHERE system=? AND operation_pattern=?", system, pattern);
     long id;
     if (old == null) id = store.insert("gateway_grant", data);
     else {
@@ -210,11 +208,11 @@ public class AuthorizationService {
   public Object toggle(
       String system, String operation, boolean enabled, boolean confirm, String actor) {
     String key = registry.canonical(operation);
-    if (store.one("SELECT id FROM gateway_system WHERE `key`=? FOR UPDATE", system) == null)
+    if (store.one("SELECT id FROM gateway_system WHERE key=? FOR UPDATE", system) == null)
       throw GatewayException.invalid("系统不存在");
     var old =
         store.one(
-            "SELECT * FROM gateway_grant WHERE `system`=? AND operation_pattern=?", system, key);
+            "SELECT * FROM gateway_grant WHERE system=? AND operation_pattern=?", system, key);
     var body = old == null ? new LinkedHashMap<String, Object>() : new LinkedHashMap<>(old);
     body.putAll(
         JsonUtils.obj(
@@ -233,7 +231,7 @@ public class AuthorizationService {
   public void delete(long id, String actor) {
     var row = store.one("SELECT * FROM gateway_grant WHERE id=?", id);
     if (row == null) throw GatewayException.missing("授权不存在");
-    store.one("SELECT id FROM gateway_system WHERE `key`=? FOR UPDATE", row.get("system"));
+    store.one("SELECT id FROM gateway_system WHERE key=? FOR UPDATE", row.get("system"));
     row = store.one("SELECT * FROM gateway_grant WHERE id=?", id);
     if (row == null) throw GatewayException.missing("授权不存在");
     store.update("DELETE FROM gateway_grant WHERE id=?", id);

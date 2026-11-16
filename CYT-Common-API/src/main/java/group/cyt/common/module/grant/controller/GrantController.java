@@ -43,11 +43,11 @@ public class GrantController {
   public Object list() {
     return JsonUtils.obj(
         "systems",
-        store.rows("SELECT `key`,display_name,enabled,description FROM gateway_system ORDER BY id"),
+        store.rows("SELECT key,display_name,enabled,description FROM gateway_system ORDER BY id"),
         "operations",
         registry.operations(),
         "grants",
-        store.rows("SELECT * FROM gateway_grant ORDER BY `system`,operation_pattern"));
+        store.rows("SELECT * FROM gateway_grant ORDER BY system,operation_pattern"));
   }
 
   @PostMapping("/grants")

@@ -1,0 +1,19 @@
+# Start with --spring.profiles.active=prod or SPRING_PROFILES_ACTIVE=prod.
+# Supply credentials through environment variables; local properties are never imported here.
+server:
+  address: ${HOST:0.0.0.0}
+
+spring:
+  flyway:
+    # Shared environments run the release's Flyway job before updating the application.
+    enabled: false
+  datasource:
+    url: ${POSTGRES_URL}
+    username: ${POSTGRES_USERNAME}
+    password: ${POSTGRES_PASSWORD}
+
+ENV: production
+MOCK_ALL: false
+GATEWAY_DEV_MODE: false
+JAVA_SEED_ENABLED: false
+ADMIN_DEV_LOGIN: false

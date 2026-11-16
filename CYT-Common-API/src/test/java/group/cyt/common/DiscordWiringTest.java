@@ -13,13 +13,17 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
-/** Wire the actual native beans without touching the developer's MySQL database or credentials. */
+/**
+ * Wire the actual native beans without touching the developer's PostgreSQL database or credentials.
+ */
+@ActiveProfiles("test")
 @SpringBootTest(
     webEnvironment = SpringBootTest.WebEnvironment.NONE,
     properties = {
-      "spring.datasource.url=jdbc:h2:mem:discord_wiring;MODE=MySQL;DB_CLOSE_DELAY=-1",
+      "spring.datasource.url=jdbc:h2:mem:discord_wiring;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1",
       "spring.datasource.driver-class-name=org.h2.Driver",
       "spring.datasource.username=sa",
       "spring.datasource.password=",

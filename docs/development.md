@@ -8,7 +8,7 @@
 - 动态 API 参数与第三方返回使用 JSON 对象；固定领域模型与请求优先使用 Java 类型。
 - 敏感操作执行时必须匹配精确授权，`deny` 优先，过期授权失效，系统停用立即生效。
 - 数据库存 UTC，接口输出带 `Z` 的时间；页面按浏览器时区展示。
-- MySQL 标识符 `key`、`system` 必须引用；幂等键和系统标识保留大小写敏感性。
+- SQL 使用 PostgreSQL 标识符与冲突处理语法；幂等键和系统标识保留大小写敏感性。
 - 管理变更与审计使用同一事务。调用日志脱敏后放入有界队列异步写入，写入失败不改变业务响应。
 - 上游地址只能来自固定平台适配器或管理员配置，自定义接口校验 DNS 并将地址固定到实际连接，不跟随重定向。
 - API Key 只返回一次明文，数据库保存摘要；凭据不得写入源码、日志、浏览器构建变量或 Git。
@@ -25,7 +25,7 @@ mvn fmt:format
 mvn package
 ```
 
-`mvn test` 在未设置 `TEST_MYSQL_URL` 时运行契约与单元测试，MySQL 集成测试会明确跳过。
+`mvn test` 在未设置 `TEST_PG_URL` 时运行契约与单元测试，PostgreSQL 集成测试会明确跳过。
 
 前端：
 
@@ -39,14 +39,14 @@ pnpm build:backend
 
 前端只保留 pnpm 锁文件。`API_PROXY_TARGET` 可在忽略的 `.env.local` 中覆盖开发代理地址。不要把密钥放进 `VITE_*`。
 
-## 真实 MySQL 集成测试
+## 真实 PostgreSQL 集成测试
 
 PowerShell：
 
 ```powershell
-$env:TEST_MYSQL_URL = 'jdbc:mysql://127.0.0.1:13309/'
-$env:TEST_MYSQL_USERNAME = 'root'
-$env:TEST_MYSQL_PASSWORD = '<仅测试实例的密码>'
+$env:TEST_PG_URL = 'jdbc:postgresql://127.0.0.1:55496/'
+$env:TEST_PG_USERNAME = 'postgres'
+$env:TEST_PG_PASSWORD = '<仅测试实例的密码>'
 mvn test
 ```
 
@@ -57,7 +57,7 @@ mvn test
 ## 配置
 
 - `ENV`：固定部署环境。页面选择其他环境仅用于管理该环境凭据。
-- `MYSQL_URL`、`MYSQL_USERNAME`、`MYSQL_PASSWORD`：新库连接，也可使用标准 `spring.datasource.*`。
+- `POSTGRES_URL`、`POSTGRES_USERNAME`、`POSTGRES_PASSWORD`：新库连接，也可使用标准 `spring.datasource.*`。
 - `MOCK_ALL` / `<PLATFORM>_MOCK`：进程配置控制模拟。真实模式缺少凭据返回配置错误。
 - `GATEWAY_DEV_MODE`：仅非生产允许 `X-System-Id`。
 - `ADMIN_AUTH_MODES`：`admin_jwt`、`portal_jwt`、`portal_proxy`；`static` 只用于本地。
@@ -90,3 +90,6 @@ python tools/export_test_cases.py D:/code/cyt-common-api
 在导入的 application-local.properties 或部署环境变量中设置 INTERNAL_API_ALLOWED_ORIGINS，例如 https://orders.internal.example:8443,http://10.20.30.40:9000。名单按协议、主机和端口精确匹配，不填写路径、查询串、用户名密码，也不支持通配。空名单保持禁止内网连接。CUSTOM_API_ALLOWED_HOSTS 若已设置仍同时生效。HTTP 仅对明确登记的来源放行；受信任来源只允许普通内网服务地址，元数据、回环、链路本地地址等不因登记而放行。
 
 菜单默认从 /workspace 开始。/grants?system=... 等旧授权链接转到对应 /systems/:system 的能力授权页；没有系统时先选择调用方。管理端导出 /admin/api/consumer-openapi/{system} 仅包含当前有效授权的接口，敏感操作仍需精确允许，拒绝和过期规则仍生效。
+
+
+`TEST_PG_URL` 只接受不带数据库名的回环实例地址；测试创建并清理随机临时库。设置后会同时在真实 PostgreSQL 上运行 5 项退款持久化测试；不设置时退款用例使用 H2 PostgreSQL 兼容模式。生产使用 `SPRING_PROFILES_ACTIVE=prod`，迁移方法见[PostgreSQL 修正记录](postgresql-main-correction.md)。

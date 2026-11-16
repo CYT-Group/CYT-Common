@@ -37,15 +37,13 @@ public class CustomHttpAdapter implements PlatformAdapter {
   }
 
   public Object invoke(OperationDefinition op, Map<String, Object> params, String system) {
-    var api =
-        store.one("SELECT * FROM gateway_custom_api WHERE `key`=? AND enabled=true", op.key());
+    var api = store.one("SELECT * FROM gateway_custom_api WHERE key=? AND enabled=true", op.key());
     if (api == null) throw GatewayException.missing("自定义接口不存在或已停用");
     Map<String, Object> module =
         JsonUtils.str(api, "module_key").isBlank()
             ? null
             : store.one(
-                "SELECT * FROM gateway_module WHERE `key`=? AND enabled=true",
-                api.get("module_key"));
+                "SELECT * FROM gateway_module WHERE key=? AND enabled=true", api.get("module_key"));
     if (!JsonUtils.str(api, "module_key").isBlank() && module == null)
       throw GatewayException.forbidden("模块已停用");
     Map<String, Object> config = new LinkedHashMap<>();

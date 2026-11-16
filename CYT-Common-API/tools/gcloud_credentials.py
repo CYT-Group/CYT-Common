@@ -1,7 +1,7 @@
 """Plan and import registered platform credentials without printing secret payloads.
 
 Cloud reads use the existing gcloud session. Imports target only an explicitly
-configured loopback MySQL cyt_common database and preserve existing values unless
+configured loopback PostgreSQL cyt_common database and preserve existing values unless
 --overwrite is explicit. A production partition requires an explicitly targeted plan.
 """
 from __future__ import annotations
@@ -166,14 +166,25 @@ def properties(path):
 
 
 def local_connection(config):
-    import pymysql
-    url = urlsplit(config.get('spring.datasource.url', '').removeprefix('jdbc:'))
+    import psycopg
+    def configured(name, fallback):
+        value = os.environ.get(name, config.get(fallback, ''))
+        def expand(match):
+            variable, separator, default = match.group(1).partition(':')
+            if variable in os.environ:
+                return os.environ[variable]
+            if separator:
+                return default
+            raise ImportFailure('A required local database configuration variable is missing')
+        return re.sub(r'\$\{([^{}]+)\}', expand, value)
+    url = urlsplit(configured('POSTGRES_URL', 'spring.datasource.url').removeprefix('jdbc:'))
     database = url.path.lstrip('/')
-    if url.scheme != 'mysql' or url.hostname not in ('localhost', '127.0.0.1', '::1') or not database.startswith('cyt_common'):
-        raise ImportFailure('Import is restricted to an explicitly configured local cyt_common MySQL database')
-    return pymysql.connect(host=url.hostname, port=url.port or 3306, database=database,
-                           user=config.get('spring.datasource.username', ''), password=config.get('spring.datasource.password', ''),
-                           charset='utf8mb4', autocommit=False, init_command="SET time_zone = '+00:00'")
+    if url.scheme != 'postgresql' or url.hostname not in ('localhost', '127.0.0.1', '::1') or not re.fullmatch(r'cyt_common[a-zA-Z0-9_]*', database):
+        raise ImportFailure('Import is restricted to an explicitly configured local cyt_common PostgreSQL database')
+    return psycopg.connect(host=url.hostname, port=url.port or 5432, dbname=database,
+                           user=configured('POSTGRES_USERNAME', 'spring.datasource.username'),
+                           password=configured('POSTGRES_PASSWORD', 'spring.datasource.password'),
+                           autocommit=False, options='-c timezone=UTC', connect_timeout=5)
 
 
 def validate_environment_target(config, document, args):
@@ -207,7 +218,7 @@ def apply(args):
     connection = local_connection(config)
     try:
         with connection.cursor() as cursor:
-            cursor.execute('SELECT COUNT(*) FROM gateway_environment WHERE `key`=%s', (args.env,))
+            cursor.execute('SELECT COUNT(*) FROM gateway_environment WHERE "key"=%s', (args.env,))
             if cursor.fetchone()[0] != 1:
                 raise ImportFailure('Target environment does not exist')
             master = os.environ.get('CREDENTIAL_MASTER_KEY') or config.get('CREDENTIAL_MASTER_KEY', '')
@@ -262,7 +273,7 @@ def apply(args):
                         retained.append(name); continue
                 token = cipher.encrypt(value.encode()).decode()
                 if old:
-                    cursor.execute('UPDATE gateway_secret SET ciphertext=%s,updated_by=%s,updated_at=UTC_TIMESTAMP(6) WHERE id=%s', (token, 'gcloud-import', old[0]))
+                    cursor.execute('UPDATE gateway_secret SET ciphertext=%s,updated_by=%s,updated_at=CURRENT_TIMESTAMP(6) WHERE id=%s', (token, 'gcloud-import', old[0]))
                 else:
                     cursor.execute('INSERT INTO gateway_secret (env,name,ciphertext,updated_by) VALUES (%s,%s,%s,%s)', (args.env, name, token, 'gcloud-import'))
                 changed.append(name)

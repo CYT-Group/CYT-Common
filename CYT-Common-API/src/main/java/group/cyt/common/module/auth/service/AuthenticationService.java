@@ -92,7 +92,7 @@ public class AuthenticationService {
   }
 
   public String enabled(String system) {
-    var row = store.one("SELECT enabled FROM gateway_system WHERE `key`=?", system);
+    var row = store.one("SELECT enabled FROM gateway_system WHERE key=?", system);
     if (row == null || !JsonUtils.bool(row.get("enabled")))
       throw GatewayException.forbidden("系统未注册或已停用: " + system);
     return system;

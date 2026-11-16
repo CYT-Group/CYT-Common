@@ -111,7 +111,7 @@ public class OperationRegistry {
     List<OperationDefinition> all = new ArrayList<>(builtins.values());
     for (var row :
         store.rows(
-            "SELECT a.* FROM gateway_custom_api a LEFT JOIN gateway_module m ON a.module_key=m.`key` WHERE a.enabled=true AND (a.module_key='' OR m.enabled=true)"))
+            "SELECT a.* FROM gateway_custom_api a LEFT JOIN gateway_module m ON a.module_key=m.key WHERE a.enabled=true AND (a.module_key='' OR m.enabled=true)"))
       all.add(custom(row));
     var overrides = store.rows("SELECT * FROM gateway_op_order");
     return all.stream()
@@ -153,7 +153,7 @@ public class OperationRegistry {
     if (builtins.containsKey(current)) return builtins.get(current);
     var row =
         store.one(
-            "SELECT a.* FROM gateway_custom_api a LEFT JOIN gateway_module m ON a.module_key=m.`key` WHERE a.`key`=? AND a.enabled=true AND (a.module_key='' OR m.enabled=true)",
+            "SELECT a.* FROM gateway_custom_api a LEFT JOIN gateway_module m ON a.module_key=m.key WHERE a.key=? AND a.enabled=true AND (a.module_key='' OR m.enabled=true)",
             current);
     if (row == null)
       throw new GatewayException(404, "operation_not_found", "未注册的操作: " + key, false);

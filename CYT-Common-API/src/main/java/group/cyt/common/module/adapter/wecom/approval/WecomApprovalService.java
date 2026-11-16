@@ -47,7 +47,7 @@ public class WecomApprovalService {
     if (key.equals("wecom.approval_templates.list")) {
       var items =
           store.rows(
-              "SELECT alias,template_id,field_aliases,description,updated_at FROM gateway_wecom_form WHERE env=? AND runtime=? AND `system`=? ORDER BY alias",
+              "SELECT alias,template_id,field_aliases,description,updated_at FROM gateway_wecom_form WHERE env=? AND runtime=? AND system=? ORDER BY alias",
               settings.current(),
               mode(mock),
               system);
@@ -63,7 +63,7 @@ public class WecomApprovalService {
     }
     if (key.equals("wecom.approval_templates.unbind")) {
       store.update(
-          "DELETE FROM gateway_wecom_form WHERE env=? AND runtime=? AND `system`=? AND alias=?",
+          "DELETE FROM gateway_wecom_form WHERE env=? AND runtime=? AND system=? AND alias=?",
           settings.current(),
           mode(mock),
           system,
@@ -136,7 +136,7 @@ public class WecomApprovalService {
     if (key.equals("wecom.approvals.track")) {
       var submission =
           store.one(
-              "SELECT * FROM gateway_wecom_submission WHERE env=? AND runtime=? AND `system`=? AND request_id=?",
+              "SELECT * FROM gateway_wecom_submission WHERE env=? AND runtime=? AND system=? AND request_id=?",
               settings.current(),
               mode(mock),
               system,
@@ -264,7 +264,7 @@ public class WecomApprovalService {
             "event_id");
       var rows =
           store.rows(
-              "SELECT id,event_id,approval_no,payload_ciphertext,delivery_state,attempts,created_at FROM gateway_wecom_event WHERE env=? AND `system`=? AND id>? ORDER BY id LIMIT ?",
+              "SELECT id,event_id,approval_no,payload_ciphertext,delivery_state,attempts,created_at FROM gateway_wecom_event WHERE env=? AND system=? AND id>? ORDER BY id LIMIT ?",
               settings.current(),
               system,
               p.getOrDefault("after_id", 0),
@@ -294,7 +294,7 @@ public class WecomApprovalService {
             "queued", false, "event_id", p.get("event_id"), "note", "模拟模式不会重投真实事件");
       int updated =
           store.update(
-              "UPDATE gateway_wecom_event SET delivery_state='pending',attempts=0,last_error='',next_attempt_at=UTC_TIMESTAMP(6) WHERE env=? AND `system`=? AND event_id=? AND delivery_state IN ('failed','poll_only')",
+              "UPDATE gateway_wecom_event SET delivery_state='pending',attempts=0,last_error='',next_attempt_at=CURRENT_TIMESTAMP WHERE env=? AND system=? AND event_id=? AND delivery_state IN ('failed','poll_only')",
               settings.current(),
               system,
               p.get("event_id"));
@@ -319,7 +319,7 @@ public class WecomApprovalService {
     if (template.isBlank()) throw GatewayException.invalid("需要 template（业务别名或企微模板 ID）");
     var binding =
         store.one(
-            "SELECT template_id,field_aliases FROM gateway_wecom_form WHERE env=? AND runtime=? AND `system`=? AND alias=?",
+            "SELECT template_id,field_aliases FROM gateway_wecom_form WHERE env=? AND runtime=? AND system=? AND alias=?",
             settings.current(),
             mode(mock),
             system,
@@ -345,7 +345,7 @@ public class WecomApprovalService {
     if (!alias.matches("[a-zA-Z][a-zA-Z0-9_-]{0,63}"))
       throw GatewayException.invalid("模板别名需为 1–64 位字母、数字、下划线或连字符，并以字母开头");
     store.update(
-        "INSERT INTO gateway_wecom_form (env,runtime,`system`,alias,template_id,field_aliases,description) VALUES (?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE template_id=VALUES(template_id),field_aliases=VALUES(field_aliases),description=VALUES(description),updated_at=UTC_TIMESTAMP(6)",
+        "INSERT INTO gateway_wecom_form (env,runtime,system,alias,template_id,field_aliases,description) VALUES (?,?,?,?,?,?,?) ON CONFLICT (env,runtime,system,alias) DO UPDATE SET template_id=EXCLUDED.template_id,field_aliases=EXCLUDED.field_aliases,description=EXCLUDED.description,updated_at=CURRENT_TIMESTAMP",
         settings.current(),
         mode(mock),
         system,
@@ -801,7 +801,7 @@ public class WecomApprovalService {
     var forms = new ArrayList<Object>();
     for (var binding :
         store.rows(
-            "SELECT alias,field_aliases FROM gateway_wecom_form WHERE env=? AND runtime=? AND `system`=? AND template_id=? ORDER BY alias",
+            "SELECT alias,field_aliases FROM gateway_wecom_form WHERE env=? AND runtime=? AND system=? AND template_id=? ORDER BY alias",
             settings.current(),
             mode(mock),
             system,

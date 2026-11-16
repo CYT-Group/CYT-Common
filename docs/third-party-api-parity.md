@@ -52,8 +52,11 @@ mvn -f CYT-Common-API/pom.xml test package
 python CYT-Common-API/tools/check_gateway_parity.py --python-root D:/code/cyt-common-api --java-root D:/code/CYT-Common
 ```
 
-两版各自的测试资源包含相同的 `public_capabilities.json` / `public-capabilities.json` 快照，覆盖全部公开操作和输入约束；退款另外保留 12 组逐字段金额、分配和哈希对照。Java MySQL 集成验证需配置隔离测试库 `TEST_MYSQL_URL`，不提供该配置时相关用例跳过。
+两版各自的测试资源包含相同的 `public_capabilities.json` / `public-capabilities.json` 快照，覆盖全部公开操作和输入约束；退款另外保留 12 组逐字段金额、分配和哈希对照。Java PostgreSQL 集成验证使用隔离实例 `TEST_PG_URL`；退款持久化用例在配置该变量时也连接独立 PG 临时库。此前 MySQL 用例跳过记录属于修正前基线，不作为 PG 验收结果。
 
 原 Java 测试中要求邮件消息不含 `issue_type` 的断言与实际既有行为不一致；本次保留 CS 归集需要的 `issue_type=usage`，将断言校正为该业务契约。
 
 官方参考：[Gmail 附件接口](https://developers.google.com/workspace/gmail/api/reference/rest/v1/users.messages.attachments/get)、[领星评价明细](https://apidoc.lingxing.com/new/api-docs/Service/reviewV2/)。
+2026-11-16 补充：Java 运行依赖、Flyway V1–V6、SQL 和 local/prod 配置已统一为 PostgreSQL；Python 保持 PostgreSQL 支持，并增加 `scripts/test_postgres_native.py`，在随机临时库执行真实 Alembic 升级和 16 项原生业务测试。未迁移共享或生产数据库。
+
+Python 真实 PG 验证需设置 `TEST_NATIVE_PG_CLUSTER=postgresql://<user>:<password>@127.0.0.1:<测试端口>/postgres` 后执行 `python scripts/test_postgres_native.py`。入口只接受回环测试实例，仅创建和删除自己生成的随机临时库。

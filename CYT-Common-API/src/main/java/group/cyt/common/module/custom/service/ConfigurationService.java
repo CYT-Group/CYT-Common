@@ -191,7 +191,7 @@ public class ConfigurationService {
       return;
     }
     if (kind == Kind.CALLBACK) {
-      if (store.one("SELECT id FROM gateway_system WHERE `key`=?", d.get("system")) == null)
+      if (store.one("SELECT id FROM gateway_system WHERE key=?", d.get("system")) == null)
         throw GatewayException.invalid("系统不存在");
       if (JsonUtils.str(d, "platform").isBlank()) throw GatewayException.invalid("平台不能为空");
       URI u = URI.create(JsonUtils.str(d, "url"));
@@ -216,7 +216,7 @@ public class ConfigurationService {
       String module = JsonUtils.str(d, "module_key");
       if (!module.isBlank()) {
         if (!key.startsWith(module + ".")) throw GatewayException.invalid("操作标识必须以模块标识开头");
-        var m = store.one("SELECT * FROM gateway_module WHERE `key`=?", module);
+        var m = store.one("SELECT * FROM gateway_module WHERE key=?", module);
         if (m == null) throw GatewayException.invalid("模块不存在");
         if (base.isBlank()) base = JsonUtils.str(m, "base_url");
       }

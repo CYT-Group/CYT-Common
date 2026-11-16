@@ -10,7 +10,6 @@ import java.nio.charset.StandardCharsets;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.*;
-import org.springframework.dao.DuplicateKeyException;
 import org.springframework.scheduling.annotation.*;
 import org.springframework.stereotype.Service;
 
@@ -39,7 +38,7 @@ public class WecomApprovalEvents {
 
   public String decrypt(
       String system, String signature, String timestamp, String nonce, String encrypted) {
-    var registered = store.one("SELECT enabled FROM gateway_system WHERE `key`=?", system);
+    var registered = store.one("SELECT enabled FROM gateway_system WHERE key=?", system);
     if (registered == null || !JsonUtils.bool(registered.get("enabled")))
       throw GatewayException.forbidden("回调接收系统不存在或已停用");
     return WecomEventCrypto.decrypt(
@@ -98,7 +97,7 @@ public class WecomApprovalEvents {
         engine
             ? List.<Map<String, Object>>of()
             : store.rows(
-                "SELECT DISTINCT `system` FROM gateway_wecom_submission WHERE env=? AND runtime='live' AND profile=? AND approval_no=?",
+                "SELECT DISTINCT system FROM gateway_wecom_submission WHERE env=? AND runtime='live' AND profile=? AND approval_no=?",
                 settings.current(),
                 client.profile(sourceSystem),
                 no);
@@ -108,23 +107,13 @@ public class WecomApprovalEvents {
     store.atomic(
         () -> {
           for (String system : systems) {
-            try {
-              store.insert(
-                  "gateway_wecom_event",
-                  JsonUtils.obj(
-                      "env",
-                      settings.current(),
-                      "system",
-                      system,
-                      "event_id",
-                      eventId,
-                      "approval_no",
-                      no,
-                      "payload_ciphertext",
-                      credentials.encrypt(JsonUtils.write(event))));
-            } catch (DuplicateKeyException ignored) {
-              /* WeCom retries must not fan out twice. */
-            }
+            store.update(
+                "INSERT INTO gateway_wecom_event(env,system,event_id,approval_no,payload_ciphertext) VALUES(?,?,?,?,?) ON CONFLICT DO NOTHING",
+                settings.current(),
+                system,
+                eventId,
+                no,
+                credentials.encrypt(JsonUtils.write(event)));
           }
           return null;
         });
@@ -134,7 +123,7 @@ public class WecomApprovalEvents {
   public void deliverPending() {
     var rows =
         store.rows(
-            "SELECT id,`system`,event_id,payload_ciphertext,attempts FROM gateway_wecom_event WHERE env=? AND delivery_state='pending' AND next_attempt_at<=UTC_TIMESTAMP(6) ORDER BY id LIMIT 20",
+            "SELECT id,system,event_id,payload_ciphertext,attempts FROM gateway_wecom_event WHERE env=? AND delivery_state='pending' AND next_attempt_at<=CURRENT_TIMESTAMP ORDER BY id LIMIT 20",
             settings.current());
     for (var row : rows) {
       long id = ((Number) row.get("id")).longValue();
@@ -143,7 +132,7 @@ public class WecomApprovalEvents {
       // event_id.
       int claimed =
           store.update(
-              "UPDATE gateway_wecom_event SET next_attempt_at=?,attempts=attempts+1 WHERE id=? AND delivery_state='pending' AND next_attempt_at<=UTC_TIMESTAMP(6)",
+              "UPDATE gateway_wecom_event SET next_attempt_at=?,attempts=attempts+1 WHERE id=? AND delivery_state='pending' AND next_attempt_at<=CURRENT_TIMESTAMP",
               Timestamp.from(Instant.now().plusSeconds(120)),
               id);
       if (claimed == 0) continue;

@@ -24,15 +24,12 @@ command -v docker >/dev/null 2>&1 || { echo "ERROR: 没有 docker" >&2; exit 2; 
 [[ -f "$SRC_DIR/deploy/test-server/docker-compose.yml" ]] || {
   echo "ERROR: 找不到 $SRC_DIR/deploy/test-server/docker-compose.yml" >&2; exit 2; }
 
-echo "==> 同步编排文件 → $COMPOSE_FILE"
 $SUDO mkdir -p "$COMPOSE_DIR"
-$SUDO cp "$SRC_DIR/deploy/test-server/docker-compose.yml" "$COMPOSE_FILE"
 
 if [[ ! -f "$ENV_FILE" ]]; then
   echo "==> 首次部署：生成随机密钥到 $ENV_FILE（权限 600）"
   command -v openssl >/dev/null 2>&1 || { echo "ERROR: 需要 openssl 生成密钥" >&2; exit 2; }
   DB_PW="$(openssl rand -hex 16)"
-  ROOT_PW="$(openssl rand -hex 16)"
   JWT="$(openssl rand -hex 32)"
   MASTER="$(openssl rand -hex 32)"
   ADMIN_PW="${INITIAL_ADMIN_PASSWORD:-$(openssl rand -hex 12)}"
@@ -41,11 +38,10 @@ if [[ ! -f "$ENV_FILE" ]]; then
 COMMON_JAVA_IMAGE=192.168.1.182:5000/cyt-common-java:latest
 APP_PORT=8088
 APP_ENV=test
-MYSQL_IMAGE=mysql:8.0
-MYSQL_DATABASE=cyt_common
-MYSQL_USER=cyt_gateway
-MYSQL_PASSWORD=$DB_PW
-MYSQL_ROOT_PASSWORD=$ROOT_PW
+POSTGRES_IMAGE=postgres:17
+POSTGRES_DATABASE=cyt_common
+POSTGRES_USERNAME=cyt_gateway
+POSTGRES_PASSWORD=$DB_PW
 ADMIN_USERNAME=admin
 ADMIN_PASSWORD=$ADMIN_PW
 ADMIN_JWT_SECRET=$JWT
@@ -61,6 +57,15 @@ EOF
 else
   echo "==> 沿用已有 .env（不覆盖密钥、不重置数据库密码）"
 fi
+
+# Reject old MySQL-only environments before replacing the running composition.
+if ! grep -Eq '^POSTGRES_PASSWORD=.+$' "$ENV_FILE"; then
+  echo "ERROR: 缺少 POSTGRES_PASSWORD；先配置 PostgreSQL 并核对数据迁移，不会覆盖旧编排或重建容器。" >&2
+  exit 2
+fi
+$SUDO docker compose -f "$SRC_DIR/deploy/test-server/docker-compose.yml" --env-file "$ENV_FILE" config --quiet
+echo "==> 同步 PostgreSQL 编排文件 → $COMPOSE_FILE"
+$SUDO cp "$SRC_DIR/deploy/test-server/docker-compose.yml" "$COMPOSE_FILE"
 
 echo "==> 重建容器"
 $SUDO docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d 2>&1 | tail -20

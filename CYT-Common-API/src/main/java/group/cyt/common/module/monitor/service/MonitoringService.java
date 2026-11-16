@@ -25,7 +25,7 @@ public class MonitoringService {
     List<Object> args = new ArrayList<>();
     for (String name : List.of("system", "platform", "operation", "status"))
       if (!query.getOrDefault(name, "").isBlank()) {
-        sql.append(" AND `").append(name).append("`=?");
+        sql.append(" AND ").append(name).append("=?");
         args.add(query.get(name));
       }
     if (!query.getOrDefault("q", "").isBlank()) {
@@ -96,10 +96,10 @@ public class MonitoringService {
         store.count(
             "SELECT COUNT(*) FROM gateway_call_log WHERE called_at>=? AND source='seed'", since));
     boolean daily = hours > 48;
-    String fmt = daily ? "%Y-%m-%d" : "%Y-%m-%d %H:00";
+    String fmt = daily ? "YYYY-MM-DD" : "YYYY-MM-DD HH24:00";
     var counts =
         store.rows(
-            "SELECT DATE_FORMAT(called_at,?) AS ts,COUNT(*) AS calls,SUM(CASE WHEN status<>'ok' THEN 1 ELSE 0 END) AS errors FROM gateway_call_log WHERE called_at>=? GROUP BY ts ORDER BY ts",
+            "SELECT TO_CHAR(called_at AT TIME ZONE 'UTC',?) AS ts,COUNT(*) AS calls,SUM(CASE WHEN status<>'ok' THEN 1 ELSE 0 END) AS errors FROM gateway_call_log WHERE called_at>=? GROUP BY ts ORDER BY ts",
             fmt,
             since);
     Map<String, Map<String, Object>> series = new LinkedHashMap<>();
@@ -150,11 +150,11 @@ public class MonitoringService {
 
   private Object group(String field, Timestamp since) {
     return store.rows(
-        "SELECT `"
+        "SELECT "
             + field
-            + "`,COUNT(*) AS calls,SUM(CASE WHEN status<>'ok' THEN 1 ELSE 0 END) AS errors,AVG(latency_ms) AS avg_latency_ms,AVG(CASE WHEN status='ok' THEN 1.0 ELSE 0 END) AS success_rate,COALESCE(SUM(cost_usd),0) AS cost_usd FROM gateway_call_log WHERE called_at>=? GROUP BY `"
+            + ",COUNT(*) AS calls,SUM(CASE WHEN status<>'ok' THEN 1 ELSE 0 END) AS errors,AVG(latency_ms) AS avg_latency_ms,AVG(CASE WHEN status='ok' THEN 1.0 ELSE 0 END) AS success_rate,COALESCE(SUM(cost_usd),0) AS cost_usd FROM gateway_call_log WHERE called_at>=? GROUP BY "
             + field
-            + "` ORDER BY calls DESC LIMIT 100",
+            + " ORDER BY calls DESC LIMIT 100",
         since);
   }
 
@@ -205,13 +205,13 @@ public class MonitoringService {
       result.put(
           field + "s",
           store.rows(
-              "SELECT `"
+              "SELECT "
                   + field
-                  + "` AS `key`,COUNT(*) AS calls,SUM(CASE WHEN status<>'ok' THEN 1 ELSE 0 END) AS errors FROM gateway_call_log"
+                  + " AS key,COUNT(*) AS calls,SUM(CASE WHEN status<>'ok' THEN 1 ELSE 0 END) AS errors FROM gateway_call_log"
                   + f.sql()
-                  + " GROUP BY `"
+                  + " GROUP BY "
                   + field
-                  + "` ORDER BY calls DESC LIMIT 1000",
+                  + " ORDER BY calls DESC LIMIT 1000",
               f.args().toArray()));
     return result;
   }

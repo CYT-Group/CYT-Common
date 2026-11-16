@@ -29,7 +29,7 @@ public class SystemService {
             s -> {
               var keys =
                   store.one(
-                      "SELECT COUNT(*) AS n, MAX(last_used_at) AS last_used FROM gateway_system_apikey WHERE `system`=? AND revoked=false",
+                      "SELECT COUNT(*) AS n, MAX(last_used_at) AS last_used FROM gateway_system_apikey WHERE system=? AND revoked=false",
                       s.getKey());
               return JsonUtils.obj(
                   "id",
@@ -43,9 +43,9 @@ public class SystemService {
                   "enabled",
                   s.getEnabled(),
                   "created_at",
-                  s.getCreatedAt().toInstant(ZoneOffset.UTC).toString(),
+                  s.getCreatedAt().toInstant().toString(),
                   "grant_count",
-                  store.count("SELECT COUNT(*) FROM gateway_grant WHERE `system`=?", s.getKey()),
+                  store.count("SELECT COUNT(*) FROM gateway_grant WHERE system=?", s.getKey()),
                   "apikey_count",
                   keys.get("n"),
                   "last_key_used_at",
@@ -61,7 +61,7 @@ public class SystemService {
     row.setDisplayName(displayName);
     row.setDescription(description);
     row.setEnabled(true);
-    row.setCreatedAt(LocalDateTime.now(ZoneOffset.UTC));
+    row.setCreatedAt(OffsetDateTime.now(ZoneOffset.UTC));
     mapper.insert(row);
     store.audit(actor, "system_create", key, Map.of());
     return row.getId();
@@ -80,13 +80,13 @@ public class SystemService {
 
   public List<Map<String, Object>> keys(String system) {
     return store.rows(
-        "SELECT id,`system`,name,prefix,revoked,created_at,last_used_at FROM gateway_system_apikey WHERE `system`=? ORDER BY id DESC",
+        "SELECT id,system,name,prefix,revoked,created_at,last_used_at FROM gateway_system_apikey WHERE system=? ORDER BY id DESC",
         system);
   }
 
   @Transactional
   public Object createKey(String system, String name, String actor) {
-    if (store.one("SELECT id FROM gateway_system WHERE `key`=?", system) == null)
+    if (store.one("SELECT id FROM gateway_system WHERE key=?", system) == null)
       throw GatewayException.missing("系统不存在");
     String
         prefix =

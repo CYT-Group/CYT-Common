@@ -26,7 +26,7 @@ public class GrantBatchService {
   @Transactional
   public Map<String, Object> preview(Map<String, Object> body) {
     String system = JsonUtils.str(body, "system");
-    if (store.one("SELECT id FROM gateway_system WHERE `key`=? FOR UPDATE", system) == null)
+    if (store.one("SELECT id FROM gateway_system WHERE key=? FOR UPDATE", system) == null)
       throw GatewayException.invalid("系统不存在");
     String effect = JsonUtils.str(body, "effect");
     if (!Set.of("allow", "deny").contains(effect))
@@ -40,7 +40,7 @@ public class GrantBatchService {
       var op = registry.get(key);
       selected.put(op.key(), op);
     }
-    var grants = store.rows("SELECT * FROM gateway_grant WHERE `system`=? ORDER BY id", system);
+    var grants = store.rows("SELECT * FROM gateway_grant WHERE system=? ORDER BY id", system);
     var items = new ArrayList<Map<String, Object>>();
     boolean target = effect.equals("allow");
     for (var op : selected.values()) {

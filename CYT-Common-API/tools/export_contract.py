@@ -1,5 +1,4 @@
 """Development-only contract snapshot. No database access or credential values."""
-import ast
 import json
 import sys
 from dataclasses import asdict
@@ -12,7 +11,6 @@ ROOT = Path(sys.argv[1]).resolve() if len(sys.argv) > 1 else Path('D:/code/cyt-c
 sys.path.insert(0, str(ROOT))
 from gateway import registry, models, naming, credentials_spec
 from gateway.seed import SYSTEMS, GRANTS
-from sqlalchemy import Boolean, DateTime, Float, Integer, String, Text, UniqueConstraint
 
 
 def referenced_models(annotation):
@@ -73,37 +71,5 @@ from gateway.adapters import shopify
 queries = {name: value for name, value in vars(shopify).items() if name.startswith('_') and name.isupper() and isinstance(value, str) and ('QUERY' in name or 'MUTATION' in name)}
 (DEST / 'shopify-queries.json').write_text(json.dumps(queries, ensure_ascii=False, indent=2), encoding='utf-8')
 
-ddl = ['-- Generated from the original SQLAlchemy models. MySQL 8.0.13+ / 8.4.\n-- Identifiers and idempotency keys are case-sensitive. All timestamps are UTC.']
-for table in models.Base.metadata.sorted_tables:
-    cols = []
-    for c in table.columns:
-        if isinstance(c.type, Boolean): typ = 'BOOLEAN'
-        elif isinstance(c.type, Integer): typ = 'BIGINT' if c.primary_key else 'INT'
-        elif isinstance(c.type, Float): typ = 'DOUBLE'
-        elif isinstance(c.type, DateTime): typ = 'DATETIME(6)'
-        elif isinstance(c.type, Text): typ = 'LONGTEXT'
-        elif isinstance(c.type, String): typ = f'VARCHAR({c.type.length})'
-        else: raise ValueError(c.type)
-        line = f'  `{c.name}` {typ}'
-        if not c.nullable: line += ' NOT NULL'
-        if c.primary_key: line += ' AUTO_INCREMENT PRIMARY KEY'
-        elif c.default is not None:
-            val = c.default.arg
-            if callable(val): line += ' DEFAULT CURRENT_TIMESTAMP(6)'
-            elif isinstance(val, bool): line += f' DEFAULT {1 if val else 0}'
-            elif isinstance(val, (int, float)): line += f' DEFAULT {val}'
-            else:
-                val = str(val).replace("'", "''")
-                line += f" DEFAULT ('{val}')" if isinstance(c.type, Text) else f" DEFAULT '{val}'"
-        cols.append(line)
-    for c in table.constraints:
-        if isinstance(c, UniqueConstraint):
-            cols.append('  UNIQUE (' + ','.join(f'`{col.name}`' for col in c.columns) + ')')
-    for idx in sorted(table.indexes, key=lambda x: x.name):
-        cols.append('  ' + ('UNIQUE ' if idx.unique else '') + f'INDEX `{idx.name}` (' + ','.join(f'`{col.name}`' for col in idx.columns) + ')')
-    ddl.append(f'CREATE TABLE `{table.name}` (\n' + ',\n'.join(cols) + '\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;')
-# Atomic claim BEFORE upstream effects, shared across replicas; old successful records migrate unchanged.
-ddl.append("ALTER TABLE gateway_idempotency ADD COLUMN state VARCHAR(16) NOT NULL DEFAULT 'complete';")
-(DEST / 'db/migration').mkdir(parents=True, exist_ok=True)
-(DEST / 'db/migration/V1__gateway.sql').write_text('\n\n'.join(ddl) + '\n', encoding='utf-8')
-print(f'Exported {len(ops)} operations, {len(platforms)} platforms, {len(models.Base.metadata.tables)} tables; no secrets exported.')
+# Flyway migrations are maintained independently; metadata exports never rewrite them.
+print(f'Exported {len(ops)} operations, {len(platforms)} platforms; no migrations or secrets exported.')

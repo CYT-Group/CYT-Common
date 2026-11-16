@@ -72,7 +72,7 @@ public class GatewayExecutor {
         if (!requestId.isBlank() && !requestId.equals(idempotencyKey))
           throw GatewayException.invalid("request_id 与 Idempotency-Key 必须一致");
       }
-      var enabled = store.one("SELECT enabled FROM gateway_system WHERE `key`=?", system);
+      var enabled = store.one("SELECT enabled FROM gateway_system WHERE key=?", system);
       if (enabled == null || !JsonUtils.bool(enabled.get("enabled")))
         throw GatewayException.forbidden("系统未注册或已停用");
       String effectiveQuota = authorization.check(system, op);
@@ -105,7 +105,7 @@ public class GatewayExecutor {
         } catch (DuplicateKeyException e) {
           var old =
               store.one(
-                  "SELECT * FROM gateway_idempotency WHERE `system`=? AND `key`=?",
+                  "SELECT * FROM gateway_idempotency WHERE system=? AND key=?",
                   system,
                   idempotencyKey);
           if (old == null) throw e;

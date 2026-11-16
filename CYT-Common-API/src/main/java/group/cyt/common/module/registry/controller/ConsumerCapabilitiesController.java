@@ -37,10 +37,10 @@ public class ConsumerCapabilitiesController {
   @GetMapping("/consumer-openapi/{system}")
   public ResponseEntity<Object> export(
       @PathVariable String system, @RequestParam(defaultValue = "all") String direction) {
-    var caller = store.one("SELECT * FROM gateway_system WHERE `key`=?", system);
+    var caller = store.one("SELECT * FROM gateway_system WHERE key=?", system);
     if (caller == null) throw GatewayException.missing("调用方系统不存在");
     if (!JsonUtils.bool(caller.get("enabled"))) throw GatewayException.forbidden("调用方系统已停用");
-    var grants = store.rows("SELECT * FROM gateway_grant WHERE `system`=?", system);
+    var grants = store.rows("SELECT * FROM gateway_grant WHERE system=?", system);
     var operations =
         contracts.filter(registry.operations(), direction).stream()
             .filter(op -> JsonUtils.bool(authorization.decision(op, grants).get("allowed")))

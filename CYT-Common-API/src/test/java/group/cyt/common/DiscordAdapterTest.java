@@ -221,12 +221,13 @@ class DiscordAdapterTest {
 
   private Database database() throws Exception {
     var ds = new JdbcDataSource();
-    ds.setURL("jdbc:h2:mem:discord_" + UUID.randomUUID() + ";MODE=MySQL;DB_CLOSE_DELAY=-1");
+    ds.setURL(
+        "jdbc:h2:mem:discord_"
+            + UUID.randomUUID()
+            + ";MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1");
     var jdbc = new JdbcTemplate(ds);
     try (var input = getClass().getResourceAsStream("/db/migration/V6__discord_gateway.sql")) {
-      String sql =
-          new String(Objects.requireNonNull(input).readAllBytes(), StandardCharsets.UTF_8)
-              .replaceAll("\\) ENGINE=[^;]+;", ");");
+      String sql = new String(Objects.requireNonNull(input).readAllBytes(), StandardCharsets.UTF_8);
       for (String statement : sql.split(";")) if (!statement.isBlank()) jdbc.execute(statement);
     }
     var store = spy(new GatewayStore(jdbc, new DataSourceTransactionManager(ds)));

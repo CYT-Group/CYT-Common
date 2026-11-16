@@ -25,7 +25,7 @@ public class GatewayBootstrap implements ApplicationRunner {
   @Override
   public void run(ApplicationArguments args) {
     var environment =
-        store.one("SELECT * FROM gateway_environment WHERE `key`=?", settings.current());
+        store.one("SELECT * FROM gateway_environment WHERE key=?", settings.current());
     boolean production =
         settings.production()
             || environment != null && JsonUtils.bool(environment.get("is_production"));
@@ -62,7 +62,7 @@ public class GatewayBootstrap implements ApplicationRunner {
         () -> {
           for (var s : registry.contract().path("systems")) {
             String key = s.path("key").asText();
-            if (store.count("SELECT COUNT(*) FROM gateway_system WHERE `key`=?", key) == 0)
+            if (store.count("SELECT COUNT(*) FROM gateway_system WHERE key=?", key) == 0)
               store.insert(
                   "gateway_system",
                   JsonUtils.obj(
@@ -79,7 +79,7 @@ public class GatewayBootstrap implements ApplicationRunner {
             String system = g.path("system").asText(),
                 pattern = g.path("operation_pattern").asText();
             if (store.count(
-                    "SELECT COUNT(*) FROM gateway_grant WHERE `system`=? AND operation_pattern=?",
+                    "SELECT COUNT(*) FROM gateway_grant WHERE system=? AND operation_pattern=?",
                     system,
                     pattern)
                 == 0)
@@ -98,7 +98,7 @@ public class GatewayBootstrap implements ApplicationRunner {
                       "seed"));
           }
           for (String key : List.of("local", "staging", "production"))
-            if (store.count("SELECT COUNT(*) FROM gateway_environment WHERE `key`=?", key) == 0)
+            if (store.count("SELECT COUNT(*) FROM gateway_environment WHERE key=?", key) == 0)
               store.insert(
                   "gateway_environment",
                   JsonUtils.obj(

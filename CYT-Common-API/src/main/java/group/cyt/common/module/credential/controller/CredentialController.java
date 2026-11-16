@@ -81,7 +81,7 @@ public class CredentialController {
   }
 
   private Map<String, Object> env(String key) {
-    var e = store.one("SELECT * FROM gateway_environment WHERE `key`=?", key);
+    var e = store.one("SELECT * FROM gateway_environment WHERE key=?", key);
     if (e == null) throw GatewayException.invalid("环境不存在: " + key);
     return e;
   }
@@ -99,7 +99,7 @@ public class CredentialController {
         "platforms",
         settings.current().equals(key) ? secrets.inventory(enabledSystemKeys()) : List.of(),
         "systems",
-        store.rows("SELECT `key`,display_name FROM gateway_system WHERE enabled=true"),
+        store.rows("SELECT key,display_name FROM gateway_system WHERE enabled=true"),
         "portal_system",
         "portal",
         "db_secrets",
@@ -158,7 +158,7 @@ public class CredentialController {
     env(key);
     if (!settings.current().equals(key)) throw GatewayException.invalid("复制共享凭据仅支持当前运行环境");
     String platform = JsonUtils.str(body, "platform"), system = JsonUtils.str(body, "system");
-    if (store.one("SELECT id FROM gateway_system WHERE `key`=?", system) == null)
+    if (store.one("SELECT id FROM gateway_system WHERE key=?", system) == null)
       throw GatewayException.invalid("系统不存在");
     Map<String, String> values = new LinkedHashMap<>();
     for (var p : registry.contract().path("credentials"))
@@ -198,7 +198,7 @@ public class CredentialController {
   }
 
   private List<String> enabledSystemKeys() {
-    return store.rows("SELECT `key` FROM gateway_system WHERE enabled=true").stream()
+    return store.rows("SELECT key FROM gateway_system WHERE enabled=true").stream()
         .map(r -> JsonUtils.str(r, "key"))
         .toList();
   }

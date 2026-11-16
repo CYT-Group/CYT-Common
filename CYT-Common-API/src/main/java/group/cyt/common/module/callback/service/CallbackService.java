@@ -30,7 +30,7 @@ public class CallbackService {
       return JsonUtils.obj("delivered", false, "reason", "no_system", "http_status", null);
     var config =
         store.one(
-            "SELECT * FROM gateway_callback WHERE `system`=? AND (platform=? OR platform='*') AND enabled=true ORDER BY CASE WHEN platform=? THEN 0 ELSE 1 END LIMIT 1",
+            "SELECT * FROM gateway_callback WHERE system=? AND (platform=? OR platform='*') AND enabled=true ORDER BY CASE WHEN platform=? THEN 0 ELSE 1 END LIMIT 1",
             system,
             platform,
             platform);
