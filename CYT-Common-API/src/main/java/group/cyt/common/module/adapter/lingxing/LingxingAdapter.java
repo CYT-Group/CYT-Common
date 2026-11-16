@@ -346,8 +346,11 @@ public class LingxingAdapter implements PlatformAdapter {
   public Object invoke(OperationDefinition op, Map<String, Object> p, String system) {
     String key = op.key().substring("lingxing.".length());
     String account = JsonUtils.str(p, "account");
+    if (Set.of("workorder.add", "workorder.audit", "refund.create").contains(key))
+      writePolicy.requireTarget("lingxing", account(account, system));
     return switch (key) {
       case "aftersales.reasons" -> aftersalesReasons(op, account, p, system);
+      case "reviews.list" -> reviewsList(account, p, system);
       case "messages.list" -> messagesList(op, account, p, system);
       case "messages.detail" ->
           data(
@@ -642,6 +645,151 @@ public class LingxingAdapter implements PlatformAdapter {
         !rows.isEmpty() && next < total,
         "cursor",
         JsonUtils.obj("offset", next, "start_date", window[0], "end_date", window[1]));
+  }
+
+  private Object reviewsList(String account, Map<String, Object> p, String system) {
+    LocalDate start, end;
+    try {
+      start = LocalDate.parse(JsonUtils.str(p, "start_date"));
+      end = LocalDate.parse(JsonUtils.str(p, "end_date"));
+    } catch (RuntimeException e) {
+      throw GatewayException.invalid("评价日期必须为有效的 YYYY-MM-DD");
+    }
+    if (start.isBefore(LocalDate.of(1970, 1, 1)) || start.isAfter(end))
+      throw GatewayException.invalid("评价日期范围无效；不会自动截短历史范围");
+    Object rawPage = JsonUtils.map(p.get("cursor")).getOrDefault("page", 1);
+    if (!(rawPage instanceof Number n)
+        || n.doubleValue() != n.longValue()
+        || n.longValue() < 1
+        || n.longValue() > Integer.MAX_VALUE) throw GatewayException.invalid("评价分页游标 page 必须为正整数");
+    long page = ((Number) rawPage).longValue();
+    int limit = JsonUtils.integer(p.get("limit"), 100);
+    long offset = (page - 1) * limit;
+    var out =
+        post(
+            account,
+            "/basicOpen/openapi/service/v3/data/mws/reviews",
+            clean(
+                JsonUtils.obj(
+                    "date_field",
+                    "review_time",
+                    "start_date",
+                    start.toString(),
+                    "end_date",
+                    end.toString(),
+                    "sort_field",
+                    "review_date",
+                    "sort_type",
+                    "asc",
+                    "star",
+                    "1,2,3",
+                    "sids",
+                    p.get("sids"),
+                    "offset",
+                    offset,
+                    "length",
+                    limit)),
+            system);
+    long total;
+    try {
+      total = new java.math.BigDecimal(String.valueOf(out.get("total"))).longValueExact();
+      if (total < 0) throw new IllegalArgumentException();
+    } catch (RuntimeException e) {
+      throw new GatewayException(502, "upstream_error", "领星评价未返回有效总条数，未推进分页", false);
+    }
+    if (!(out.get("data") instanceof List<?> rows)
+        || rows.size() > limit
+        || rows.stream().anyMatch(row -> !(row instanceof Map))
+        || rows.isEmpty() && offset < total
+        || !rows.isEmpty() && offset + rows.size() > total
+        || rows.size() < limit && offset + rows.size() < total)
+      throw new GatewayException(502, "upstream_error", "领星评价分页总数与明细不一致，未推进分页", false);
+    var items = new ArrayList<Object>();
+    Set<String> ids = new HashSet<>();
+    for (Object raw : (List<?>) out.get("data")) {
+      var row = reviewRow(JsonUtils.map(raw));
+      if (!ids.add(JsonUtils.str(row, "id")))
+        throw new GatewayException(502, "upstream_error", "领星同页评价包含重复 Review ID，未推进分页", false);
+      items.add(row);
+    }
+    return JsonUtils.obj(
+        "items",
+        items,
+        "total",
+        total,
+        "has_more",
+        offset + items.size() < total,
+        "cursor",
+        JsonUtils.obj("page", page + 1),
+        "start_date",
+        start.toString(),
+        "end_date",
+        end.toString());
+  }
+
+  private static Map<String, Object> reviewRow(Map<String, Object> row) {
+    String identity = JsonUtils.str(row, "review_id").strip();
+    boolean deleted = "-1".equals(String.valueOf(row.get("review_modified_status")));
+    Integer rating = null;
+    try {
+      if (row.get("last_star") != null) {
+        rating = new java.math.BigDecimal(row.get("last_star").toString()).intValueExact();
+        if (rating < 1 || rating > 5) throw new IllegalArgumentException();
+      }
+    } catch (RuntimeException e) {
+      throw new GatewayException(502, "upstream_error", "领星评价星级无效，未推进分页", false);
+    }
+    if (identity.isEmpty() || rating == null && !deleted)
+      throw new GatewayException(502, "upstream_error", "领星评价缺少 Review ID 或星级，未推进分页", false);
+    Object local = row.getOrDefault("local_info", List.of());
+    if (local == null) local = List.of();
+    if (!(local instanceof List<?>))
+      throw new GatewayException(502, "upstream_error", "领星评价商品信息格式无效", false);
+    Set<String> skus = new LinkedHashSet<>(),
+        names = new LinkedHashSet<>(),
+        emails = new LinkedHashSet<>();
+    for (Object item : (List<?>) local) {
+      if (!(item instanceof Map)) continue;
+      var product = JsonUtils.map(item);
+      if (!JsonUtils.str(product, "local_sku").isBlank())
+        skus.add(JsonUtils.str(product, "local_sku").strip());
+      if (!JsonUtils.str(product, "local_name").isBlank())
+        names.add(JsonUtils.str(product, "local_name").strip());
+    }
+    Object rawEmails = row.get("buyer_email");
+    if (rawEmails == null || rawEmails.equals("")) rawEmails = List.of();
+    if (rawEmails instanceof String) rawEmails = List.of(rawEmails);
+    if (!(rawEmails instanceof List<?>))
+      throw new GatewayException(502, "upstream_error", "领星评价邮箱格式无效", false);
+    for (Object email : (List<?>) rawEmails)
+      if (email instanceof String value && !value.isBlank()) emails.add(value.strip());
+    return JsonUtils.obj(
+        "id",
+        identity,
+        "rating",
+        rating,
+        "title",
+        JsonUtils.str(row, "last_title"),
+        "content",
+        JsonUtils.str(row, "last_content"),
+        "customer_name",
+        row.get("author"),
+        "customer_email",
+        emails.size() == 1 ? emails.iterator().next() : null,
+        "review_date",
+        row.get("review_date"),
+        "review_url",
+        row.get("review_url"),
+        "asin",
+        row.get("asin"),
+        "sku",
+        skus.size() == 1 ? skus.iterator().next() : null,
+        "product_name",
+        names.size() == 1 ? names.iterator().next() : null,
+        "deleted",
+        deleted,
+        "raw",
+        row);
   }
 
   /** Lingxing requires both dates; the window travels with the cursor so paging cannot drift. */

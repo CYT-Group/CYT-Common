@@ -456,8 +456,8 @@ class NativeAdapterTest {
                 "2026-11-05"));
     var result = JsonUtils.map(adapter.invoke(op, params, "fixture"));
     assertEquals("2026-11-01", JsonUtils.map(result.get("cursor")).get("start_date"));
-    assertFalse(
-        JsonUtils.map(JsonUtils.list(result.get("items")).getFirst()).containsKey("issue_type"));
+    assertEquals(
+        "usage", JsonUtils.map(JsonUtils.list(result.get("items")).getFirst()).get("issue_type"));
     params.put("start_date", "invalid");
     assertThrows(GatewayException.class, () -> adapter.invoke(op, params, "fixture"));
   }

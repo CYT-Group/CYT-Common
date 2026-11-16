@@ -1,0 +1,2691 @@
+[
+  {
+    "key": "discord.accounts.list",
+    "platform": "discord",
+    "quota": "120/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "read"
+    ],
+    "path": "/integrations/discord/accounts/list",
+    "schema_sha256": "21fefb4a8357eb06d02eee47cbb26f43fc544da09f8f54e5f93f74d37e9fbd01"
+  },
+  {
+    "key": "discord.bots.list",
+    "platform": "discord",
+    "quota": "120/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "read"
+    ],
+    "path": "/integrations/discord/bots/list",
+    "schema_sha256": "f0b6612372b15fef499148b57751067703c450057463de3d4b747ed8fe374034"
+  },
+  {
+    "key": "discord.channels.get",
+    "platform": "discord",
+    "quota": "120/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "read"
+    ],
+    "path": "/integrations/discord/channels/get",
+    "schema_sha256": "81214210fff69e6c950ae3190634a25645978b7de1d40b976a374afb4b95536c"
+  },
+  {
+    "key": "discord.channels.list",
+    "platform": "discord",
+    "quota": "120/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "read"
+    ],
+    "path": "/integrations/discord/channels/list",
+    "schema_sha256": "f0b6612372b15fef499148b57751067703c450057463de3d4b747ed8fe374034"
+  },
+  {
+    "key": "discord.events.list",
+    "platform": "discord",
+    "quota": "120/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "read"
+    ],
+    "path": "/integrations/discord/events/list",
+    "schema_sha256": "362eec1e86cdea1ed567c44ab7857241598f243477993754586b2500073737a7"
+  },
+  {
+    "key": "discord.guilds.list",
+    "platform": "discord",
+    "quota": "120/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "read"
+    ],
+    "path": "/integrations/discord/guilds/list",
+    "schema_sha256": "21fefb4a8357eb06d02eee47cbb26f43fc544da09f8f54e5f93f74d37e9fbd01"
+  },
+  {
+    "key": "discord.identity.get",
+    "platform": "discord",
+    "quota": "120/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "read"
+    ],
+    "path": "/integrations/discord/identity/get",
+    "schema_sha256": "21fefb4a8357eb06d02eee47cbb26f43fc544da09f8f54e5f93f74d37e9fbd01"
+  },
+  {
+    "key": "discord.messages.get",
+    "platform": "discord",
+    "quota": "120/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "read"
+    ],
+    "path": "/integrations/discord/messages/get",
+    "schema_sha256": "20c2387e3563694d1aad08e653aa859133b93131959884e39bebf806d1f24a1c"
+  },
+  {
+    "key": "discord.messages.list",
+    "platform": "discord",
+    "quota": "120/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "read"
+    ],
+    "path": "/integrations/discord/messages/list",
+    "schema_sha256": "0ed9a6772f793ec0d8d4f0e3183f9a5ddcd110e72cc73896fcfd71cd0acd1ea7"
+  },
+  {
+    "key": "discord.messages.send",
+    "platform": "discord",
+    "quota": "120/min",
+    "sensitive": true,
+    "idempotent": true,
+    "retry_max": 0,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "write"
+    ],
+    "path": "/integrations/discord/messages/send",
+    "schema_sha256": "15f74f02ee28e2a556a979dd4614693cd074467bcc36422afdb7eb81da1b07a4"
+  },
+  {
+    "key": "discord.threads.list",
+    "platform": "discord",
+    "quota": "120/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "read"
+    ],
+    "path": "/integrations/discord/threads/list",
+    "schema_sha256": "29670c223fa648992036982c7a2ec0abeadcaad01a75115d84763b4b8a899ac8"
+  },
+  {
+    "key": "docusign.envelopes.collect",
+    "platform": "docusign",
+    "quota": "60/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 90,
+    "deprecated": false,
+    "tags": [
+      "read",
+      "business"
+    ],
+    "path": "/integrations/docusign/envelopes/collect",
+    "schema_sha256": "c3dc01ab345ff71b9a880550706f5bd4b4842c8bb7ea175410c0ffdb9c632554"
+  },
+  {
+    "key": "docusign.envelopes.create",
+    "platform": "docusign",
+    "quota": "30/min",
+    "sensitive": false,
+    "idempotent": true,
+    "retry_max": 1,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "write",
+      "money"
+    ],
+    "path": "/integrations/docusign/envelopes/create",
+    "schema_sha256": "339e70fedf8298daa310ba5823f320af08589b627d2028ecf283de2fd912f536"
+  },
+  {
+    "key": "docusign.envelopes.get",
+    "platform": "docusign",
+    "quota": "120/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "read"
+    ],
+    "path": "/integrations/docusign/envelopes/get",
+    "schema_sha256": "efd94c1033b07cb8c7f87b90d422b2b66703b310d3ac84255c0a6b80a931f9d2"
+  },
+  {
+    "key": "docusign.envelopes.list",
+    "platform": "docusign",
+    "quota": "60/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "read"
+    ],
+    "path": "/integrations/docusign/envelopes/list",
+    "schema_sha256": "fb6a557c168fd79c5cd2121b3ea9d3897d18c52a9647903c6afad64427d166df"
+  },
+  {
+    "key": "docusign.envelopes.void",
+    "platform": "docusign",
+    "quota": "10/min",
+    "sensitive": true,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "write",
+      "danger"
+    ],
+    "path": "/integrations/docusign/envelopes/void",
+    "schema_sha256": "8f6a9acf92a319208e25c0495eb63d34379b1c03b4396c778072956e0d65cd44"
+  },
+  {
+    "key": "docusign.templates.collect",
+    "platform": "docusign",
+    "quota": "60/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 90,
+    "deprecated": false,
+    "tags": [
+      "read",
+      "business"
+    ],
+    "path": "/integrations/docusign/templates/collect",
+    "schema_sha256": "d6332cb32c8a97443c93dbb4df2082400150791347bad27da454666ca648d8d6"
+  },
+  {
+    "key": "docusign.templates.get",
+    "platform": "docusign",
+    "quota": "60/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 90,
+    "deprecated": false,
+    "tags": [
+      "read",
+      "business"
+    ],
+    "path": "/integrations/docusign/templates/get",
+    "schema_sha256": "c8490821c9aef8015f34b572e751cceeb5135886c314a8d2b7b2b49c83b72ac2"
+  },
+  {
+    "key": "docusign.templates.list",
+    "platform": "docusign",
+    "quota": "60/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "read"
+    ],
+    "path": "/integrations/docusign/templates/list",
+    "schema_sha256": "f5617d9d1e056e2ec5387609c5dc00dfe67fbb4d48a8fad70c91988d4f845ab7"
+  },
+  {
+    "key": "docusign.testing.advance",
+    "platform": "docusign",
+    "quota": "120/min",
+    "sensitive": true,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "mock"
+    ],
+    "path": "/integrations/docusign/testing/advance",
+    "schema_sha256": "d96d6791e63d9e5f5c025c44aba5d23285421641bcc2b5cf2fa2d8da8f17ba38"
+  },
+  {
+    "key": "gcs.objects.collect",
+    "platform": "gcs",
+    "quota": "120/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 90,
+    "deprecated": false,
+    "tags": [
+      "read",
+      "business",
+      "collection"
+    ],
+    "path": "/integrations/gcs/objects/collect",
+    "schema_sha256": "1f80f4332ae40095ff9b272e019c1166e6876a5817e6c05f87c691e8552376d9"
+  },
+  {
+    "key": "gcs.objects.delete",
+    "platform": "gcs",
+    "quota": "30/min",
+    "sensitive": true,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "write",
+      "danger"
+    ],
+    "path": "/integrations/gcs/objects/delete",
+    "schema_sha256": "9a87bee2b006b5f335d4b3887eed76402c0972402c1f1c5ace476d791a90ed41"
+  },
+  {
+    "key": "gcs.objects.get_metadata",
+    "platform": "gcs",
+    "quota": "300/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 3,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "read"
+    ],
+    "path": "/integrations/gcs/objects/get-metadata",
+    "schema_sha256": "9a87bee2b006b5f335d4b3887eed76402c0972402c1f1c5ace476d791a90ed41"
+  },
+  {
+    "key": "gcs.objects.list",
+    "platform": "gcs",
+    "quota": "120/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 3,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "read"
+    ],
+    "path": "/integrations/gcs/objects/list",
+    "schema_sha256": "6931d56c1ca809f61aa160d561b49d3395e3c6cc614620788b3a0b03eb98daf7"
+  },
+  {
+    "key": "gcs.objects.upload",
+    "platform": "gcs",
+    "quota": "60/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 120,
+    "deprecated": false,
+    "tags": [
+      "write"
+    ],
+    "path": "/integrations/gcs/objects/upload",
+    "schema_sha256": "91b035ac2fd48186598abbc6ff017c29e992224691ed6ac98ef25f1a25c0e5db"
+  },
+  {
+    "key": "gdrive.files.get",
+    "platform": "gdrive",
+    "quota": "300/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 3,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "read"
+    ],
+    "path": "/integrations/gdrive/files/get",
+    "schema_sha256": "cd3d00a8a64b129e8a730a9ddde78c306f0bb72829c94b40397410da398e3382"
+  },
+  {
+    "key": "gdrive.files.list",
+    "platform": "gdrive",
+    "quota": "300/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 3,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "read"
+    ],
+    "path": "/integrations/gdrive/files/list",
+    "schema_sha256": "d91ad3516bcf6f8b9ffc06795bcad5390781ed81cabfdf47654ace52dcb8739b"
+  },
+  {
+    "key": "gdrive.files.search",
+    "platform": "gdrive",
+    "quota": "300/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 90,
+    "deprecated": false,
+    "tags": [
+      "read",
+      "business",
+      "collection"
+    ],
+    "path": "/integrations/gdrive/files/search",
+    "schema_sha256": "f81e33e8ebc1cee12c56623a958aef45755b48eaec224815c1bc8767a195a1f9"
+  },
+  {
+    "key": "gdrive.files.upload",
+    "platform": "gdrive",
+    "quota": "60/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 60,
+    "deprecated": false,
+    "tags": [
+      "write"
+    ],
+    "path": "/integrations/gdrive/files/upload",
+    "schema_sha256": "9290bcb76ddf4f29b430d984349f3ea9f5659df719a39ef992bc1c4723c5ff7b"
+  },
+  {
+    "key": "gdrive.folders.create",
+    "platform": "gdrive",
+    "quota": "60/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "write"
+    ],
+    "path": "/integrations/gdrive/folders/create",
+    "schema_sha256": "467a6ab3201472b2562c5b32544ea75ee466a8388d86b392f9cc0bc992325fdc"
+  },
+  {
+    "key": "gmail.attachments.get",
+    "platform": "gmail",
+    "quota": "120/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 2,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "read"
+    ],
+    "path": "/integrations/gmail/attachments/get",
+    "schema_sha256": "cb1583a9456099791ab2fe35f61d11cdfc10bb09f5b1013dd60c6515abc5b544"
+  },
+  {
+    "key": "gmail.labels.list",
+    "platform": "gmail",
+    "quota": "120/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 3,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "read"
+    ],
+    "path": "/integrations/gmail/labels/list",
+    "schema_sha256": "f235a728e961c45d9dcb2920e3b1fc5ecb8364715e7dc8c7dfbf6bb5ffb04cb2"
+  },
+  {
+    "key": "gmail.messages.get",
+    "platform": "gmail",
+    "quota": "600/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 3,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "read",
+      "hot"
+    ],
+    "path": "/integrations/gmail/messages/get",
+    "schema_sha256": "aa2c6431d9ffc5d856901f50144e2596e122cddb02590b25303e5000483de9cb"
+  },
+  {
+    "key": "gmail.messages.list",
+    "platform": "gmail",
+    "quota": "600/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 3,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "read",
+      "hot"
+    ],
+    "path": "/integrations/gmail/messages/list",
+    "schema_sha256": "391e9fc656c7dd92c229674ba5606c51649be5d4e0e64bd05c51f03077b082cb"
+  },
+  {
+    "key": "gmail.messages.restore_from_spam",
+    "platform": "gmail",
+    "quota": "60/min",
+    "sensitive": true,
+    "idempotent": true,
+    "retry_max": 1,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "write"
+    ],
+    "path": "/integrations/gmail/messages/restore-from-spam",
+    "schema_sha256": "23c16b38617192ef9c476176e39c3ff3037d2d0038c72d046c8694ef953eda36"
+  },
+  {
+    "key": "gmail.messages.search",
+    "platform": "gmail",
+    "quota": "600/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 90,
+    "deprecated": false,
+    "tags": [
+      "read",
+      "business",
+      "collection"
+    ],
+    "path": "/integrations/gmail/messages/search",
+    "schema_sha256": "23e711928c3596dd490ab7f35a6919acdf07e86c19ede83a77630275fabc9ae1"
+  },
+  {
+    "key": "gmail.messages.send",
+    "platform": "gmail",
+    "quota": "60/min",
+    "sensitive": true,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "write",
+      "danger"
+    ],
+    "path": "/integrations/gmail/messages/send",
+    "schema_sha256": "618229766bf0aa4da98ad6e12459c0fb6a47c175c4a0d25c2a8e30f0b6a76398"
+  },
+  {
+    "key": "gmail.profile.get",
+    "platform": "gmail",
+    "quota": "120/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 3,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "read"
+    ],
+    "path": "/integrations/gmail/profile/get",
+    "schema_sha256": "f235a728e961c45d9dcb2920e3b1fc5ecb8364715e7dc8c7dfbf6bb5ffb04cb2"
+  },
+  {
+    "key": "judgeme.replies.list",
+    "platform": "judgeme",
+    "quota": "30/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 60,
+    "deprecated": false,
+    "tags": [
+      "read"
+    ],
+    "path": "/integrations/judgeme/replies/list",
+    "schema_sha256": "0d37743386fba73ae1f9844964ed524790282d09b1e2dcd0154311e53125a335"
+  },
+  {
+    "key": "judgeme.reviews.collect",
+    "platform": "judgeme",
+    "quota": "30/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 90,
+    "deprecated": false,
+    "tags": [
+      "read",
+      "business",
+      "collection"
+    ],
+    "path": "/integrations/judgeme/reviews/collect",
+    "schema_sha256": "b3f4ecf0c4598d81fcbe2c8fee72fe64f47dac95d6a28b4bbd0fd0275f63bfb4"
+  },
+  {
+    "key": "judgeme.reviews.list",
+    "platform": "judgeme",
+    "quota": "30/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 120,
+    "deprecated": false,
+    "tags": [
+      "read"
+    ],
+    "path": "/integrations/judgeme/reviews/list",
+    "schema_sha256": "0d37743386fba73ae1f9844964ed524790282d09b1e2dcd0154311e53125a335"
+  },
+  {
+    "key": "judgeme.reviews.reply",
+    "platform": "judgeme",
+    "quota": "30/min",
+    "sensitive": true,
+    "idempotent": true,
+    "retry_max": 1,
+    "timeout_s": 30,
+    "deprecated": false,
+    "tags": [
+      "write"
+    ],
+    "path": "/integrations/judgeme/reviews/reply",
+    "schema_sha256": "fe8a924d64558eb17ecce539390025425040c1de83201407290f18fcaf751e91"
+  },
+  {
+    "key": "lingxing.aftersales.reasons",
+    "platform": "lingxing",
+    "quota": "60/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "read"
+    ],
+    "path": "/integrations/lingxing/aftersales/reasons",
+    "schema_sha256": "5a2e88fdc8a27ec633026b77c1f74aacd4f9110fea8f433ab260f167e2dbd128"
+  },
+  {
+    "key": "lingxing.inventory.fba",
+    "platform": "lingxing",
+    "quota": "60/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "read",
+      "inventory"
+    ],
+    "path": "/integrations/lingxing/inventory/fba",
+    "schema_sha256": "8050f12e8f019301391ecf5927f31f0a87a64dda716111524396bfef138dd70f"
+  },
+  {
+    "key": "lingxing.inventory.list",
+    "platform": "lingxing",
+    "quota": "60/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "read",
+      "inventory"
+    ],
+    "path": "/integrations/lingxing/inventory/list",
+    "schema_sha256": "6a8c09ca6aa79d829130410253b6487bf5ff69222a02e4e8b5a154f130bdcf3b"
+  },
+  {
+    "key": "lingxing.listing.list",
+    "platform": "lingxing",
+    "quota": "60/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "read",
+      "inventory"
+    ],
+    "path": "/integrations/lingxing/listing/list",
+    "schema_sha256": "237b290a378f303cad743a823e743fc9ffa1b820dd0371ab0c219ef87510b80a"
+  },
+  {
+    "key": "lingxing.messages.detail",
+    "platform": "lingxing",
+    "quota": "60/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "read",
+      "message"
+    ],
+    "path": "/integrations/lingxing/messages/detail",
+    "schema_sha256": "be90d7fed1de765bb47e6d11b0302f274aede87fea5165061340198b4275d372"
+  },
+  {
+    "key": "lingxing.messages.list",
+    "platform": "lingxing",
+    "quota": "60/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "read",
+      "message"
+    ],
+    "path": "/integrations/lingxing/messages/list",
+    "schema_sha256": "558dfdf64dfb5ad3950c8086e3db52083ef123c1bad8fe2af489ff936396d58d"
+  },
+  {
+    "key": "lingxing.mporders.list",
+    "platform": "lingxing",
+    "quota": "60/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "read",
+      "order"
+    ],
+    "path": "/integrations/lingxing/mporders/list",
+    "schema_sha256": "00bf865b2ed0adadc59070a39e1ac808527b7ad9fd51d27f6a1616ab1dae666c"
+  },
+  {
+    "key": "lingxing.orders.collect",
+    "platform": "lingxing",
+    "quota": "60/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 90,
+    "deprecated": false,
+    "tags": [
+      "read",
+      "business"
+    ],
+    "path": "/integrations/lingxing/orders/collect",
+    "schema_sha256": "df6cd47851d5faa3b8969cab90969575fe1859ed5974a14b4ae9475cde055db1"
+  },
+  {
+    "key": "lingxing.orders.detail",
+    "platform": "lingxing",
+    "quota": "60/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "read",
+      "order"
+    ],
+    "path": "/integrations/lingxing/orders/detail",
+    "schema_sha256": "1670e90f056c1dc697c5b276bb4198cef3c4b7a1adc2e3296d7318842951bac4"
+  },
+  {
+    "key": "lingxing.orders.list",
+    "platform": "lingxing",
+    "quota": "60/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "read",
+      "order"
+    ],
+    "path": "/integrations/lingxing/orders/list",
+    "schema_sha256": "9923762a3fdf1ef8e0a67c5ddb299763e24739b15cb57850cde04166edccd480"
+  },
+  {
+    "key": "lingxing.product.collect",
+    "platform": "lingxing",
+    "quota": "60/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 90,
+    "deprecated": false,
+    "tags": [
+      "read",
+      "business"
+    ],
+    "path": "/integrations/lingxing/product/collect",
+    "schema_sha256": "9544466f567b33dd9ef24935341d2bcfc3cfee0efd5d85fb9762fa43cec14007"
+  },
+  {
+    "key": "lingxing.product.list",
+    "platform": "lingxing",
+    "quota": "60/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "read"
+    ],
+    "path": "/integrations/lingxing/product/list",
+    "schema_sha256": "85ee6da612b8e9225a10eaa580a9195a460211f296bbef78eeb4dca728014c07"
+  },
+  {
+    "key": "lingxing.refund.create",
+    "platform": "lingxing",
+    "quota": "60/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "write",
+      "refund"
+    ],
+    "path": "/integrations/lingxing/refund/create",
+    "schema_sha256": "8f60da234e7bcff18b7b98d2527a1317140d8dfa697580d13fe5dcf61a6a806b"
+  },
+  {
+    "key": "lingxing.return.qty",
+    "platform": "lingxing",
+    "quota": "60/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "read",
+      "refund"
+    ],
+    "path": "/integrations/lingxing/return/qty",
+    "schema_sha256": "b4cdba809f092933f61eb55e0fcf198016c09802644d370dd1db29d7b5748608"
+  },
+  {
+    "key": "lingxing.reviews.list",
+    "platform": "lingxing",
+    "quota": "30/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "read",
+      "review"
+    ],
+    "path": "/integrations/lingxing/reviews/list",
+    "schema_sha256": "1a79bca560c491f2f6c9f140724e43f253c40c021309edba393069108d5542f0"
+  },
+  {
+    "key": "lingxing.seller.list",
+    "platform": "lingxing",
+    "quota": "60/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "read"
+    ],
+    "path": "/integrations/lingxing/seller/list",
+    "schema_sha256": "63e86e7408155e66641a0b6a04cedb2b063b251b3300918af1777f4ca747e45d"
+  },
+  {
+    "key": "lingxing.warehouse.list",
+    "platform": "lingxing",
+    "quota": "60/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "read",
+      "inventory"
+    ],
+    "path": "/integrations/lingxing/warehouse/list",
+    "schema_sha256": "b0f61c9a2b58ca38b4e24292fd4286b47cee8b1badfbc04845fab1a55b208bfd"
+  },
+  {
+    "key": "lingxing.workorder.add",
+    "platform": "lingxing",
+    "quota": "60/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "write",
+      "refund"
+    ],
+    "path": "/integrations/lingxing/workorder/add",
+    "schema_sha256": "d745b0f6cd6921fdab8ec983f9aef3f1a81414bbfa8621b2c64d60dc1a9ccb04"
+  },
+  {
+    "key": "lingxing.workorder.audit",
+    "platform": "lingxing",
+    "quota": "60/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "write",
+      "refund"
+    ],
+    "path": "/integrations/lingxing/workorder/audit",
+    "schema_sha256": "a112925599c7fc1da1879a179b187e71b0772f3a835f49fb45c67b4b0f386936"
+  },
+  {
+    "key": "lingxing.workorder.list",
+    "platform": "lingxing",
+    "quota": "60/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "read",
+      "refund"
+    ],
+    "path": "/integrations/lingxing/workorder/list",
+    "schema_sha256": "94b271b031002d8beb6514dddf414a4ec268d894811e29df23522a5ef071c257"
+  },
+  {
+    "key": "mabang.orders.collect",
+    "platform": "mabang",
+    "quota": "60/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 90,
+    "deprecated": false,
+    "tags": [
+      "read",
+      "business",
+      "collection"
+    ],
+    "path": "/integrations/mabang/orders/collect",
+    "schema_sha256": "fdbd996b289293f38d7c9c07e5893a732a539bc47a502e0f82f8132729350ce2"
+  },
+  {
+    "key": "mabang.orders.list",
+    "platform": "mabang",
+    "quota": "60/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 60.0,
+    "deprecated": false,
+    "tags": [
+      "read",
+      "order"
+    ],
+    "path": "/integrations/mabang/orders/list",
+    "schema_sha256": "efcdea74feeb2bdb7b4a506ccf01995db0c832776bef2d235498d82b6dfc7d22"
+  },
+  {
+    "key": "mabang.orders.track",
+    "platform": "mabang",
+    "quota": "60/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 60.0,
+    "deprecated": false,
+    "tags": [
+      "read",
+      "logistics"
+    ],
+    "path": "/integrations/mabang/orders/track",
+    "schema_sha256": "e2bbe7ba36d8872694bdf00a8be674d475b9bdd2a35a951379265090926b299a"
+  },
+  {
+    "key": "nas.buckets.create",
+    "platform": "nas",
+    "quota": "10/min",
+    "sensitive": true,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 60,
+    "deprecated": false,
+    "tags": [
+      "write",
+      "danger"
+    ],
+    "path": "/integrations/nas/buckets/create",
+    "schema_sha256": "b66709235ad0c5e9a0a3de95b879fc8bdd979f1276ab1b1ab02398302ea24523"
+  },
+  {
+    "key": "nas.buckets.delete",
+    "platform": "nas",
+    "quota": "10/min",
+    "sensitive": true,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 60,
+    "deprecated": false,
+    "tags": [
+      "write",
+      "danger"
+    ],
+    "path": "/integrations/nas/buckets/delete",
+    "schema_sha256": "b506324b00b2d4c50015e2adddc4e56689c3bdb0f79424bf2890b9401b449f4b"
+  },
+  {
+    "key": "nas.buckets.list",
+    "platform": "nas",
+    "quota": "120/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 3,
+    "timeout_s": 60,
+    "deprecated": false,
+    "tags": [
+      "read"
+    ],
+    "path": "/integrations/nas/buckets/list",
+    "schema_sha256": "99334726611ccf58a148b0814696bfa6fe08c1b2d027e946beccf5a74331c9aa"
+  },
+  {
+    "key": "nas.objects.collect",
+    "platform": "nas",
+    "quota": "30/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 90,
+    "deprecated": false,
+    "tags": [
+      "read",
+      "business",
+      "collection"
+    ],
+    "path": "/integrations/nas/objects/collect",
+    "schema_sha256": "9a4a43a43ca9d15804c96e7ca27fd65a2b0e067f900165f6a3618a2f7ebdcc60"
+  },
+  {
+    "key": "nas.objects.copy",
+    "platform": "nas",
+    "quota": "30/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 120,
+    "deprecated": false,
+    "tags": [
+      "write"
+    ],
+    "path": "/integrations/nas/objects/copy",
+    "schema_sha256": "79e095a57638e4fecacbb5574f62704bf6ff709b5713ca17b08b22cce37fafe8"
+  },
+  {
+    "key": "nas.objects.copy_prefix",
+    "platform": "nas",
+    "quota": "20/min",
+    "sensitive": true,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 600,
+    "deprecated": false,
+    "tags": [
+      "write",
+      "danger"
+    ],
+    "path": "/integrations/nas/objects/copy-prefix",
+    "schema_sha256": "ba401d3e61c0bb830558085573fbad292118999fbd8a31de32c2edd6ae60f316"
+  },
+  {
+    "key": "nas.objects.delete",
+    "platform": "nas",
+    "quota": "60/min",
+    "sensitive": true,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "write",
+      "danger"
+    ],
+    "path": "/integrations/nas/objects/delete",
+    "schema_sha256": "c9944005ae0591d7b4a79939b5371c7c0b0498f4caaf4e51fbdf39a9ee4c8408"
+  },
+  {
+    "key": "nas.objects.delete_batch",
+    "platform": "nas",
+    "quota": "60/min",
+    "sensitive": true,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 120,
+    "deprecated": false,
+    "tags": [
+      "write",
+      "danger"
+    ],
+    "path": "/integrations/nas/objects/delete-batch",
+    "schema_sha256": "9b18d7998b2da29b13b8291e2febed9c3d87d69f41124a3ba10e99812b9bb6ea"
+  },
+  {
+    "key": "nas.objects.list",
+    "platform": "nas",
+    "quota": "30/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 3,
+    "timeout_s": 120,
+    "deprecated": false,
+    "tags": [
+      "read"
+    ],
+    "path": "/integrations/nas/objects/list",
+    "schema_sha256": "ac635854ad2cc1ea54f18e987b95e8c2230609edc5f04aecd417e69b3f59d8bb"
+  },
+  {
+    "key": "nas.objects.presign_get",
+    "platform": "nas",
+    "quota": "300/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 10,
+    "deprecated": false,
+    "tags": [
+      "read"
+    ],
+    "path": "/integrations/nas/objects/presign-get",
+    "schema_sha256": "8d29b1fb8445662d92c968aa5a172dfb984216abf30e7fd631c5ee4964219927"
+  },
+  {
+    "key": "nas.objects.presign_put",
+    "platform": "nas",
+    "quota": "60/min",
+    "sensitive": true,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 10,
+    "deprecated": false,
+    "tags": [
+      "write",
+      "danger"
+    ],
+    "path": "/integrations/nas/objects/presign-put",
+    "schema_sha256": "f320a3e8343c908f99549cb8927d58ba32b69f71a2ef91e28261bfe8db8495d3"
+  },
+  {
+    "key": "nas.objects.read_head",
+    "platform": "nas",
+    "quota": "120/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 3,
+    "timeout_s": 60,
+    "deprecated": false,
+    "tags": [
+      "read"
+    ],
+    "path": "/integrations/nas/objects/read-head",
+    "schema_sha256": "9f9c7a8ea456b514f5ece9dbae75d66ffd493f64b97c7bf0744234b2d13c6a63"
+  },
+  {
+    "key": "nas.objects.stat",
+    "platform": "nas",
+    "quota": "300/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 3,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "read"
+    ],
+    "path": "/integrations/nas/objects/stat",
+    "schema_sha256": "c9944005ae0591d7b4a79939b5371c7c0b0498f4caaf4e51fbdf39a9ee4c8408"
+  },
+  {
+    "key": "paypal.disputes.collect",
+    "platform": "paypal",
+    "quota": "30/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 90,
+    "deprecated": false,
+    "tags": [
+      "read",
+      "business",
+      "collection"
+    ],
+    "path": "/integrations/paypal/disputes/collect",
+    "schema_sha256": "b3f4ecf0c4598d81fcbe2c8fee72fe64f47dac95d6a28b4bbd0fd0275f63bfb4"
+  },
+  {
+    "key": "paypal.disputes.list",
+    "platform": "paypal",
+    "quota": "30/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 120,
+    "deprecated": false,
+    "tags": [
+      "read"
+    ],
+    "path": "/integrations/paypal/disputes/list",
+    "schema_sha256": "0d37743386fba73ae1f9844964ed524790282d09b1e2dcd0154311e53125a335"
+  },
+  {
+    "key": "quickcep.analytics.get",
+    "platform": "quickcep",
+    "quota": "60/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 2,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "read"
+    ],
+    "path": "/integrations/quickcep/analytics/get",
+    "schema_sha256": "67c9b2054b9663683405c4fb920dde6bd983cb52411d530e96ec04fd3ad2575c"
+  },
+  {
+    "key": "quickcep.messages.collect",
+    "platform": "quickcep",
+    "quota": "60/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 90,
+    "deprecated": false,
+    "tags": [
+      "read",
+      "business"
+    ],
+    "path": "/integrations/quickcep/messages/collect",
+    "schema_sha256": "db8b45cdaf250c9d2b88d3a3dd6964de102c5be9f3e3dd14a2c2dced66cc1ca9"
+  },
+  {
+    "key": "quickcep.messages.list",
+    "platform": "quickcep",
+    "quota": "600/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 3,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "read"
+    ],
+    "path": "/integrations/quickcep/messages/list",
+    "schema_sha256": "06982d6cdcc2f2cdb988464645e32f736081564c55de4612b8af5e03152af31a"
+  },
+  {
+    "key": "quickcep.messages.send",
+    "platform": "quickcep",
+    "quota": "120/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 0,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "write",
+      "danger"
+    ],
+    "path": "/integrations/quickcep/messages/send",
+    "schema_sha256": "b2ad8f8f76c3ef81b0e4b8aa78cd98695fcdf5c84db1f4b6fb1f31ff5b4e27a1"
+  },
+  {
+    "key": "quickcep.sessions.by_operator",
+    "platform": "quickcep",
+    "quota": "600/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 3,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "read"
+    ],
+    "path": "/integrations/quickcep/sessions/by-operator",
+    "schema_sha256": "dbe47389f370826f2decd6291b29c240c994efea8018573096ca9f584cef985c"
+  },
+  {
+    "key": "quickcep.sessions.close",
+    "platform": "quickcep",
+    "quota": "120/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 2,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "write"
+    ],
+    "path": "/integrations/quickcep/sessions/close",
+    "schema_sha256": "580ecb6522f9390b172a7ef36ad7ef4133dc548c0480b78aa114388bf8898c5b"
+  },
+  {
+    "key": "quickcep.sessions.create",
+    "platform": "quickcep",
+    "quota": "60/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 0,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "write"
+    ],
+    "path": "/integrations/quickcep/sessions/create",
+    "schema_sha256": "3b1ba4ccea2e595633ac62ae626b95770dd678a1dc2b2bfca826474c0177edcf"
+  },
+  {
+    "key": "quickcep.sessions.get",
+    "platform": "quickcep",
+    "quota": "600/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 3,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "read"
+    ],
+    "path": "/integrations/quickcep/sessions/get",
+    "schema_sha256": "580ecb6522f9390b172a7ef36ad7ef4133dc548c0480b78aa114388bf8898c5b"
+  },
+  {
+    "key": "quickcep.sessions.list",
+    "platform": "quickcep",
+    "quota": "600/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 3,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "read"
+    ],
+    "path": "/integrations/quickcep/sessions/list",
+    "schema_sha256": "68492db033adb22fe11e8487bcdccf85b559a04d74d98ace08aa56f7f01c81f6"
+  },
+  {
+    "key": "quickcep.staff.list",
+    "platform": "quickcep",
+    "quota": "600/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 3,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "read"
+    ],
+    "path": "/integrations/quickcep/staff/list",
+    "schema_sha256": "63e86e7408155e66641a0b6a04cedb2b063b251b3300918af1777f4ca747e45d"
+  },
+  {
+    "key": "rd.products.collect",
+    "platform": "rd",
+    "quota": "30/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 90,
+    "deprecated": false,
+    "tags": [
+      "read",
+      "business",
+      "collection"
+    ],
+    "path": "/integrations/rd/products/collect",
+    "schema_sha256": "b3f4ecf0c4598d81fcbe2c8fee72fe64f47dac95d6a28b4bbd0fd0275f63bfb4"
+  },
+  {
+    "key": "rd.products.list",
+    "platform": "rd",
+    "quota": "30/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 120,
+    "deprecated": false,
+    "tags": [
+      "read"
+    ],
+    "path": "/integrations/rd/products/list",
+    "schema_sha256": "0d37743386fba73ae1f9844964ed524790282d09b1e2dcd0154311e53125a335"
+  },
+  {
+    "key": "shopify.inventory.set",
+    "platform": "shopify",
+    "quota": "30/min",
+    "sensitive": true,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "write",
+      "danger"
+    ],
+    "path": "/integrations/shopify/inventory/set",
+    "schema_sha256": "4b668ea8fe165eebe15b89de0e684427e314e2d384a9806283e1e8869dbe0c00"
+  },
+  {
+    "key": "shopify.orders.collect",
+    "platform": "shopify",
+    "quota": "120/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 90,
+    "deprecated": false,
+    "tags": [
+      "read",
+      "business",
+      "collection"
+    ],
+    "path": "/integrations/shopify/orders/collect",
+    "schema_sha256": "66b107052e4101fd63136cc035b2f5eabcbfee14b028116f6970812a2c895193"
+  },
+  {
+    "key": "shopify.orders.create",
+    "platform": "shopify",
+    "quota": "60/min",
+    "sensitive": true,
+    "idempotent": true,
+    "retry_max": 0,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "write",
+      "danger"
+    ],
+    "path": "/integrations/shopify/orders/create",
+    "schema_sha256": "41ab43368cb56898c125c54a120046963c9627610ef2f96d0348449beb8f9bb3"
+  },
+  {
+    "key": "shopify.orders.get",
+    "platform": "shopify",
+    "quota": "120/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 3,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "read"
+    ],
+    "path": "/integrations/shopify/orders/get",
+    "schema_sha256": "7d176f781e92aa13ad4b13902efc9dcea7a55468a786a34b296d12450258cd08"
+  },
+  {
+    "key": "shopify.orders.list",
+    "platform": "shopify",
+    "quota": "120/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 3,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "read"
+    ],
+    "path": "/integrations/shopify/orders/list",
+    "schema_sha256": "abcbab1370db2b94cefb8051c78d99cd7588876eeff9b55f3eff263bec44a753"
+  },
+  {
+    "key": "shopify.orders.update",
+    "platform": "shopify",
+    "quota": "60/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "write"
+    ],
+    "path": "/integrations/shopify/orders/update",
+    "schema_sha256": "46d0151d0930fa13d5b56da551281f376186ccbcfaf0a105cfc87032b9235c2a"
+  },
+  {
+    "key": "shopify.products.collect",
+    "platform": "shopify",
+    "quota": "120/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 90,
+    "deprecated": false,
+    "tags": [
+      "read",
+      "business",
+      "collection"
+    ],
+    "path": "/integrations/shopify/products/collect",
+    "schema_sha256": "6a99344074098fff30c305fbe62dee2df5e6490f0b00cacf8a584965318912bf"
+  },
+  {
+    "key": "shopify.products.get",
+    "platform": "shopify",
+    "quota": "120/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 3,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "read"
+    ],
+    "path": "/integrations/shopify/products/get",
+    "schema_sha256": "4877b27026c6eb4ed7e8f7ccb33c6fbd77654a5dfb006e7afbed31bc6d7fb870"
+  },
+  {
+    "key": "shopify.products.list",
+    "platform": "shopify",
+    "quota": "120/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 3,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "read"
+    ],
+    "path": "/integrations/shopify/products/list",
+    "schema_sha256": "cf4eb9036e8624e9b194601ff5400e4b52eee2252e576cdd8c05579e64c5d552"
+  },
+  {
+    "key": "shopify.refunds.create",
+    "platform": "shopify",
+    "quota": "30/min",
+    "sensitive": true,
+    "idempotent": true,
+    "retry_max": 0,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "write",
+      "money"
+    ],
+    "path": "/integrations/shopify/refunds/create",
+    "schema_sha256": "bafaf9f4b7a3333a448fb5625f6797d504f474f653f0e632b77102ed9c528ffb"
+  },
+  {
+    "key": "shopify.refunds.execute_plan",
+    "platform": "shopify",
+    "quota": "30/min",
+    "sensitive": true,
+    "idempotent": true,
+    "retry_max": 0,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "write",
+      "money"
+    ],
+    "path": "/integrations/shopify/refunds/execute-plan",
+    "schema_sha256": "bcb36d39cf5463da1497897fdf97e42e56b3a02d210e4fc33aef2486825f0eef"
+  },
+  {
+    "key": "shopify.refunds.list",
+    "platform": "shopify",
+    "quota": "120/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 3,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "read"
+    ],
+    "path": "/integrations/shopify/refunds/list",
+    "schema_sha256": "1ca4e74d65f1fbb3ac76dc8a513150788616ec1664c3a2a46d1a915f0c6ac2b2"
+  },
+  {
+    "key": "shopify.refunds.quote",
+    "platform": "shopify",
+    "quota": "60/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "read"
+    ],
+    "path": "/integrations/shopify/refunds/quote",
+    "schema_sha256": "3b744cd58e46ad14c0ce19ac57954e597337985112b972b8caa44d7724402383"
+  },
+  {
+    "key": "shopify.returns.list",
+    "platform": "shopify",
+    "quota": "120/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 3,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "read"
+    ],
+    "path": "/integrations/shopify/returns/list",
+    "schema_sha256": "1ca4e74d65f1fbb3ac76dc8a513150788616ec1664c3a2a46d1a915f0c6ac2b2"
+  },
+  {
+    "key": "shopify.store_credit.credit",
+    "platform": "shopify",
+    "quota": "30/min",
+    "sensitive": true,
+    "idempotent": true,
+    "retry_max": 0,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "write",
+      "money",
+      "idempotency_required"
+    ],
+    "path": "/integrations/shopify/store-credit/credit",
+    "schema_sha256": "53c63ed4a9977f771c0b75b129cc75471d38494b54fb8e8650be5a0d09e377b1"
+  },
+  {
+    "key": "stripe.disputes.collect",
+    "platform": "stripe",
+    "quota": "30/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 90,
+    "deprecated": false,
+    "tags": [
+      "read",
+      "business",
+      "collection"
+    ],
+    "path": "/integrations/stripe/disputes/collect",
+    "schema_sha256": "b3f4ecf0c4598d81fcbe2c8fee72fe64f47dac95d6a28b4bbd0fd0275f63bfb4"
+  },
+  {
+    "key": "stripe.disputes.list",
+    "platform": "stripe",
+    "quota": "30/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 120,
+    "deprecated": false,
+    "tags": [
+      "read"
+    ],
+    "path": "/integrations/stripe/disputes/list",
+    "schema_sha256": "0d37743386fba73ae1f9844964ed524790282d09b1e2dcd0154311e53125a335"
+  },
+  {
+    "key": "trustpilot.reviews.collect",
+    "platform": "trustpilot",
+    "quota": "30/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 90,
+    "deprecated": false,
+    "tags": [
+      "read",
+      "business",
+      "collection"
+    ],
+    "path": "/integrations/trustpilot/reviews/collect",
+    "schema_sha256": "b3f4ecf0c4598d81fcbe2c8fee72fe64f47dac95d6a28b4bbd0fd0275f63bfb4"
+  },
+  {
+    "key": "trustpilot.reviews.list",
+    "platform": "trustpilot",
+    "quota": "30/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 120,
+    "deprecated": false,
+    "tags": [
+      "read"
+    ],
+    "path": "/integrations/trustpilot/reviews/list",
+    "schema_sha256": "0d37743386fba73ae1f9844964ed524790282d09b1e2dcd0154311e53125a335"
+  },
+  {
+    "key": "wecom.approval_events.list",
+    "platform": "wecom",
+    "quota": "120/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 2,
+    "timeout_s": 60,
+    "deprecated": false,
+    "tags": [
+      "read",
+      "business",
+      "approval"
+    ],
+    "path": "/integrations/wecom/approval-events/list",
+    "schema_sha256": "7fd0642e08aff5cddfd5c0137c24aa3a0b2b35e13cbe5abb0e1f48b07cd5b0f1"
+  },
+  {
+    "key": "wecom.approval_events.retry",
+    "platform": "wecom",
+    "quota": "120/min",
+    "sensitive": false,
+    "idempotent": true,
+    "retry_max": 1,
+    "timeout_s": 60,
+    "deprecated": false,
+    "tags": [
+      "write",
+      "business",
+      "approval"
+    ],
+    "path": "/integrations/wecom/approval-events/retry",
+    "schema_sha256": "6f1f87d2bec5d42fb8a9fc7c818227c094961d99e091d036fb77d076bfadb2c5"
+  },
+  {
+    "key": "wecom.approval_files.download",
+    "platform": "wecom",
+    "quota": "120/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 2,
+    "timeout_s": 60,
+    "deprecated": false,
+    "tags": [
+      "read",
+      "business",
+      "approval"
+    ],
+    "path": "/integrations/wecom/approval-files/download",
+    "schema_sha256": "1dd682a2cf8d76b050da250edb4ae866b6565c4a70fd7f6446ab0471a55f6d29"
+  },
+  {
+    "key": "wecom.approval_files.upload",
+    "platform": "wecom",
+    "quota": "120/min",
+    "sensitive": false,
+    "idempotent": true,
+    "retry_max": 1,
+    "timeout_s": 60,
+    "deprecated": false,
+    "tags": [
+      "write",
+      "business",
+      "approval"
+    ],
+    "path": "/integrations/wecom/approval-files/upload",
+    "schema_sha256": "bc54490fe6de26db4feace4ac8541e62f6eacda2eb647f55ad4dc35d9b35e01e"
+  },
+  {
+    "key": "wecom.approval_templates.bind",
+    "platform": "wecom",
+    "quota": "120/min",
+    "sensitive": false,
+    "idempotent": true,
+    "retry_max": 1,
+    "timeout_s": 60,
+    "deprecated": false,
+    "tags": [
+      "write",
+      "business",
+      "approval"
+    ],
+    "path": "/integrations/wecom/approval-templates/bind",
+    "schema_sha256": "1d659daf141f1ff3666e16f7dd864217f1cdbb2b3e39e31e895aa68e7fc7c191"
+  },
+  {
+    "key": "wecom.approval_templates.clone",
+    "platform": "wecom",
+    "quota": "120/min",
+    "sensitive": true,
+    "idempotent": true,
+    "retry_max": 1,
+    "timeout_s": 60,
+    "deprecated": false,
+    "tags": [
+      "write",
+      "business",
+      "approval",
+      "idempotency_required"
+    ],
+    "path": "/integrations/wecom/approval-templates/clone",
+    "schema_sha256": "d40c3d054a26b80d8797ebe1ff250e514271e43609f8fc8b96adf78ed35bbf25"
+  },
+  {
+    "key": "wecom.approval_templates.create",
+    "platform": "wecom",
+    "quota": "120/min",
+    "sensitive": true,
+    "idempotent": true,
+    "retry_max": 1,
+    "timeout_s": 60,
+    "deprecated": false,
+    "tags": [
+      "write",
+      "business",
+      "approval",
+      "idempotency_required"
+    ],
+    "path": "/integrations/wecom/approval-templates/create",
+    "schema_sha256": "410939348219adb5c83601ca108d14386be9a67d511824d1601c1c43a3777f21"
+  },
+  {
+    "key": "wecom.approval_templates.get",
+    "platform": "wecom",
+    "quota": "120/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 2,
+    "timeout_s": 60,
+    "deprecated": false,
+    "tags": [
+      "read",
+      "business",
+      "approval"
+    ],
+    "path": "/integrations/wecom/approval-templates/get",
+    "schema_sha256": "6db03bb043ecaf3a1ebd5348928c044cb4a918e53f2f5cd70280ea6f0ced5ad0"
+  },
+  {
+    "key": "wecom.approval_templates.list",
+    "platform": "wecom",
+    "quota": "120/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 2,
+    "timeout_s": 60,
+    "deprecated": false,
+    "tags": [
+      "read",
+      "business",
+      "approval"
+    ],
+    "path": "/integrations/wecom/approval-templates/list",
+    "schema_sha256": "99334726611ccf58a148b0814696bfa6fe08c1b2d027e946beccf5a74331c9aa"
+  },
+  {
+    "key": "wecom.approval_templates.unbind",
+    "platform": "wecom",
+    "quota": "120/min",
+    "sensitive": false,
+    "idempotent": true,
+    "retry_max": 1,
+    "timeout_s": 60,
+    "deprecated": false,
+    "tags": [
+      "write",
+      "business",
+      "approval"
+    ],
+    "path": "/integrations/wecom/approval-templates/unbind",
+    "schema_sha256": "7a199df68ff276bf82eeb9cc8569b951620740a08117fbd20b700c8709f610de"
+  },
+  {
+    "key": "wecom.approval_templates.update",
+    "platform": "wecom",
+    "quota": "120/min",
+    "sensitive": true,
+    "idempotent": true,
+    "retry_max": 1,
+    "timeout_s": 60,
+    "deprecated": false,
+    "tags": [
+      "write",
+      "business",
+      "approval",
+      "idempotency_required"
+    ],
+    "path": "/integrations/wecom/approval-templates/update",
+    "schema_sha256": "6fb6472b83335f88e4bd2fb5c39323d16338d4618fbc259f9c8ece890c2f804f"
+  },
+  {
+    "key": "wecom.approvals.collect",
+    "platform": "wecom",
+    "quota": "120/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 2,
+    "timeout_s": 90,
+    "deprecated": false,
+    "tags": [
+      "read",
+      "business",
+      "approval"
+    ],
+    "path": "/integrations/wecom/approvals/collect",
+    "schema_sha256": "09547d3571f82724c5a660feff7fb074b2c17fad4f394901582b5473bd7e7cf4"
+  },
+  {
+    "key": "wecom.approvals.engine_get",
+    "platform": "wecom",
+    "quota": "120/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 2,
+    "timeout_s": 60,
+    "deprecated": false,
+    "tags": [
+      "read",
+      "business",
+      "approval"
+    ],
+    "path": "/integrations/wecom/approvals/engine-get",
+    "schema_sha256": "79fe41c291b8d523ef3e62535a252bdd250e1e71a23ad15ae3e6bf101d0bdd49"
+  },
+  {
+    "key": "wecom.approvals.engine_launch",
+    "platform": "wecom",
+    "quota": "120/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 2,
+    "timeout_s": 60,
+    "deprecated": false,
+    "tags": [
+      "read",
+      "business",
+      "approval"
+    ],
+    "path": "/integrations/wecom/approvals/engine-launch",
+    "schema_sha256": "a1c6f266090f37c2f06352f36605a2c3ada0bead66a6a4f4631dafcaae5605e8"
+  },
+  {
+    "key": "wecom.approvals.get",
+    "platform": "wecom",
+    "quota": "120/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 2,
+    "timeout_s": 60,
+    "deprecated": false,
+    "tags": [
+      "read",
+      "business",
+      "approval"
+    ],
+    "path": "/integrations/wecom/approvals/get",
+    "schema_sha256": "059b6fbe0299443e34e66ded3f9671e938025dbb46549def039adc7a511369c6"
+  },
+  {
+    "key": "wecom.approvals.get_many",
+    "platform": "wecom",
+    "quota": "120/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 2,
+    "timeout_s": 60,
+    "deprecated": false,
+    "tags": [
+      "read",
+      "business",
+      "approval"
+    ],
+    "path": "/integrations/wecom/approvals/get-many",
+    "schema_sha256": "08f9ddb873d03b1dc4be19090b4fa2ea2458a07e12123152ed2cb7858d09cd50"
+  },
+  {
+    "key": "wecom.approvals.legacy_get",
+    "platform": "wecom",
+    "quota": "120/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 2,
+    "timeout_s": 60,
+    "deprecated": true,
+    "tags": [
+      "read",
+      "business",
+      "approval"
+    ],
+    "path": "/integrations/wecom/approvals/legacy-get",
+    "schema_sha256": "743009a070d5d001c3999f7edbb6bdc450c100aa5d5422e890f60f1677dad5d4"
+  },
+  {
+    "key": "wecom.approvals.list",
+    "platform": "wecom",
+    "quota": "120/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 2,
+    "timeout_s": 60,
+    "deprecated": false,
+    "tags": [
+      "read",
+      "business",
+      "approval"
+    ],
+    "path": "/integrations/wecom/approvals/list",
+    "schema_sha256": "769659acf1879b8b5cc59130c9e87e42678e9de6f1c3ac1ba541bbbc694419a0"
+  },
+  {
+    "key": "wecom.approvals.prepare",
+    "platform": "wecom",
+    "quota": "120/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 2,
+    "timeout_s": 60,
+    "deprecated": false,
+    "tags": [
+      "read",
+      "business",
+      "approval"
+    ],
+    "path": "/integrations/wecom/approvals/prepare",
+    "schema_sha256": "f413979913de9cdbe0c756c1128cda135c8bdcf10c5992fc895872ae65dd3c80"
+  },
+  {
+    "key": "wecom.approvals.submit",
+    "platform": "wecom",
+    "quota": "120/min",
+    "sensitive": true,
+    "idempotent": true,
+    "retry_max": 1,
+    "timeout_s": 60,
+    "deprecated": false,
+    "tags": [
+      "write",
+      "business",
+      "approval",
+      "idempotency_required"
+    ],
+    "path": "/integrations/wecom/approvals/submit",
+    "schema_sha256": "3f406edf29856b9462fcd896fdf508f16b99e0565acb06c075449dcae6dbe9f3"
+  },
+  {
+    "key": "wecom.approvals.track",
+    "platform": "wecom",
+    "quota": "120/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 2,
+    "timeout_s": 60,
+    "deprecated": false,
+    "tags": [
+      "read",
+      "business",
+      "approval"
+    ],
+    "path": "/integrations/wecom/approvals/track",
+    "schema_sha256": "93d3fa15ab17c4526fa34aaabb768d38f1b6ab61347104cfa3d194121deb578b"
+  },
+  {
+    "key": "wecom.attendees.add",
+    "platform": "wecom",
+    "quota": "120/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "write"
+    ],
+    "path": "/integrations/wecom/attendees/add",
+    "schema_sha256": "b74919636f20f13117ead247fd80e57c310d1f8bde634661df43d2f67cc8e190"
+  },
+  {
+    "key": "wecom.attendees.remove",
+    "platform": "wecom",
+    "quota": "120/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "write"
+    ],
+    "path": "/integrations/wecom/attendees/remove",
+    "schema_sha256": "b74919636f20f13117ead247fd80e57c310d1f8bde634661df43d2f67cc8e190"
+  },
+  {
+    "key": "wecom.auth.access_token",
+    "platform": "wecom",
+    "quota": "120/min",
+    "sensitive": true,
+    "idempotent": false,
+    "retry_max": 2,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "read",
+      "danger"
+    ],
+    "path": "/integrations/wecom/auth/access-token",
+    "schema_sha256": "780b4fd58aa332bbfc07baa4e88110039ffead78850739ef84aa4c0d64acc744"
+  },
+  {
+    "key": "wecom.calendars.create",
+    "platform": "wecom",
+    "quota": "30/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "write"
+    ],
+    "path": "/integrations/wecom/calendars/create",
+    "schema_sha256": "301b956c378e9c8d3d94240c194f7ab2f1986ac6dea25b412eb0aa97725367a6"
+  },
+  {
+    "key": "wecom.calendars.delete",
+    "platform": "wecom",
+    "quota": "30/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "write"
+    ],
+    "path": "/integrations/wecom/calendars/delete",
+    "schema_sha256": "581b46a1e094c412d963ebd2c74d4d66896525ccf9900b45700ca80ec32dcaa9"
+  },
+  {
+    "key": "wecom.calendars.get_many",
+    "platform": "wecom",
+    "quota": "300/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 3,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "read"
+    ],
+    "path": "/integrations/wecom/calendars/get-many",
+    "schema_sha256": "9e684cbbd238f25fd9006e5bedfed4b03649d483b1afc87c71c0be8c3cd66f26"
+  },
+  {
+    "key": "wecom.calendars.update",
+    "platform": "wecom",
+    "quota": "30/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "write"
+    ],
+    "path": "/integrations/wecom/calendars/update",
+    "schema_sha256": "2687c3bfcc608a7ff8d5e295e33ba5be1d9a4414a973560a77fb574962a25dcd"
+  },
+  {
+    "key": "wecom.directory.departments",
+    "platform": "wecom",
+    "quota": "60/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 3,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "read"
+    ],
+    "path": "/integrations/wecom/directory/departments",
+    "schema_sha256": "0f3f0a6e1bcced56188ce7df3ae78226dac8975bd1b16d3b1d925f14f33baa1b"
+  },
+  {
+    "key": "wecom.directory.list",
+    "platform": "wecom",
+    "quota": "10/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 180,
+    "deprecated": false,
+    "tags": [
+      "read"
+    ],
+    "path": "/integrations/wecom/directory/list",
+    "schema_sha256": "b06a9f263c45ef671e4369f2e184e06b6b3387ca3899ce3a2ebbdb32334b7bfa"
+  },
+  {
+    "key": "wecom.directory.users",
+    "platform": "wecom",
+    "quota": "10/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 180,
+    "deprecated": false,
+    "tags": [
+      "read"
+    ],
+    "path": "/integrations/wecom/directory/users",
+    "schema_sha256": "2aa6b89641c1aa567aa931e2b73e5cfe0cdb22f38cd899d1ab49bfb6a7288cef"
+  },
+  {
+    "key": "wecom.hr.get_fields",
+    "platform": "wecom",
+    "quota": "300/min",
+    "sensitive": true,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 40,
+    "deprecated": false,
+    "tags": [
+      "read",
+      "hr"
+    ],
+    "path": "/integrations/wecom/hr/get-fields",
+    "schema_sha256": "d4c0a04fdb3fd75d3b247025ee218cf16452c78d397c9c160c78010c93acfef6"
+  },
+  {
+    "key": "wecom.hr.get_staff_info",
+    "platform": "wecom",
+    "quota": "300/min",
+    "sensitive": true,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 40,
+    "deprecated": false,
+    "tags": [
+      "read",
+      "hr"
+    ],
+    "path": "/integrations/wecom/hr/get-staff-info",
+    "schema_sha256": "b85d3d782551d078969b3e357cec41b7425ef49d42a40ec27dc5bef95e90bdf1"
+  },
+  {
+    "key": "wecom.messages.send_markdown",
+    "platform": "wecom",
+    "quota": "120/min",
+    "sensitive": false,
+    "idempotent": true,
+    "retry_max": 2,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "write"
+    ],
+    "path": "/integrations/wecom/messages/send-markdown",
+    "schema_sha256": "66ac4c6e1cb85e934b33e4f35f9a2298d53cede079f8f69f1841d910a7ab0af6"
+  },
+  {
+    "key": "wecom.messages.send_text",
+    "platform": "wecom",
+    "quota": "120/min",
+    "sensitive": false,
+    "idempotent": true,
+    "retry_max": 2,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "write"
+    ],
+    "path": "/integrations/wecom/messages/send-text",
+    "schema_sha256": "f6b4f0f84f89860174665df6d227f01c7b054187fc38259c749f98362dbbfb30"
+  },
+  {
+    "key": "wecom.schedules.batch_create",
+    "platform": "wecom",
+    "quota": "120/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "write"
+    ],
+    "path": "/integrations/wecom/schedules/batch-create",
+    "schema_sha256": "ddc70e5d075074069aa86a3248e8598e5a5db909abe7975d4164e8883d609a6c"
+  },
+  {
+    "key": "wecom.schedules.copy",
+    "platform": "wecom",
+    "quota": "60/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "write"
+    ],
+    "path": "/integrations/wecom/schedules/copy",
+    "schema_sha256": "6df0ede36bccdad4d13ead568fc7058654f58142fdd3a17603b1246a85abfa9a"
+  },
+  {
+    "key": "wecom.schedules.create",
+    "platform": "wecom",
+    "quota": "120/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "write"
+    ],
+    "path": "/integrations/wecom/schedules/create",
+    "schema_sha256": "8b95039abafd87181e6de8da2b81524bc1b203ff5137ffae4f031e5f3dece8f3"
+  },
+  {
+    "key": "wecom.schedules.delete",
+    "platform": "wecom",
+    "quota": "120/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "write"
+    ],
+    "path": "/integrations/wecom/schedules/delete",
+    "schema_sha256": "35a4af7ec6f723502c16ad6218837b2b2d9e56e29c57b866c1502bb25caf895b"
+  },
+  {
+    "key": "wecom.schedules.get_many",
+    "platform": "wecom",
+    "quota": "300/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 3,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "read"
+    ],
+    "path": "/integrations/wecom/schedules/get-many",
+    "schema_sha256": "409c74e727252c3d1173378a02e96bc0c28f61207b3f88990a9476174300c41b"
+  },
+  {
+    "key": "wecom.schedules.list",
+    "platform": "wecom",
+    "quota": "300/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 3,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "read"
+    ],
+    "path": "/integrations/wecom/schedules/list",
+    "schema_sha256": "0561bee6df9cae0bafc005f4084f31f4d46012bcbd5c8aa265ae443a32f5a2ea"
+  },
+  {
+    "key": "wecom.schedules.list_all",
+    "platform": "wecom",
+    "quota": "120/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 2,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "read"
+    ],
+    "path": "/integrations/wecom/schedules/list-all",
+    "schema_sha256": "890692cf1565caaec59dae176084254c4e55e065fef1946608efaf0b0cbca6b9"
+  },
+  {
+    "key": "wecom.schedules.update",
+    "platform": "wecom",
+    "quota": "120/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "write"
+    ],
+    "path": "/integrations/wecom/schedules/update",
+    "schema_sha256": "7ad9973ecf5c31d520b7e2cd6af73d6c1fdb2983d22c5f74f2bfd5afb9729dbd"
+  },
+  {
+    "key": "wecom.users.get",
+    "platform": "wecom",
+    "quota": "300/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 3,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "read"
+    ],
+    "path": "/integrations/wecom/users/get",
+    "schema_sha256": "061242e8cc2f6cd58f075eec4cc832729d8edef89e4d81e57fe08bbe9f71168f"
+  },
+  {
+    "key": "wecom.users.resolve_code",
+    "platform": "wecom",
+    "quota": "120/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "read"
+    ],
+    "path": "/integrations/wecom/users/resolve-code",
+    "schema_sha256": "429f3b4f2c30c2d062102ef924bd49df7ce24dfc5979abe4534af0e232cdce0a"
+  },
+  {
+    "key": "wecom.vacation.config",
+    "platform": "wecom",
+    "quota": "120/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 2,
+    "timeout_s": 60,
+    "deprecated": false,
+    "tags": [
+      "read",
+      "business",
+      "approval"
+    ],
+    "path": "/integrations/wecom/vacation/config",
+    "schema_sha256": "99334726611ccf58a148b0814696bfa6fe08c1b2d027e946beccf5a74331c9aa"
+  },
+  {
+    "key": "wecom.vacation.get",
+    "platform": "wecom",
+    "quota": "120/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 2,
+    "timeout_s": 60,
+    "deprecated": false,
+    "tags": [
+      "read",
+      "business",
+      "approval"
+    ],
+    "path": "/integrations/wecom/vacation/get",
+    "schema_sha256": "061242e8cc2f6cd58f075eec4cc832729d8edef89e4d81e57fe08bbe9f71168f"
+  },
+  {
+    "key": "wecom.vacation.set",
+    "platform": "wecom",
+    "quota": "120/min",
+    "sensitive": true,
+    "idempotent": true,
+    "retry_max": 1,
+    "timeout_s": 60,
+    "deprecated": false,
+    "tags": [
+      "write",
+      "business",
+      "approval",
+      "idempotency_required"
+    ],
+    "path": "/integrations/wecom/vacation/set",
+    "schema_sha256": "6f66b4d0812d178b1451cfb3cb12341f44575288830c1c8fd01601c5051182eb"
+  },
+  {
+    "key": "winit.inbound.list",
+    "platform": "winit",
+    "quota": "60/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "read"
+    ],
+    "path": "/integrations/winit/inbound/list",
+    "schema_sha256": "6695948dbc5cfa17b2006f4d296091a0ba14463006fde5f7347e3f94bee4e89c"
+  },
+  {
+    "key": "winit.inbound.tracking",
+    "platform": "winit",
+    "quota": "60/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "read"
+    ],
+    "path": "/integrations/winit/inbound/tracking",
+    "schema_sha256": "b8425880a7076b2bf71480f6642b9a4f8427ec3c823133bcf51d7dbe99fbfdf6"
+  },
+  {
+    "key": "winit.inventory.list",
+    "platform": "winit",
+    "quota": "60/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "read"
+    ],
+    "path": "/integrations/winit/inventory/list",
+    "schema_sha256": "e46990f1c149025cefe237612baf3a3f62e030c0315b3204d19abeff94bd7f38"
+  },
+  {
+    "key": "winit.outbound.list",
+    "platform": "winit",
+    "quota": "60/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "read"
+    ],
+    "path": "/integrations/winit/outbound/list",
+    "schema_sha256": "f16c954a3ea560bf3396a406c92a155479a7d8c819dd0c34795df4c0f80dedab"
+  },
+  {
+    "key": "winit.outbound.tracking",
+    "platform": "winit",
+    "quota": "60/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "read"
+    ],
+    "path": "/integrations/winit/outbound/tracking",
+    "schema_sha256": "4ce6a1c381ece33dac02622aba0a50b0b914792feefcd54b6149089a700a9700"
+  },
+  {
+    "key": "winit.returns.create",
+    "platform": "winit",
+    "quota": "10/min",
+    "sensitive": true,
+    "idempotent": true,
+    "retry_max": 0,
+    "timeout_s": 60,
+    "deprecated": false,
+    "tags": [
+      "write",
+      "danger"
+    ],
+    "path": "/integrations/winit/returns/create",
+    "schema_sha256": "f8c4218ae30388fa20a1ca9cf3c404fd22e19fb2759e2b69a26a3f114b2b4931"
+  },
+  {
+    "key": "winit.returns.items",
+    "platform": "winit",
+    "quota": "60/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "read"
+    ],
+    "path": "/integrations/winit/returns/items",
+    "schema_sha256": "88a1a7c9e2ea547e69ac3c2623b00c1497a432e87daafe5668c12c13515f5a1a"
+  },
+  {
+    "key": "winit.returns.label",
+    "platform": "winit",
+    "quota": "60/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 60,
+    "deprecated": false,
+    "tags": [
+      "read"
+    ],
+    "path": "/integrations/winit/returns/label",
+    "schema_sha256": "6127e15884a1a60f531008d1738a7471dcd2f36e34ebefd2c87640db79cb9009"
+  },
+  {
+    "key": "winit.returns.list",
+    "platform": "winit",
+    "quota": "60/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "read"
+    ],
+    "path": "/integrations/winit/returns/list",
+    "schema_sha256": "cafe50b296cc5d982e01f05775e6d76b310103e87da5a7a9abd006fcfc1349e3"
+  },
+  {
+    "key": "winit.returns.psc",
+    "platform": "winit",
+    "quota": "60/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 20,
+    "deprecated": false,
+    "tags": [
+      "read"
+    ],
+    "path": "/integrations/winit/returns/psc",
+    "schema_sha256": "efddc7bd8bbcef73a14eb1ace1ffdaec81e518ef1e13c1e9271d0b8acb694a49"
+  },
+  {
+    "key": "winit.returns.void",
+    "platform": "winit",
+    "quota": "10/min",
+    "sensitive": true,
+    "idempotent": true,
+    "retry_max": 0,
+    "timeout_s": 45,
+    "deprecated": false,
+    "tags": [
+      "write",
+      "danger"
+    ],
+    "path": "/integrations/winit/returns/void",
+    "schema_sha256": "35ff089c94465bee851b09cf614576c3aa089c1f83afeb6085f02092d18f8521"
+  },
+  {
+    "key": "winit.warehouses.list",
+    "platform": "winit",
+    "quota": "60/min",
+    "sensitive": false,
+    "idempotent": false,
+    "retry_max": 1,
+    "timeout_s": 30.0,
+    "deprecated": false,
+    "tags": [
+      "read"
+    ],
+    "path": "/integrations/winit/warehouses/list",
+    "schema_sha256": "c86f04fc3a60974020275e413766c28602d3ca0a6ab0dd52e63f952f39753fe0"
+  }
+]

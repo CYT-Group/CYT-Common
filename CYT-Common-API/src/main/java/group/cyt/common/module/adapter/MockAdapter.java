@@ -59,6 +59,9 @@ public class MockAdapter {
 
   public Object invoke(OperationDefinition op, Map<String, Object> p, String system) {
     String key = op.key(), action = key.substring(key.lastIndexOf('.') + 1);
+    if (key.equals("gmail.attachments.get")) throw GatewayException.forbidden("模拟邮件没有可验证归属的附件");
+    if (Set.of("lingxing.workorder.add", "lingxing.workorder.audit", "lingxing.refund.create")
+        .contains(key)) throw GatewayException.forbidden("领星接入为只读：退款与工单写回已禁用");
     String now = Instant.now().toString();
     if (op.platform().equals("docusign")) {
       if (key.equals("docusign.templates.get"))

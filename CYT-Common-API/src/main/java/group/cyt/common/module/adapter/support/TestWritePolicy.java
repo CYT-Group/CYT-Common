@@ -30,8 +30,13 @@ public class TestWritePolicy {
   }
 
   public void requireTarget(String platform, String target) {
+    // The legacy Lingxing integration is explicitly read-only, including test accounts.
+    // Keep the same boundary when switching between independently deployed gateways.
+    if (platform.equals("lingxing"))
+      throw GatewayException.forbidden("领星接入为只读：退款与工单写回已禁用，环境变量不能放开");
     String name =
-        TARGET_ENV.getOrDefault(platform, "GATEWAY_TEST_" + platform.toUpperCase(Locale.ROOT) + "_ACCOUNTS");
+        TARGET_ENV.getOrDefault(
+            platform, "GATEWAY_TEST_" + platform.toUpperCase(Locale.ROOT) + "_ACCOUNTS");
     if (!settings.flag("GATEWAY_ENABLE_TEST_WRITES", false)
         || target.isBlank()
         || settings.csv(name, "").stream().noneMatch(target::equalsIgnoreCase))

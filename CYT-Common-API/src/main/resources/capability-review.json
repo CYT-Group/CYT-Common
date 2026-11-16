@@ -32,9 +32,9 @@
     }
   ],
   "depth_summary": {
-    "total": 169,
+    "total": 171,
     "counts": {
-      "enhanced": 81,
+      "enhanced": 83,
       "deep": 31,
       "test_only": 1,
       "basic": 51,
@@ -4042,6 +4042,52 @@
           "anchor": "public Map<String, Object> credit("
         }
       ]
+    },
+    {
+      "key": "gmail.attachments.get",
+      "platform": "gmail",
+      "current": "已实现原生读取与边界校验。",
+      "proposal": "通过相同操作名和参数在 Java 与 Python 独立运行。",
+      "recommended_operations": [
+        "gmail.attachments.get"
+      ],
+      "depth": "enhanced",
+      "depth_reason": "验证身份、分页与响应数据完整性。",
+      "remaining_gap": "真实供应商凭据和网络仍需在目标环境联调。",
+      "evidence": [
+        {
+          "path": "src/main/java/group/cyt/common/module/adapter/google/GoogleAdapter.java",
+          "line": 84,
+          "anchor": "case \"gmail.attachments.get\""
+        }
+      ],
+      "summary": "读取原邮件的指定附件",
+      "source": "src/main/java/group/cyt/common/module/adapter/google/GoogleAdapter.java",
+      "assessment": "enhance",
+      "caveat": "真实账号权限和供应商网络需在目标环境联调。"
+    },
+    {
+      "key": "lingxing.reviews.list",
+      "platform": "lingxing",
+      "current": "已实现原生读取与边界校验。",
+      "proposal": "通过相同操作名和参数在 Java 与 Python 独立运行。",
+      "recommended_operations": [
+        "lingxing.reviews.list"
+      ],
+      "depth": "enhanced",
+      "depth_reason": "验证身份、分页与响应数据完整性。",
+      "remaining_gap": "真实供应商凭据和网络仍需在目标环境联调。",
+      "evidence": [
+        {
+          "path": "src/main/java/group/cyt/common/module/adapter/lingxing/LingxingAdapter.java",
+          "line": 650,
+          "anchor": "private Object reviewsList("
+        }
+      ],
+      "summary": "查询历史亚马逊 1–3 星商品评价",
+      "source": "src/main/java/group/cyt/common/module/adapter/lingxing/LingxingAdapter.java",
+      "assessment": "enhance",
+      "caveat": "真实账号权限和供应商网络需在目标环境联调。"
     }
   ]
 }

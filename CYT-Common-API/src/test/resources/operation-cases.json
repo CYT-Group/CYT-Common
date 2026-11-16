@@ -18,7 +18,8 @@
           "role_name": "signer",
           "email": "fixture@example.invalid",
           "name": "Fixture",
-          "routing_order": 1
+          "routing_order": 1,
+          "tabs": null
         }
       ],
       "documents": null,
@@ -44,7 +45,8 @@
       "from_date": null,
       "to_date": null,
       "status": null,
-      "page_size": 20
+      "page_size": 20,
+      "start_position": null
     }
   },
   {
@@ -62,7 +64,8 @@
     "operation": "docusign.templates.list",
     "params": {},
     "normalized": {
-      "page_size": 20
+      "page_size": 20,
+      "start_position": null
     }
   },
   {
@@ -252,7 +255,10 @@
       "body_html": null,
       "cc": [],
       "bcc": [],
-      "thread_id": null
+      "thread_id": null,
+      "attachments": [],
+      "in_reply_to": null,
+      "references": []
     }
   },
   {

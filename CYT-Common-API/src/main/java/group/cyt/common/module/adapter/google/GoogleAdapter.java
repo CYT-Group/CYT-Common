@@ -81,17 +81,66 @@ public class GoogleAdapter implements PlatformAdapter {
             url.addQueryParameter("metadataHeaders", header.toString());
         yield http.object("GET", url.build().toString(), headers, null);
       }
+      case "gmail.attachments.get" -> {
+        String path = base + "/messages/" + UpstreamHttp.segment(p.get("message_id"));
+        var message = http.object("GET", path + "?format=full", headers, null);
+        String id = JsonUtils.str(p, "attachment_id");
+        var part = GmailAttachments.find(JsonUtils.map(message.get("payload")), id, 0);
+        if (part == null || JsonUtils.str(part, "filename").isBlank())
+          throw GatewayException.forbidden("附件不属于当前邮箱的原邮件");
+        Object rawSize = JsonUtils.map(part.get("body")).get("size");
+        if (!(rawSize instanceof Number n)
+            || n.doubleValue() != n.longValue()
+            || n.longValue() <= 0
+            || n.longValue() > GmailAttachments.MAX_FILE)
+          throw GatewayException.invalid("附件大小无效或超过 10 MiB");
+        var result =
+            http.object("GET", path + "/attachments/" + UpstreamHttp.segment(id), headers, null);
+        String data = JsonUtils.str(result, "data");
+        if (data.length() > 4 * ((GmailAttachments.MAX_FILE + 2) / 3))
+          throw GatewayException.invalid("附件内容超过 10 MiB");
+        byte[] bytes;
+        try {
+          bytes = Base64.getUrlDecoder().decode(data);
+        } catch (IllegalArgumentException error) {
+          throw GatewayException.invalid("附件内容无效");
+        }
+        GmailAttachments.validate(
+            JsonUtils.str(part, "filename"),
+            JsonUtils.str(part, "mimeType"),
+            Base64.getEncoder().encodeToString(bytes));
+        if (bytes.length != ((Number) rawSize).longValue()
+            || JsonUtils.integer(result.get("size"), -1) != bytes.length)
+          throw GatewayException.invalid("附件长度与原邮件不一致");
+        result.put("filename", part.get("filename"));
+        result.put("mime_type", part.get("mimeType"));
+        yield result;
+      }
       case "gmail.messages.restore_from_spam" -> {
         String path = base + "/messages/" + UpstreamHttp.segment(p.get("message_id"));
         var message = http.object("GET", path + "?format=minimal", headers, null);
         var labels = JsonUtils.list(message.get("labelIds"));
-        if (!labels.contains("SPAM") || labels.contains("TRASH"))
-          throw GatewayException.forbidden("邮件必须位于 SPAM 且不能位于 TRASH");
-        yield http.object(
-            "POST",
-            path + "/modify",
-            headers,
-            JsonUtils.obj("removeLabelIds", List.of("SPAM"), "addLabelIds", List.of("INBOX")));
+        if (labels.contains("TRASH")) throw GatewayException.forbidden("不允许将垃圾箱邮件作为垃圾邮件自动恢复");
+        if (!labels.contains("SPAM"))
+          yield JsonUtils.obj(
+              "id",
+              p.get("message_id"),
+              "restored",
+              false,
+              "reason",
+              "not_in_spam",
+              "labelIds",
+              labels);
+        var restored =
+            http.object(
+                "POST",
+                path + "/modify",
+                headers,
+                JsonUtils.obj("removeLabelIds", List.of("SPAM"), "addLabelIds", List.of("INBOX")));
+        var currentLabels = JsonUtils.list(restored.get("labelIds"));
+        restored.put(
+            "restored", currentLabels.contains("INBOX") && !currentLabels.contains("SPAM"));
+        yield restored;
       }
       case "gmail.messages.send" -> {
         List<String> recipients = new ArrayList<>();
@@ -105,34 +154,11 @@ public class GoogleAdapter implements PlatformAdapter {
             recipients.add(address);
           }
         if (recipients.isEmpty()) throw GatewayException.invalid("收件人不能为空");
-        StringBuilder mime = new StringBuilder("MIME-Version: 1.0\r\n");
-        for (String field : List.of("to", "cc", "bcc")) {
-          var list = JsonUtils.list(p.get(field));
-          if (!list.isEmpty())
-            mime.append(field)
-                .append(": ")
-                .append(String.join(", ", list.stream().map(Object::toString).toList()))
-                .append("\r\n");
-        }
-        String subject = JsonUtils.str(p, "subject");
-        if (subject.contains("\r") || subject.contains("\n"))
-          throw GatewayException.invalid("邮件主题不能包含换行");
-        boolean html = p.get("body_html") != null && !JsonUtils.str(p, "body_html").isBlank();
-        mime.append("Subject: =?UTF-8?B?")
-            .append(Base64.getEncoder().encodeToString(subject.getBytes(StandardCharsets.UTF_8)))
-            .append("?=\r\nContent-Type: text/")
-            .append(html ? "html" : "plain")
-            .append("; charset=UTF-8\r\nContent-Transfer-Encoding: base64\r\n\r\n")
-            .append(
-                Base64.getMimeEncoder()
-                    .encodeToString(
-                        JsonUtils.str(p, html ? "body_html" : "body_text")
-                            .getBytes(StandardCharsets.UTF_8)));
+        String mime = GmailAttachments.mime(p);
         var body =
             JsonUtils.obj(
                 "raw",
-                Base64.getUrlEncoder()
-                    .encodeToString(mime.toString().getBytes(StandardCharsets.UTF_8)));
+                Base64.getUrlEncoder().encodeToString(mime.getBytes(StandardCharsets.UTF_8)));
         if (!JsonUtils.str(p, "thread_id").isBlank()) body.put("threadId", p.get("thread_id"));
         yield http.object("POST", base + "/messages/send", headers, body);
       }

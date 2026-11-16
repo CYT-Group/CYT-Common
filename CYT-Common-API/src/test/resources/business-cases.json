@@ -675,5 +675,33 @@
         }
       ]
     }
+  },
+  {
+    "operation": "gmail.attachments.get",
+    "params": {
+      "account": "fixture@example.invalid",
+      "message_id": "mail-001",
+      "attachment_id": "attachment-1"
+    },
+    "normalized": {
+      "account": "fixture@example.invalid",
+      "message_id": "mail-001",
+      "attachment_id": "attachment-1"
+    }
+  },
+  {
+    "operation": "lingxing.reviews.list",
+    "params": {
+      "start_date": "2026-01-01",
+      "end_date": "2026-11-01"
+    },
+    "normalized": {
+      "account": "",
+      "cursor": {},
+      "limit": 100,
+      "start_date": "2026-01-01",
+      "end_date": "2026-11-01",
+      "sids": ""
+    }
   }
 ]
