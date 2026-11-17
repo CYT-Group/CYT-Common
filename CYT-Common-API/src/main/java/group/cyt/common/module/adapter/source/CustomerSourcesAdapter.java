@@ -162,23 +162,30 @@ public class CustomerSourcesAdapter implements PlatformAdapter {
     String kind = Objects.toString(cursor.getOrDefault("review_type", "product-reviews"));
     if (!Set.of("product-reviews", "shop-reviews").contains(kind))
       throw GatewayException.invalid("公开评价类型无效");
+    Object rawHandle = cursor.get("product_handle");
+    if (cursor.containsKey("product_handle")
+        && (!(rawHandle instanceof String)
+            || ((String) rawHandle).isBlank()
+            || ((String) rawHandle).length() > 255
+            || !kind.equals("product-reviews")))
+      throw GatewayException.invalid("公开商品评价需要有效的 product_handle 和 product-reviews 类型");
+    String handle = rawHandle instanceof String ? (String) rawHandle : null;
     String token = cred("judgeme", account, "API_TOKEN", true, system);
     String shop = cred("judgeme", account, "SHOP_DOMAIN", true, system);
+    var query =
+        JsonUtils.obj(
+            "shop_domain", shop, "json_request", "true", "review_type", kind, "page", page);
+    if (handle != null) {
+      query.put("handle", handle);
+      query.put("per_page", 30);
+    }
+    String endpoint = handle == null ? "all_reviews_page" : "product_review";
     var data =
         JsonUtils.map(
             http.json(
                 "GET",
                 UpstreamHttp.query(
-                    "https://api.judge.me/api/v1/widgets/all_reviews_page",
-                    JsonUtils.obj(
-                        "shop_domain",
-                        shop,
-                        "json_request",
-                        "true",
-                        "review_type",
-                        kind,
-                        "page",
-                        page)),
+                    "https://api.judge.me/api/v1/widgets/" + endpoint, query),
                 Map.of("X-Api-Token", token),
                 null,
                 timeout));
@@ -186,10 +193,16 @@ public class CustomerSourcesAdapter implements PlatformAdapter {
     if (!(data.get("reviews") instanceof List<?>)
         || !(current instanceof Number)
         || !(total instanceof Number)
-        || ((Number) current).doubleValue() != page
+        || ((Number) current).doubleValue() != ((Number) current).intValue()
         || ((Number) total).intValue() < 0
         || ((Number) total).doubleValue() != ((Number) total).intValue())
       throw new GatewayException(502, "upstream_error", "Judge.me 公开回复未返回可验证的分页", false);
+    if (((Number) current).intValue() != page)
+      throw new GatewayException(
+          502,
+          "upstream_error",
+          "Judge.me pagination_mismatch：请求页 " + page + "，返回页 " + ((Number) current).intValue() + "；未推进游标",
+          false);
     List<Map<String, Object>> items = new ArrayList<>();
     Set<String> ids = new HashSet<>();
     for (Object raw : (List<?>) data.get("reviews")) {
@@ -212,11 +225,13 @@ public class CustomerSourcesAdapter implements PlatformAdapter {
       boolean observed =
           row.containsKey("reply_content") && (reply == null || reply instanceof String);
       String content = reply instanceof String ? (String) reply : "";
-      String handle = "";
+      String productHandle = "";
       try {
-        String path = URI.create(JsonUtils.str(row, "product_url")).getPath();
+        String path =
+            URI.create(Objects.toString(orFirst(row.get("product_url"), row.get("product_url_with_utm")), ""))
+                .getPath();
         if (path != null && path.contains("/products/"))
-          handle = path.split("/products/", 2)[1].split("/", 2)[0];
+          productHandle = path.split("/products/", 2)[1].split("/", 2)[0];
       } catch (IllegalArgumentException ignored) {
         // A missing product identity cannot be used for matching by the caller.
       }
@@ -233,7 +248,7 @@ public class CustomerSourcesAdapter implements PlatformAdapter {
               "created_at",
               row.get("created_at"),
               "product_handle",
-              handle,
+              productHandle,
               "review_type",
               kind,
               "grouped",
@@ -247,18 +262,19 @@ public class CustomerSourcesAdapter implements PlatformAdapter {
     boolean nextPage = page < ((Number) total).intValue();
     if (nextPage && items.isEmpty())
       throw new GatewayException(502, "upstream_error", "Judge.me 公开评价分页为空但仍有后续", false);
-    boolean more = nextPage || kind.equals("product-reviews");
+    boolean more = nextPage || (handle == null && kind.equals("product-reviews"));
+    var following =
+        JsonUtils.obj(
+            "page", nextPage ? page + 1 : 1,
+            "review_type", nextPage ? kind : (more ? "shop-reviews" : "product-reviews"));
+    if (handle != null) following.put("product_handle", handle);
     return JsonUtils.obj(
         "items",
         items,
         "has_more",
         more,
         "cursor",
-        JsonUtils.obj(
-            "page",
-            nextPage ? page + 1 : 1,
-            "review_type",
-            nextPage ? kind : (more ? "shop-reviews" : "product-reviews")),
+        following,
         "coverage",
         "published_public_replies",
         "reply_timestamp_available",

@@ -106,6 +106,76 @@ class JudgeMePublicRepliesTest {
   }
 
   @Test
+  void readsProductPartitionAndCompletesOnlyThatProduct() {
+    var cursor = Map.<String, Object>of(
+        "page", 24, "review_type", "product-reviews", "product_handle", "fixture-keyboard");
+    response(JsonUtils.obj("reviews", List.of(row()), "current_page", 24, "total_pages", 25));
+    var result = invoke(cursor);
+    assertEquals(true, result.get("has_more"));
+    assertEquals(Map.of("page", 25, "review_type", "product-reviews", "product_handle", "fixture-keyboard"),
+        result.get("cursor"));
+    verify(http).json(eq("GET"), argThat(url ->
+        url.startsWith("https://api.judge.me/api/v1/widgets/product_review?")
+            && url.contains("handle=fixture-keyboard") && url.contains("per_page=30")
+            && url.contains("page=24") && !url.contains("api_token")),
+        eq(Map.of("X-Api-Token", "fixture-private-token")), isNull(), anyDouble());
+    response(JsonUtils.obj("reviews", List.of(row()), "current_page", 25, "total_pages", 25));
+    var last = invoke(Map.of("page", 25, "product_handle", "fixture-keyboard"));
+    assertEquals(false, last.get("has_more"));
+    assertEquals(Map.of("page", 1, "review_type", "product-reviews", "product_handle", "fixture-keyboard"),
+        last.get("cursor"));
+    response(JsonUtils.obj("reviews", List.of(), "current_page", 1, "total_pages", 0));
+    var empty = invoke(Map.of("product_handle", "fixture-keyboard"));
+    assertEquals(false, empty.get("has_more"));
+    assertEquals("fixture-keyboard", JsonUtils.map(empty.get("cursor")).get("product_handle"));
+  }
+
+  @Test
+  void rejectsClampedPagesWithoutAdvancingTheCursor() {
+    response(JsonUtils.obj("reviews", List.of(row()), "current_page", 40, "total_pages", 361));
+    for (var cursor : List.of(Map.<String, Object>of("page", 41),
+        Map.<String, Object>of("page", 41, "product_handle", "fixture-keyboard"))) {
+      var error = assertThrows(GatewayException.class, () -> invoke(cursor));
+      assertTrue(error.getMessage().contains("pagination_mismatch"));
+      assertTrue(error.getMessage().contains("41"));
+      assertTrue(error.getMessage().contains("40"));
+    }
+  }
+
+  @Test
+  void rejectsInvalidProductPartitionBeforeCallingUpstream() {
+    for (Object handle : List.of("", " ", 123, List.of(), "x".repeat(256)))
+      assertThrows(GatewayException.class, () -> invoke(Map.of("product_handle", handle)));
+    assertThrows(GatewayException.class, () -> invoke(JsonUtils.obj("product_handle", null)));
+    assertThrows(GatewayException.class, () -> invoke(
+        Map.of("product_handle", "fixture-keyboard", "review_type", "shop-reviews")));
+    verifyNoInteractions(http);
+  }
+
+  @Test
+  void usesActualProductTrackingUrlWithoutInventingTheRequestHandle() {
+    var value = row();
+    value.put("product_url", null);
+    value.put("product_url_with_utm", "https://fixture.example/products/actual-keyboard?utm_source=judgeme");
+    value.put("is_for_product_from_group", null);
+    value.put("is_for_product_from_bundle", false);
+    response(JsonUtils.obj("reviews", List.of(value), "current_page", 1, "total_pages", 1));
+    var result = first(invoke(Map.of("product_handle", "requested-keyboard")));
+    assertEquals("actual-keyboard", result.get("product_handle"));
+    assertEquals(false, result.get("grouped"));
+    value.remove("product_url_with_utm");
+    assertEquals("", first(invoke(Map.of("product_handle", "requested-keyboard"))).get("product_handle"));
+  }
+
+  @Test
+  void prefersProductUrlOverTrackingUrl() {
+    var value = row();
+    value.put("product_url_with_utm", "https://fixture.example/products/other-keyboard?utm_source=judgeme");
+    response(JsonUtils.obj("reviews", List.of(value), "current_page", 1, "total_pages", 1));
+    assertEquals("fixture-keyboard", first(invoke(Map.of())).get("product_handle"));
+  }
+
+  @Test
   void absenceAndExplicitEmptyReplyAreDifferentObservations() {
     var row = row();
     row.remove("reply_content");
