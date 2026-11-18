@@ -60,7 +60,8 @@ class PublicCapabilitiesTest {
         "stripe.disputes.closure_history",
         "stripe.disputes.order_reference",
         "paypal.disputes.closures",
-        "paypal.disputes.closure_history")) {
+        "paypal.disputes.closure_history",
+        "nas.objects.upload")) {
       assertNotNull(actual.remove(key), key);
     }
   }

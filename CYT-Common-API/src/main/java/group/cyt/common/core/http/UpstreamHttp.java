@@ -163,6 +163,68 @@ public class UpstreamHttp {
         : bytes;
   }
 
+  /** One-shot streaming path: no redirects, replay, byte[] payload or error-body disclosure. */
+  public ResponseData upload(String url, Map<String, String> headers, BinaryUpload source) {
+    source.verifyEmpty();
+    var duration = Duration.ofMillis(Math.max(1, (long) (source.timeoutSeconds() * 1000)));
+    var http =
+        client
+            .newBuilder()
+            .callTimeout(duration)
+            .readTimeout(duration)
+            .writeTimeout(duration)
+            .connectTimeout(duration)
+            .build();
+    RequestBody body =
+        new RequestBody() {
+          @Override
+          public MediaType contentType() {
+            return MediaType.get(source.contentType());
+          }
+
+          @Override
+          public long contentLength() {
+            return source.length();
+          }
+
+          @Override
+          public boolean isOneShot() {
+            return true;
+          }
+
+          @Override
+          public void writeTo(okio.BufferedSink sink) throws IOException {
+            if (source.length() > 0) source.writeTo(sink.outputStream());
+          }
+        };
+    var call =
+        http.newCall(new Request.Builder().url(url).headers(Headers.of(headers)).put(body).build());
+    source.onCancel(call::cancel);
+    try (Response response = call.execute()) {
+      if (!source.completed()) throw GatewayException.invalid("文件尚未完整接收");
+      int status = response.code();
+      if (status < 200 || status >= 300) {
+        var error =
+            new GatewayException(
+                status == 429 ? 429 : 502,
+                status == 429 ? "rate_limited" : "upstream_error",
+                "上游返回 HTTP " + status,
+                false);
+        error.code = "UPSTREAM_HTTP_" + status;
+        throw error;
+      }
+      Map<String, String> responseHeaders = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+      for (String key : response.headers().names()) responseHeaders.put(key, response.header(key));
+      return new ResponseData(status, responseHeaders, new byte[0]);
+    } catch (java.io.InterruptedIOException e) {
+      if (source.failure() != null) throw source.failure();
+      throw new GatewayException(504, "upstream_timeout", "文件上传超时", false);
+    } catch (IOException e) {
+      if (source.failure() != null) throw source.failure();
+      throw new GatewayException(502, "upstream_error", "文件上传连接失败", false);
+    }
+  }
+
   private ResponseData receive(OkHttpClient http, Request request) {
     try (Response response = http.newCall(request).execute()) {
       int status = response.code();

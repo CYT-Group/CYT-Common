@@ -433,7 +433,7 @@ async function copyPath(path: string) {
         />
         <el-descriptions :column="1" border>
           <el-descriptions-item label="网关调用"
-            ><span class="mono">POST {{ selected.path }}</span
+            ><span class="mono">{{ selected.http_method || 'POST' }} {{ selected.path }}</span
             ><el-button
               link
               :icon="DocumentCopy"

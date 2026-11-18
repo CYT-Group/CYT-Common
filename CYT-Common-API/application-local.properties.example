@@ -14,3 +14,7 @@ CREDENTIAL_MASTER_KEY=
 
 # Explicit trusted internal service origins; empty keeps private networks blocked.
 INTERNAL_API_ALLOWED_ORIGINS=
+
+# Raw NAS proxy upload (bytes / seconds)
+NAS_UPLOAD_MAX_BYTES=536870912
+NAS_UPLOAD_TIMEOUT_S=300

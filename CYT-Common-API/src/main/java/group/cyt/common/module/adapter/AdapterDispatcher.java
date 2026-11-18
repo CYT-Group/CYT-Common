@@ -38,6 +38,8 @@ public class AdapterDispatcher {
    * 这样可以在保持其余平台模拟的同时单独放开审批这类资源走真连。
    */
   public boolean mock(OperationDefinition op) {
+    // Upload never inherits the local default MOCK_ALL=true or a resource-level switch.
+    if (op.rawBinary()) return settings.flag("NAS_MOCK", settings.flag("MOCK_ALL", false));
     if (op.platform().equals("discord")) return false;
     if (!registry.builtin(op.key())) return false;
     for (String flag : mockFlags(op)) if (settings.isSet(flag)) return settings.flag(flag, false);
@@ -59,6 +61,7 @@ public class AdapterDispatcher {
   }
 
   public Object invoke(OperationDefinition op, Map<String, Object> params, String system) {
+    if (op.rawBinary()) throw GatewayException.invalid("此操作需要 PUT 原始文件流");
     if (approvals.supports(op.key())) return approvals.invoke(op, params, system, mock(op));
     if (workflows.supports(op.key())) return workflows.invoke(op, params, system, mock(op));
     if (mock(op)) return mock.invoke(op, params, system);
@@ -68,5 +71,20 @@ public class AdapterDispatcher {
         .findFirst()
         .orElseThrow(() -> GatewayException.config("平台适配器未加载: " + op.platform()))
         .invoke(op, params, system);
+  }
+
+  public Object upload(
+      OperationDefinition op,
+      Map<String, Object> params,
+      String system,
+      group.cyt.common.core.http.BinaryUpload source) {
+    if (!op.key().equals("nas.objects.upload")) throw GatewayException.invalid("不支持的二进制操作");
+    if (settings.production() && mock(op)) throw GatewayException.config("生产环境禁止模拟上传");
+    return adapters.stream()
+        .filter(a -> a instanceof group.cyt.common.module.adapter.nas.NasAdapter)
+        .map(a -> (group.cyt.common.module.adapter.nas.NasAdapter) a)
+        .findFirst()
+        .orElseThrow(() -> GatewayException.config("NAS 适配器未加载"))
+        .upload(params, system, source, mock(op));
   }
 }

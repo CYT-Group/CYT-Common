@@ -49,10 +49,10 @@ public class ConsumerCapabilitiesController {
     var paths = JsonUtils.map(spec.get("paths"));
     for (var operation : operations) {
       var path = JsonUtils.map(paths.get(operation.path()));
-      var post = JsonUtils.map(path.get("post"));
+      var post = JsonUtils.map(path.get(operation.httpMethod().toLowerCase(java.util.Locale.ROOT)));
       post.put("x-cyt-effective-quota", authorization.decision(operation, grants).get("quota"));
       post.put("x-cyt-sensitive", operation.sensitive());
-      path.put("post", post);
+      path.put(operation.httpMethod().toLowerCase(java.util.Locale.ROOT), post);
       paths.put(operation.path(), path);
     }
     spec.put("paths", paths);
@@ -80,7 +80,7 @@ public class ConsumerCapabilitiesController {
             + "1. 本包 openapi.json 仅包含导出时已获授权的接口。运行时继续检查系统状态、权限和配额。\n"
             + "2. 向管理员领取本系统独立 API Key，存入后端环境变量 CYT_API_KEY。本包不包含密钥。\n"
             + "3. 使用管理员提供的可访问网关地址替换示例域名。不要向网关管理端 /admin/api 发业务请求。\n"
-            + "4. 按 openapi.json 填写业务参数。SDK 的操作名称取各接口 x-cyt-operation 字段。写操作使用稳定业务编号，超时后先核对原结果。\n\n"
+            + "4. 二进制上传使用 PUT 原始文件流，query 参数与准确 Content-Length；不支持 JSON、multipart、chunked 或幂等重放。使用 SDK upload_file/uploadFile 方法，业务 Key 只保存在后端。\n5. 按 openapi.json 填写业务参数。SDK 的操作名称取各接口 x-cyt-operation 字段。写操作使用稳定业务编号，超时后先核对原结果。\n\n"
             + "Python SDK：将 sdk/python 加入模块路径，或把 cyt_gateway.py 放入业务项目。\n\n"
             + "```python\nimport os\nfrom cyt_gateway import Gateway\ngateway = Gateway('https://<网关域名>', os.environ['CYT_API_KEY'])\n# gateway.call('<openapi 中的操作标识>', {填写实际业务参数})\n```\n\n"
             + "TypeScript SDK：导入 sdk/typescript/index.ts 的 Gateway 类，在业务后端调用。\n\n"

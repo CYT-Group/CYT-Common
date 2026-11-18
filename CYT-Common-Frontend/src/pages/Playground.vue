@@ -59,6 +59,10 @@ onMounted(async () => {
   else reset();
 });
 async function execute() {
+  if (selected.value?.transport === 'raw_binary') {
+    ElMessage.warning('文件上传请在业务后端使用 PUT 原始文件流；本调试台不执行二进制上传');
+    return;
+  }
   let body: unknown;
   try {
     body = JSON.parse(params.value);
@@ -128,7 +132,7 @@ async function execute() {
             </div>
             <template v-if="selected"
               ><div class="endpoint">
-                <el-tag type="success" effect="plain">POST</el-tag
+                <el-tag type="success" effect="plain">{{ selected.http_method || 'POST' }}</el-tag
                 ><span class="mono">{{ selected.path }}</span
                 ><el-tag v-if="selected.sensitive" type="warning" effect="plain">敏感操作</el-tag>
               </div>
@@ -139,7 +143,14 @@ async function execute() {
               type="info"
               :closable="false" /><el-tabs v-model="active" style="margin-top: 22px"
               ><el-tab-pane label="请求参数" name="parameters"
-                ><el-input
+                ><el-alert
+                  v-if="selected?.transport === 'raw_binary'"
+                  title="PUT 原始文件上传"
+                  description="filename、folder、key、bucket 是 query 参数。请在业务后端使用文件流和准确 Content-Length 调用；不支持 JSON、multipart 或 chunked。业务 Key 仅保存在后端。"
+                  type="info"
+                  :closable="false" />
+                <el-input
+                  v-else
                   v-model="params"
                   type="textarea"
                   :rows="16"
@@ -174,7 +185,7 @@ async function execute() {
             type="primary"
             :icon="CaretRight"
             :loading="busy"
-            :disabled="!operation || !system"
+            :disabled="!operation || !system || selected?.transport === 'raw_binary'"
             @click="execute"
             >执行请求</el-button
           >

@@ -472,5 +472,41 @@
         }
       }
     }
+  },
+  "nas.objects.upload": {
+    "type": "object",
+    "required": [
+      "bucket",
+      "key",
+      "size_bytes",
+      "content_type",
+      "etag"
+    ],
+    "properties": {
+      "bucket": {
+        "type": "string",
+        "description": "实际上传桶名"
+      },
+      "key": {
+        "type": "string",
+        "description": "实际完整对象键"
+      },
+      "size_bytes": {
+        "type": "integer",
+        "description": "经 EOF 核对的文件字节数"
+      },
+      "content_type": {
+        "type": "string",
+        "description": "文件 MIME 类型"
+      },
+      "etag": {
+        "type": "string",
+        "description": "S3 返回的 ETag，不保证是内容 MD5"
+      },
+      "_mock": {
+        "type": "boolean",
+        "description": "仅模拟上传时为 true"
+      }
+    }
   }
 }

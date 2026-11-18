@@ -23,6 +23,21 @@ public record OperationDefinition(
     @JsonProperty("sort_order") int sortOrder,
     String path,
     JsonNode schema) {
+  @com.fasterxml.jackson.annotation.JsonIgnore
+  public boolean rawBinary() {
+    return tags != null && tags.contains("raw_binary");
+  }
+
+  @JsonProperty("http_method")
+  public String httpMethod() {
+    return rawBinary() ? "PUT" : "POST";
+  }
+
+  @JsonProperty("transport")
+  public String transport() {
+    return rawBinary() ? "raw_binary" : "json";
+  }
+
   public boolean readOnly() {
     return tags != null && tags.contains("read");
   }

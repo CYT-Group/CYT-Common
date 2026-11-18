@@ -1,6 +1,7 @@
 package group.cyt.common.module.adapter.nas;
 
 import group.cyt.common.core.exception.GatewayException;
+import group.cyt.common.core.http.BinaryUpload;
 import group.cyt.common.core.http.UpstreamHttp;
 import group.cyt.common.core.util.JsonUtils;
 import group.cyt.common.module.adapter.PlatformAdapter;
@@ -34,6 +35,7 @@ public class NasAdapter implements PlatformAdapter {
   }
 
   public Object invoke(OperationDefinition op, Map<String, Object> p, String system) {
+    if (op.rawBinary()) throw GatewayException.invalid("此操作需要 PUT 原始文件流");
     Config cfg = config(p, system);
     String key = op.key().substring(4), bucket = cfg.bucket();
     return switch (key) {
@@ -204,6 +206,75 @@ public class NasAdapter implements PlatformAdapter {
         credentials.required("NAS_MINIO_SECRET_KEY", system),
         region.isBlank() ? "us-east-1" : region,
         bucket);
+  }
+
+  public Object upload(Map<String, Object> p, String system, BinaryUpload source, boolean mock) {
+    String filename = JsonUtils.str(p, "filename"), name = JsonUtils.str(p, "key");
+    if (filename.isBlank() || filename.length() > 200 || filename.matches(".*[\\x00-\\x1f\\x7f].*"))
+      throw GatewayException.invalid("filename 必须为 1–200 字符的文件名");
+    if (name.isBlank()) {
+      String folder = JsonUtils.str(p, "folder").replaceAll("^/+|/+$", "");
+      String extension =
+          filename.contains(".")
+              ? filename.substring(filename.lastIndexOf('.')).toLowerCase(Locale.ROOT)
+              : "";
+      if (extension.isBlank()) throw GatewayException.invalid("文件名需要扩展名，或提供完整 key");
+      name =
+          (folder.isBlank() ? "" : folder + "/")
+              + LocalDate.now(ZoneOffset.UTC)
+              + "/"
+              + UUID.randomUUID()
+              + extension;
+    }
+    name = validKey(name);
+    String bucket, etag;
+    if (mock) {
+      bucket = JsonUtils.str(p, "bucket");
+      if (bucket.isBlank()) bucket = credentials.resolve("NAS_MINIO_BUCKET", system);
+      if (bucket.isBlank()) bucket = "cyt-training";
+      validBucket(bucket);
+      try {
+        source.writeTo(java.io.OutputStream.nullOutputStream());
+      } catch (java.io.IOException e) {
+        throw GatewayException.invalid("文件接收中断");
+      }
+      etag = "mock-upload";
+    } else {
+      Config cfg = config(p, system);
+      bucket = cfg.bucket();
+      Map<String, String> supplied =
+          Map.of(
+              "Content-Length",
+              Long.toString(source.length()),
+              "Content-Type",
+              source.contentType());
+      String target =
+          cfg.endpoint().getScheme()
+              + "://"
+              + cfg.endpoint().getRawAuthority()
+              + path(cfg, bucket, name);
+      var response =
+          http.upload(
+              target,
+              signedHeaders(
+                  cfg, "PUT", path(cfg, bucket, name), Map.of(), supplied, "UNSIGNED-PAYLOAD"),
+              source);
+      etag = response.headers().getOrDefault("ETag", "").replace("\"", "");
+    }
+    var result =
+        JsonUtils.obj(
+            "bucket",
+            bucket,
+            "key",
+            name,
+            "size_bytes",
+            source.length(),
+            "content_type",
+            source.contentType(),
+            "etag",
+            etag);
+    if (mock) result.put("_mock", true);
+    return result;
   }
 
   private Object list(Config cfg, Map<String, Object> p) {
@@ -380,6 +451,20 @@ public class NasAdapter implements PlatformAdapter {
         payload =
             HexFormat.of()
                 .formatHex(JsonUtils.digest("SHA-256", body == null ? new byte[0] : body));
+    Map<String, String> headers = signedHeaders(cfg, method, path, query, supplied, payload);
+    String url = cfg.endpoint().getScheme() + "://" + cfg.endpoint().getRawAuthority() + path;
+    String q = canonicalQuery(query);
+    if (!q.isBlank()) url += "?" + q;
+    return http.exchange(method, url, headers, body, 120, null);
+  }
+
+  private Map<String, String> signedHeaders(
+      Config cfg,
+      String method,
+      String path,
+      Map<String, String> query,
+      Map<String, String> supplied,
+      String payload) {
     Instant now = Instant.now();
     String
         date =
@@ -429,10 +514,7 @@ public class NasAdapter implements PlatformAdapter {
             + names
             + ", Signature="
             + signature);
-    String url = cfg.endpoint().getScheme() + "://" + cfg.endpoint().getRawAuthority() + path;
-    String q = canonicalQuery(query);
-    if (!q.isBlank()) url += "?" + q;
-    return http.exchange(method, url, headers, body, 120, null);
+    return headers;
   }
 
   private String presign(Config cfg, String method, String bucket, String key, int expires) {

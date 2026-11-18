@@ -29,6 +29,13 @@ export function callExample(
 ) {
   const base = gatewayAddress(address);
   if (!base) return '';
+  if (operation.transport === 'raw_binary') {
+    if (language === 'python')
+      return `import os\nfrom cyt_gateway import Gateway\n\ngateway = Gateway(${JSON.stringify(base)}, os.environ['CYT_API_KEY'])\nresult = gateway.upload_file('file.bin', folder='uploads')\nprint(result)`;
+    if (language === 'typescript')
+      return `import { createReadStream, statSync } from 'node:fs';\nimport { Readable } from 'node:stream';\nimport { Gateway } from './sdk/typescript/index';\n\nconst gateway = new Gateway(${JSON.stringify(base)}, process.env.CYT_API_KEY!);\nconst stream = Readable.toWeb(createReadStream('file.bin')) as ReadableStream<Uint8Array>;\nconst result = await gateway.uploadFile(stream, {filename: 'file.bin', contentLength: statSync('file.bin').size, folder: 'uploads'});`;
+    return `curl --request PUT ${shellQuote(base + operation.path + '?filename=file.bin&folder=uploads')} --header "Authorization: Bearer \${CYT_API_KEY}" --header 'Content-Type: application/octet-stream' --data-binary '@file.bin'`;
+  }
   const required = operation.tags?.includes('idempotency_required');
   const params = structuredClone(parameters);
   const record =

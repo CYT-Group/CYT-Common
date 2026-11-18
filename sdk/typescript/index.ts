@@ -24,6 +24,7 @@ export class Gateway {
   constructor(private baseUrl: string, private apiKey: string, private timeoutMs = 100_000) {}
 
   async call<T = Record<string, unknown>>(operation: string, params: Record<string, unknown> = {}, requestId?: string): Promise<T> {
+    if (operation === 'nas.objects.upload') throw new Error('Use uploadFile for PUT raw binary uploads');
     if (!/^[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*$/.test(operation)) throw new Error('Invalid operation name');
     const response = await fetch(`${this.baseUrl.replace(/\/$/, '')}/integrations/${operation.replaceAll('.', '/').replaceAll('_', '-')}`, {
       method: 'POST',
@@ -34,6 +35,26 @@ export class Gateway {
     const result = await response.json().catch(() => ({ error: { message: 'Gateway returned a non-JSON response' } }));
     if (!response.ok || !result.ok) throw new GatewayError(response.status, result.error || {});
     return result.data as T;
+  }
+
+  /** Backend-only, one-shot file stream. contentLength must be the exact byte count. */
+  async uploadFile(body: ReadableStream<Uint8Array>, options: {
+    filename: string; contentLength: number; contentType?: string; folder?: string;
+    key?: string; bucket?: string; timeoutMs?: number;
+  }): Promise<{bucket: string; key: string; size_bytes: number; content_type: string; etag: string}> {
+    if (!Number.isSafeInteger(options.contentLength) || options.contentLength < 0) throw new Error('Invalid contentLength');
+    const query = new URLSearchParams({filename: options.filename, folder: options.folder || ''});
+    if (options.key !== undefined) query.set('key', options.key);
+    if (options.bucket !== undefined) query.set('bucket', options.bucket);
+    const response = await fetch(`${this.baseUrl.replace(/\/$/, '')}/integrations/nas/objects/upload?${query}`, {
+      method: 'PUT', redirect: 'error', duplex: 'half',
+      headers: {Authorization: `Bearer ${this.apiKey}`, 'Content-Length': String(options.contentLength),
+        'Content-Type': options.contentType || 'application/octet-stream'},
+      body, signal: AbortSignal.timeout(options.timeoutMs ?? 300_000),
+    } as RequestInit & {duplex: 'half'});
+    const result = await response.json().catch(() => ({error: {message: 'Gateway returned a non-JSON response'}}));
+    if (!response.ok || !result.ok) throw new GatewayError(response.status, result.error || {});
+    return result.data;
   }
 
   readonly approvals = {

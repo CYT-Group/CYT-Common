@@ -22,7 +22,7 @@
 <script>
 const spec = JSON.parse(document.getElementById('openapi-data').textContent);
 const byId = (id) => document.getElementById(id);
-const operations = Object.entries(spec.paths || {}).filter(([, path]) => path.post).map(([path, item]) => ({path, ...item.post}));
+const operations = Object.entries(spec.paths || {}).flatMap(([path, item]) => ['post', 'put'].filter(method => item[method]).map(method => ({path, method: method.toUpperCase(), ...item[method]})));
 const category = (operation) => operation['x-cyt-category'] || operation.tags?.[0] || '未分类';
 byId('guide-title').textContent = spec.info?.title || 'CYT Common 接入指南';
 byId('guide-scope').textContent = '调用方：' + (spec['x-cyt-consumer'] || '') + ' · ' + operations.length + ' 项授权接口 · 接口权限以实际调用时为准';
@@ -46,13 +46,19 @@ function example(input, depth = 0) {
 }
 function address() { try { const url = new URL(byId('address').value.trim()); return ['http:', 'https:'].includes(url.protocol) && !url.username && !url.password && !url.search && !url.hash ? url.toString().replace(/\/+$/, '') : ''; } catch { return ''; } }
 function quote(value) { return "'" + value.replaceAll("'", "'\\''") + "'"; }
+function querySchema() { return {type:'object', properties:Object.fromEntries((selected.parameters || []).filter(p=>p.in==='query').map(p=>[p.name,p.schema])),required:['filename']}; }
 function renderSample() {
   const base = address(); byId('address-error').classList.toggle('hidden', !!base); byId('copy').disabled = !base || !selected; if(!base || !selected) { byId('sample').textContent = ''; return; }
   const schema = selected.requestBody?.content?.['application/json']?.schema;
   const params = example(schema); const required = selected['x-cyt-idempotency-required'];
   if(required && params && typeof params === 'object' && 'request_id' in params && !params.request_id) params.request_id = '<稳定业务请求号>';
   const requestId = String(params?.request_id || '<稳定业务请求号>'); const language = byId('language').value; let sample;
-  if(language === 'python') sample = 'import json\nimport os\nfrom cyt_gateway import Gateway\n\ngateway = Gateway(' + JSON.stringify(base) + ', os.environ["CYT_API_KEY"])\nparams = json.loads(' + JSON.stringify(JSON.stringify(params)) + ')\nresult = gateway.call(' + JSON.stringify(selected['x-cyt-operation']) + ', params' + (required ? ', request_id=' + JSON.stringify(requestId) : '') + ')\nprint(result)';
+  if(selected['x-cyt-transport'] === 'raw_binary') {
+    if(language === 'python') sample = 'import os\nfrom cyt_gateway import Gateway\ngateway = Gateway(' + JSON.stringify(base) + ', os.environ["CYT_API_KEY"])\nresult = gateway.upload_file("file.bin", folder="uploads")\nprint(result)';
+    else if(language === 'typescript') sample = "import { createReadStream, statSync } from 'node:fs';\nimport { Readable } from 'node:stream';\nimport { Gateway } from './sdk/typescript/index';\nconst gateway = new Gateway(" + JSON.stringify(base) + ", process.env.CYT_API_KEY!);\nconst stream = Readable.toWeb(createReadStream('file.bin')) as ReadableStream<Uint8Array>;\nconst result = await gateway.uploadFile(stream, {filename: 'file.bin', contentLength: statSync('file.bin').size});";
+    else sample = 'curl --request PUT ' + quote(base + selected.path + '?filename=file.bin&folder=uploads') + ' --header "Authorization: Bearer ${CYT_API_KEY}" --header \'Content-Type: application/octet-stream\' --data-binary \'@file.bin\'';
+  }
+  else if(language === 'python') sample = 'import json\nimport os\nfrom cyt_gateway import Gateway\n\ngateway = Gateway(' + JSON.stringify(base) + ', os.environ["CYT_API_KEY"])\nparams = json.loads(' + JSON.stringify(JSON.stringify(params)) + ')\nresult = gateway.call(' + JSON.stringify(selected['x-cyt-operation']) + ', params' + (required ? ', request_id=' + JSON.stringify(requestId) : '') + ')\nprint(result)';
   else if(language === 'typescript') sample = "import { Gateway } from './sdk/typescript/index';\n\nconst gateway = new Gateway(" + JSON.stringify(base) + ', process.env.CYT_API_KEY!);\nconst params = ' + JSON.stringify(params, null, 2) + ';\nconst result = await gateway.call(' + JSON.stringify(selected['x-cyt-operation']) + ', params' + (required ? ', ' + JSON.stringify(requestId) : '') + ');\nconsole.log(result);';
   else sample = 'curl -X POST ' + quote(base + selected.path) + ' \\\n  -H "Authorization: Bearer ${CYT_API_KEY}" \\\n  -H \'Content-Type: application/json\'' + (required ? ' \\\n  -H ' + quote('Idempotency-Key: ' + requestId) : '') + ' \\\n  -d ' + quote(JSON.stringify(params, null, 2));
   byId('sample').textContent = sample; byId('copy-status').textContent = '';
@@ -65,8 +71,8 @@ function fieldRows(input,prefix='',depth=0) {
 }
 function renderDetail() {
   byId('api-detail').classList.toggle('hidden', !selected); byId('empty').classList.toggle('hidden', !!selected); if(!selected) return;
-  byId('category').textContent = category(selected); byId('operation-title').textContent = selected.summary || selected['x-cyt-operation']; byId('endpoint').textContent = 'POST ' + selected.path; byId('description').textContent = selected.description || ''; byId('quota').textContent = '生效配额：' + (selected['x-cyt-effective-quota'] || '以管理员配置为准'); byId('write-note').classList.toggle('hidden', !!selected['x-cyt-read-only']);
-  const schema = resolve(selected.requestBody?.content?.['application/json']?.schema); byId('schema').textContent = JSON.stringify(schema, null, 2); byId('parameters').replaceChildren();
+  byId('category').textContent = category(selected); byId('operation-title').textContent = selected.summary || selected['x-cyt-operation']; byId('endpoint').textContent = selected.method + ' ' + selected.path; byId('description').textContent = selected.description || ''; byId('quota').textContent = '生效配额：' + (selected['x-cyt-effective-quota'] || '以管理员配置为准'); byId('write-note').classList.toggle('hidden', !!selected['x-cyt-read-only']);
+  const schema = selected['x-cyt-transport'] === 'raw_binary' ? querySchema() : resolve(selected.requestBody?.content?.['application/json']?.schema); byId('schema').textContent = JSON.stringify(schema, null, 2); byId('parameters').replaceChildren();
   for(const row of fieldRows(schema)) { const tr=document.createElement('tr'); for(const value of [row.path,row.type,row.required?'必填':'可选',row.description]) {const td=document.createElement('td');td.textContent=value;tr.append(td);} byId('parameters').append(tr); }
   const response=resolve(selected.responses?.['200']?.content?.['application/json']?.schema);
   byId('response-fields').replaceChildren();byId('response-schema').textContent=JSON.stringify(response,null,2);

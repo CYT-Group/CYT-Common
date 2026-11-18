@@ -520,7 +520,8 @@ async function copyPath() {
           </div>
         </div>
         <div class="endpoint-block">
-          <span class="http-method">POST</span><code>{{ selected.path }}</code
+          <span class="http-method">{{ selected.http_method || 'POST' }}</span
+          ><code>{{ selected.path }}</code
           ><el-tooltip content="复制接口路径"
             ><el-button
               :icon="CopyDocument"

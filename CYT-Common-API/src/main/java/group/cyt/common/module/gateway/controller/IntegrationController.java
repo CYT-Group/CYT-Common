@@ -1,6 +1,9 @@
 package group.cyt.common.module.gateway.controller;
 
+import group.cyt.common.core.config.GatewaySettings;
 import group.cyt.common.core.exception.GatewayException;
+import group.cyt.common.core.http.BinaryUpload;
+import group.cyt.common.core.http.BinaryUploadFilter;
 import group.cyt.common.core.util.JsonUtils;
 import group.cyt.common.module.auth.service.AuthenticationService;
 import group.cyt.common.module.gateway.service.GatewayExecutor;
@@ -14,12 +17,56 @@ public class IntegrationController {
   private final AuthenticationService authentication;
   private final GatewayExecutor executor;
   private final OperationRegistry registry;
+  private final GatewaySettings settings;
 
   public IntegrationController(
-      AuthenticationService authentication, GatewayExecutor executor, OperationRegistry registry) {
+      AuthenticationService authentication,
+      GatewayExecutor executor,
+      OperationRegistry registry,
+      GatewaySettings settings) {
     this.authentication = authentication;
     this.executor = executor;
     this.registry = registry;
+    this.settings = settings;
+  }
+
+  @PutMapping("/integrations/nas/objects/upload")
+  public Object upload(HttpServletRequest request) {
+    String system = authentication.system(request);
+    var query = new LinkedHashMap<String, Object>();
+    String raw = request.getQueryString();
+    if (raw != null && raw.length() > 8192) throw GatewayException.invalid("上传 query 过长");
+    if (raw != null && !raw.isBlank()) {
+      try {
+        for (String part : raw.split("&")) {
+          String[] pair = part.split("=", 2);
+          String name =
+              java.net.URLDecoder.decode(pair[0], java.nio.charset.StandardCharsets.UTF_8);
+          String value =
+              pair.length == 1
+                  ? ""
+                  : java.net.URLDecoder.decode(pair[1], java.nio.charset.StandardCharsets.UTF_8);
+          if (query.putIfAbsent(name, value) != null)
+            throw GatewayException.invalid("上传 query 不允许重复参数");
+        }
+      } catch (IllegalArgumentException e) {
+        throw GatewayException.invalid("上传 query 编码无效");
+      }
+    }
+    String contentType =
+        request.getAttribute(BinaryUploadFilter.ORIGINAL_TYPE) instanceof String original
+            ? original
+            : request.getContentType();
+    return executor.executeUpload(
+        system,
+        query,
+        new BinaryUpload(
+            request::getInputStream,
+            request.getHeader("Content-Length"),
+            request.getHeader("Transfer-Encoding"),
+            contentType,
+            settings),
+        request.getHeader("X-Trace-Id"));
   }
 
   @PostMapping("/integrations/{platform}/{resource}/{action}")

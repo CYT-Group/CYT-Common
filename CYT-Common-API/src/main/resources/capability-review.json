@@ -32,9 +32,9 @@
     }
   ],
   "depth_summary": {
-    "total": 177,
+    "total": 178,
     "counts": {
-      "enhanced": 89,
+      "enhanced": 90,
       "deep": 31,
       "test_only": 1,
       "basic": 51,
@@ -4214,6 +4214,27 @@
       "key": "paypal.disputes.closure_history",
       "platform": "paypal",
       "summary": "读取支付平台结案历史"
+    },
+    {
+      "source": "src/main/java/group/cyt/common/module/adapter/nas/NasAdapter.java",
+      "current": "通过统一网关流式上传到 NAS，核对末块与 EOF 后返回元信息。",
+      "proposal": "业务侧按文件用途校验内容。",
+      "caveat": "不扫描文件内容；失败不自动重试。",
+      "assessment": "ready",
+      "depth": "enhanced",
+      "evidence": [
+        {
+          "path": "src/main/java/group/cyt/common/module/adapter/nas/NasAdapter.java",
+          "line": 211,
+          "anchor": "public Object upload("
+        }
+      ],
+      "recommended_operations": [],
+      "depth_reason": "独立授权、限额、长度校验与流式代理。",
+      "remaining_gap": "业务文件校验由调用方负责。",
+      "key": "nas.objects.upload",
+      "platform": "nas",
+      "summary": "统一文件代理上传"
     }
   ]
 }

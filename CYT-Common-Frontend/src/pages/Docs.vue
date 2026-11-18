@@ -520,7 +520,7 @@ function debug() {
               <header class="panel-head">
                 <div>
                   <h2>{{ selected.summary }}</h2>
-                  <p class="mono">POST {{ selected.path }}</p>
+                  <p class="mono">{{ selected.http_method || 'POST' }} {{ selected.path }}</p>
                 </div>
                 <el-button link type="primary" :icon="Right" @click="debug">前往调试</el-button>
               </header>
@@ -540,7 +540,13 @@ function debug() {
                     >支持幂等键</el-tag
                   >
                 </div>
-                <h3 class="docs-heading">请求参数</h3>
+                <h3 class="docs-heading">
+                  {{ selected.transport === 'raw_binary' ? 'Query 参数' : '请求参数' }}
+                </h3>
+                <p v-if="selected.transport === 'raw_binary'" class="form-hint">
+                  请求体是原始文件流，Content-Type 为文件 MIME，必须提供准确 Content-Length；不支持
+                  multipart 或 chunked。请在业务后端调用。
+                </p>
                 <SchemaFields :schema="selected.schema" />
                 <h3 class="docs-heading">响应字段含义</h3>
                 <ResponseFields :operation="selected" />

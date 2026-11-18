@@ -4314,6 +4314,61 @@
       "sort_order": 0,
       "transport": "json",
       "http_method": "POST"
+    },
+    {
+      "key": "nas.objects.upload",
+      "platform": "nas",
+      "summary": "统一文件代理上传",
+      "description": "PUT 原始二进制文件流；filename/folder/key/bucket 位于 query，Content-Type 为文件 MIME，必须提供准确 Content-Length，不支持 chunked。独立高危操作，必须精确授权 nas.objects.upload；presign_put 或通配授权不能替代。不重试、不幂等重放。默认最大 512MiB、总超时 300 秒，分别由 NAS_UPLOAD_MAX_BYTES、NAS_UPLOAD_TIMEOUT_S 配置。业务系统 Key 仅保存在其后端。",
+      "quota": "60/min",
+      "sensitive": true,
+      "idempotent": false,
+      "since": "2026-11",
+      "deprecated": false,
+      "tags": [
+        "write",
+        "danger",
+        "raw_binary"
+      ],
+      "category": "对象",
+      "path": "/integrations/nas/objects/upload",
+      "schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "filename"
+        ],
+        "properties": {
+          "filename": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "文件名；未提供 key 时须包含扩展名"
+          },
+          "folder": {
+            "type": "string",
+            "default": "",
+            "maxLength": 500,
+            "description": "自动生成对象键时使用的目录，默认空"
+          },
+          "key": {
+            "type": "string",
+            "maxLength": 500,
+            "description": "可选完整对象键；提供时优先于 folder"
+          },
+          "bucket": {
+            "type": "string",
+            "maxLength": 63,
+            "description": "可选桶名，默认 NAS_MINIO_BUCKET"
+          }
+        }
+      },
+      "timeout_s": 300.0,
+      "retry_max": 1,
+      "sort_order": 31,
+      "transport": "raw_binary",
+      "http_method": "PUT",
+      "cost": "none"
     }
   ],
   "native_extensions": [

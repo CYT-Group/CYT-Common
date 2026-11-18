@@ -46,6 +46,8 @@ export interface CapabilityItem {
   evidence: { path: string; line: number; anchor: string }[];
 }
 export interface Operation {
+  http_method?: 'POST' | 'PUT';
+  transport?: 'json' | 'raw_binary';
   key: string;
   platform: string;
   path: string;

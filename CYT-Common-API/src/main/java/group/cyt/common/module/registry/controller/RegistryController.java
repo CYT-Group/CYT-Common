@@ -174,7 +174,7 @@ public class RegistryController {
       paths.put(
           op.path(),
           JsonUtils.obj(
-              "post",
+              op.httpMethod().toLowerCase(Locale.ROOT),
               JsonUtils.obj(
                   "operationId",
                   prefix,
@@ -235,6 +235,69 @@ public class RegistryController {
                       "429",
                       JsonUtils.obj("description", "配额耗尽")))));
     }
+    for (var op : operations) {
+      if (!op.rawBinary()) continue;
+      var item = JsonUtils.map(paths.get(op.path()));
+      var upload = JsonUtils.map(item.get("put"));
+      upload.put("x-cyt-transport", op.transport());
+      upload.put("x-cyt-sensitive", true);
+      var parameters = new ArrayList<Object>();
+      op.schema()
+          .path("properties")
+          .fields()
+          .forEachRemaining(
+              field ->
+                  parameters.add(
+                      JsonUtils.obj(
+                          "name",
+                          field.getKey(),
+                          "in",
+                          "query",
+                          "required",
+                          field.getKey().equals("filename"),
+                          "schema",
+                          JsonUtils.parse(field.getValue().toString()))));
+      parameters.add(
+          JsonUtils.obj(
+              "name",
+              "Content-Length",
+              "in",
+              "header",
+              "required",
+              true,
+              "schema",
+              JsonUtils.obj("type", "integer", "minimum", 0),
+              "description",
+              "准确的文件字节数；不支持 Transfer-Encoding/chunked"));
+      upload.put("parameters", parameters);
+      upload.put(
+          "requestBody",
+          JsonUtils.obj(
+              "required",
+              true,
+              "content",
+              JsonUtils.obj(
+                  "application/octet-stream",
+                  JsonUtils.obj("schema", JsonUtils.obj("type", "string", "format", "binary")))));
+      var responses = JsonUtils.map(upload.get("responses"));
+      for (var error :
+          Map.of(
+                  "411",
+                  "必须提供准确 Content-Length，不支持 chunked",
+                  "413",
+                  "文件超过大小限制",
+                  "502",
+                  "NAS 上游错误",
+                  "503",
+                  "未配置 NAS 凭据或网关不可用",
+                  "504",
+                  "文件上传超时")
+              .entrySet())
+        responses.put(error.getKey(), JsonUtils.obj("description", error.getValue()));
+      upload.put("responses", responses);
+      item.put("put", upload);
+      paths.put(op.path(), item);
+    }
     return JsonUtils.obj(
         "openapi",
         "3.1.0",
@@ -280,12 +343,14 @@ public class RegistryController {
   public ResponseEntity<String> html() {
     StringBuilder html =
         new StringBuilder(
-            "<!doctype html><html lang=\"zh-CN\"><meta charset=\"utf-8\"><title>CYT Common API 接入文档</title><style>body{max-width:1000px;margin:40px auto;padding:0 24px;font:14px/1.8 system-ui;color:#30364b}section{border-top:1px solid #ddd;padding:20px 0}pre{overflow:auto;background:#f6f7fb;padding:20px;font:12px/1.7 monospace}h1{font-size:26px}h2{font-size:18px}</style><h1>CYT Common API 接入文档</h1><p>认证使用 Authorization: Bearer &lt;系统 API Key 或 Google ID token&gt;。所有操作通过 POST 提交 JSON。</p>");
+            "<!doctype html><html lang=\"zh-CN\"><meta charset=\"utf-8\"><title>CYT Common API 接入文档</title><style>body{max-width:1000px;margin:40px auto;padding:0 24px;font:14px/1.8 system-ui;color:#30364b}section{border-top:1px solid #ddd;padding:20px 0}pre{overflow:auto;background:#f6f7fb;padding:20px;font:12px/1.7 monospace}h1{font-size:26px}h2{font-size:18px}</style><h1>CYT Common API 接入文档</h1><p>认证使用 Authorization: Bearer &lt;系统 API Key 或 Google ID token&gt;。JSON 操作使用 POST；原始文件上传使用 PUT，参数位于 query，必须提供准确 Content-Length。</p>");
     for (var op : registry.operations())
       html.append("<section><h2>")
           .append(escape(op.summary()))
           .append("</h2><p>")
-          .append(escape(op.path()))
+          .append(escape(op.httpMethod() + " " + op.path()))
+          .append("</p><p>")
+          .append(escape(op.description()))
           .append("</p><pre>")
           .append(escape(JsonUtils.write(op.schema())))
           .append("</pre></section>");

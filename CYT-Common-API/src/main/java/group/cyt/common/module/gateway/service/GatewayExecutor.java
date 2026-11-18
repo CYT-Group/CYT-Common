@@ -1,6 +1,7 @@
 package group.cyt.common.module.gateway.service;
 
 import group.cyt.common.core.exception.GatewayException;
+import group.cyt.common.core.http.BinaryUpload;
 import group.cyt.common.core.persistence.GatewayStore;
 import group.cyt.common.core.util.JsonUtils;
 import group.cyt.common.module.adapter.AdapterDispatcher;
@@ -46,6 +47,21 @@ public class GatewayExecutor {
       Map<String, Object> params,
       String idempotencyKey,
       String traceId) {
+    return execute(system, key, params, idempotencyKey, traceId, null);
+  }
+
+  public Map<String, Object> executeUpload(
+      String system, Map<String, Object> params, BinaryUpload source, String traceId) {
+    return execute(system, "nas.objects.upload", params, null, traceId, source);
+  }
+
+  private Map<String, Object> execute(
+      String system,
+      String key,
+      Map<String, Object> params,
+      String idempotencyKey,
+      String traceId,
+      BinaryUpload source) {
     String trace =
         traceId == null || traceId.isBlank()
             ? UUID.randomUUID().toString().replace("-", "")
@@ -81,6 +97,9 @@ public class GatewayExecutor {
         if (p.path("platform").asText().equals(platform) && !p.path("platform_quota").isNull())
           quota.consume("platform:" + platform, p.path("platform_quota").asText());
       var validated = registry.validate(op, params);
+      if (op.rawBinary() && source == null)
+        throw GatewayException.invalid("此操作只支持 PUT 原始文件流，不能通过 JSON、批量或管理 JSON 调试调用");
+      if (source != null) source.prepare();
       String hash = JsonUtils.sha(JsonUtils.write(JsonUtils.sorted(validated)));
       if (op.tags() != null && op.tags().contains("business"))
         hash = JsonUtils.sha(hash + ":" + mock + ":" + adapters.environment());
@@ -151,7 +170,7 @@ public class GatewayExecutor {
       if (!op.readOnly()) attempts = 1;
       for (int attempt = 0; attempt < attempts; attempt++) {
         try {
-          data = invokeWithTimeout(op, validated, system);
+          data = invokeWithTimeout(op, validated, system, source);
           break;
         } catch (GatewayException e) {
           if (!e.retryable || attempt == attempts - 1) throw e;
@@ -217,18 +236,29 @@ public class GatewayExecutor {
   }
 
   private Object invokeWithTimeout(
-      OperationDefinition op, Map<String, Object> params, String system) {
-    Future<Object> future = upstreamExecutor.submit(() -> adapters.invoke(op, params, system));
+      OperationDefinition op, Map<String, Object> params, String system, BinaryUpload source) {
+    Future<Object> future =
+        upstreamExecutor.submit(
+            () ->
+                source == null
+                    ? adapters.invoke(op, params, system)
+                    : adapters.upload(op, params, system, source));
     try {
-      return future.get(Math.max(1, (long) (op.timeoutSeconds() * 1000)), TimeUnit.MILLISECONDS);
+      return future.get(
+          Math.max(
+              1, (long) ((source == null ? op.timeoutSeconds() : source.timeoutSeconds()) * 1000)),
+          TimeUnit.MILLISECONDS);
     } catch (TimeoutException e) {
       future.cancel(true);
-      throw new GatewayException(504, "upstream_timeout", "操作执行超时", true);
+      if (source != null) source.cancel();
+      throw new GatewayException(504, "upstream_timeout", "操作执行超时", source == null);
     } catch (InterruptedException e) {
       future.cancel(true);
+      if (source != null) source.cancel();
       Thread.currentThread().interrupt();
-      throw new GatewayException(503, "interrupted", "请求已中断", true);
+      throw new GatewayException(503, "interrupted", "请求已中断", source == null);
     } catch (ExecutionException e) {
+      if (source != null) source.cancel();
       if (e.getCause() instanceof GatewayException gateway) throw gateway;
       if (e.getCause() instanceof RuntimeException runtime) throw runtime;
       throw new GatewayException(502, "upstream_error", "上游执行失败", false);

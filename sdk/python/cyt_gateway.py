@@ -43,6 +43,8 @@ class Gateway:
         self.approvals = Approvals(self)
 
     def call(self, operation: str, params: dict[str, Any] | None = None, *, request_id: str | None = None) -> Any:
+        if operation == 'nas.objects.upload':
+            raise ValueError('Use upload_file for PUT raw binary uploads')
         parts = operation.split('.')
         if len(parts) != 3 or not all(part.replace('_', '').isalnum() for part in parts):
             raise ValueError('operation must be platform.resource.action')
@@ -63,6 +65,43 @@ class Gateway:
         if not envelope.get('ok'):
             raise GatewayError(502, envelope.get('error', {}))
         return envelope['data']
+
+    def upload_file(self, path, *, filename: str | None = None, folder: str = '',
+                    key: str | None = None, bucket: str | None = None,
+                    content_type: str | None = None, timeout: float = 300) -> dict[str, Any]:
+        """Backend-only, one-shot file streaming. No redirects or automatic write retries."""
+        from pathlib import Path
+        import http.client
+        import mimetypes
+        from urllib.parse import urlsplit, urlencode
+        file = Path(path)
+        target = urlsplit(self.base_url)
+        if target.scheme not in ('http', 'https') or not target.hostname or target.username or target.password or target.query or target.fragment:
+            raise ValueError('Invalid gateway base URL')
+        query = {'filename': filename or file.name, 'folder': folder}
+        if key is not None:
+            query['key'] = key
+        if bucket is not None:
+            query['bucket'] = bucket
+        connection_type = http.client.HTTPSConnection if target.scheme == 'https' else http.client.HTTPConnection
+        connection = connection_type(target.hostname, target.port, timeout=timeout)
+        try:
+            with file.open('rb') as stream:
+                import os
+                length = os.fstat(stream.fileno()).st_size
+                connection.request('PUT', target.path.rstrip('/') + '/integrations/nas/objects/upload?' + urlencode(query),
+                    body=stream, headers={'Authorization': f'Bearer {self.api_key}',
+                        'Content-Length': str(length), 'Content-Type': content_type or mimetypes.guess_type(file.name)[0] or 'application/octet-stream'})
+                response = connection.getresponse()
+                try:
+                    envelope = json.load(response)
+                except (ValueError, UnicodeError):
+                    raise GatewayError(response.status, {'message': 'Gateway returned a non-JSON response'}) from None
+                if not 200 <= response.status < 300 or not envelope.get('ok'):
+                    raise GatewayError(response.status, envelope.get('error', {}))
+                return envelope['data']
+        finally:
+            connection.close()
 
     def collect(self, operation: str, *, max_requests: int = 10, **params: Any) -> Iterator[dict[str, Any]]:
         """Yield bounded batches; never infer completion from the number of returned rows."""
