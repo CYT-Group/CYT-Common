@@ -37,6 +37,7 @@ public class DiscordGatewayListener implements SmartLifecycle {
         events,
         settings,
         new OkHttpClient.Builder()
+            .proxy(DiscordProxy.from(settings))
             .connectTimeout(Duration.ofSeconds(15))
             .readTimeout(Duration.ZERO)
             .callTimeout(Duration.ZERO)

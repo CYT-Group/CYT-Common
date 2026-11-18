@@ -53,6 +53,40 @@ class DiscordAdapterTest {
   }
 
   @Test
+  void discordProxyOnlyAppliesToExplicitlyConfiguredDiscordRequests() {
+    assertNull(DiscordProxy.from(settings));
+    var configured =
+        new GatewaySettings(
+            new MockEnvironment().withProperty("DISCORD_PROXY", "http://127.0.0.1:7890"));
+    var proxied = new DiscordClient(credentials, http, configured);
+    when(http.quietExchange(
+            eq("GET"), anyString(), anyMap(), isNull(), anyDouble(), any(java.net.Proxy.class)))
+        .thenReturn(response(200, Map.of("id", B, "username", "Fixture", "bot", true)));
+    assertEquals(B, proxied.identity("fixture", "cs", true).get("id"));
+    verify(http)
+        .quietExchange(
+            eq("GET"),
+            anyString(),
+            anyMap(),
+            isNull(),
+            anyDouble(),
+            argThat(
+                proxy ->
+                    proxy.type() == java.net.Proxy.Type.HTTP
+                        && ((java.net.InetSocketAddress) proxy.address()).getPort() == 7890));
+    verify(http, never()).quietExchange(anyString(), anyString(), anyMap(), any(), anyDouble());
+    for (String invalid :
+        List.of(
+            "https://proxy:7890",
+            "http://secret@proxy:7890",
+            "http://proxy:0",
+            "http://proxy:7890/path")) {
+      var bad = new GatewaySettings(new MockEnvironment().withProperty("DISCORD_PROXY", invalid));
+      assertThrows(GatewayException.class, () -> DiscordProxy.from(bad));
+    }
+  }
+
+  @Test
   void sendRequiresConfirmationAndTheActualGuild() {
     var p = JsonUtils.obj("channel_id", C, "guild_id", G, "content", "hello", "nonce", "123");
     assertThrows(GatewayException.class, () -> call("discord.messages.send", p));

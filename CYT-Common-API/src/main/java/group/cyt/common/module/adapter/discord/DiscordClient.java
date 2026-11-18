@@ -59,19 +59,18 @@ public class DiscordClient {
     Supplier<Object> fetch =
         () -> {
           String url = UpstreamHttp.query(API + path, params == null ? Map.of() : params);
+          var headers =
+              Map.of(
+                  "Authorization", "Bot " + token,
+                  "User-Agent", "CYT-Common/1.0",
+                  "Content-Type", "application/json");
+          var payload =
+              body == null ? null : JsonUtils.write(body).getBytes(StandardCharsets.UTF_8);
+          var proxy = DiscordProxy.from(settings);
           var response =
-              http.quietExchange(
-                  method,
-                  url,
-                  Map.of(
-                      "Authorization",
-                      "Bot " + token,
-                      "User-Agent",
-                      "CYT-Common/1.0",
-                      "Content-Type",
-                      "application/json"),
-                  body == null ? null : JsonUtils.write(body).getBytes(StandardCharsets.UTF_8),
-                  25);
+              proxy == null
+                  ? http.quietExchange(method, url, headers, payload, 25)
+                  : http.quietExchange(method, url, headers, payload, 25, proxy);
           if (response.body().length > 8 * 1024 * 1024)
             throw new GatewayException(502, "upstream_error", "Discord 响应过大", false);
           Object data;

@@ -75,10 +75,21 @@ public class UpstreamHttp {
    */
   public ResponseData quietExchange(
       String method, String url, Map<String, String> headers, byte[] body, double timeout) {
+    return quietExchange(method, url, headers, body, timeout, null);
+  }
+
+  public ResponseData quietExchange(
+      String method,
+      String url,
+      Map<String, String> headers,
+      byte[] body,
+      double timeout,
+      Proxy proxy) {
     var builder =
         client
             .newBuilder()
             .callTimeout(Duration.ofMillis((long) (Math.max(1, Math.min(120, timeout)) * 1000)));
+    if (proxy != null) builder.proxy(proxy);
     RequestBody requestBody =
         body == null
             ? null
