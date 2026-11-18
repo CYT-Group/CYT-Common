@@ -724,5 +724,60 @@
       "restock": false,
       "notify_customer": false
     }
+  },
+  {
+    "operation": "stripe.disputes.closures",
+    "params": {
+      "account": "fixture"
+    },
+    "normalized": {
+      "account": "fixture"
+    }
+  },
+  {
+    "operation": "stripe.disputes.closure_history",
+    "params": {
+      "account": "fixture",
+      "from": "2026-11-17T00:00:00Z",
+      "to": "2026-11-18T00:00:00Z"
+    },
+    "normalized": {
+      "account": "fixture",
+      "from": "2026-11-17T00:00:00Z",
+      "to": "2026-11-18T00:00:00Z"
+    }
+  },
+  {
+    "operation": "stripe.disputes.order_reference",
+    "params": {
+      "account": "fixture",
+      "payment_id": "pi_fixture"
+    },
+    "normalized": {
+      "account": "fixture",
+      "payment_id": "pi_fixture"
+    }
+  },
+  {
+    "operation": "paypal.disputes.closures",
+    "params": {
+      "account": "fixture"
+    },
+    "normalized": {
+      "account": "fixture"
+    }
+  },
+  {
+    "operation": "paypal.disputes.closure_history",
+    "params": {
+      "account": "fixture",
+      "from": "2026-11-17T00:00:00Z",
+      "to": "2026-11-18T00:00:00Z"
+    },
+    "normalized": {
+      "account": "fixture",
+      "from": "2026-11-17T00:00:00Z",
+      "to": "2026-11-18T00:00:00Z"
+    }
   }
 ]

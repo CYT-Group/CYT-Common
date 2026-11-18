@@ -4,6 +4,7 @@ import group.cyt.common.core.exception.GatewayException;
 import group.cyt.common.core.http.UpstreamHttp;
 import group.cyt.common.core.util.JsonUtils;
 import group.cyt.common.module.adapter.PlatformAdapter;
+import group.cyt.common.module.callback.service.PaymentDisputeEvents;
 import group.cyt.common.module.credential.service.CredentialService;
 import group.cyt.common.module.registry.model.OperationDefinition;
 import java.math.BigDecimal;
@@ -15,6 +16,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 /**
@@ -37,10 +39,17 @@ public class CustomerSourcesAdapter implements PlatformAdapter {
 
   private final CredentialService credentials;
   private final UpstreamHttp http;
+  private final PaymentDisputeEvents disputeEvents;
 
   public CustomerSourcesAdapter(CredentialService credentials, UpstreamHttp http) {
+    this(credentials, http, null);
+  }
+
+  @Autowired
+  public CustomerSourcesAdapter(CredentialService credentials, UpstreamHttp http, PaymentDisputeEvents disputeEvents) {
     this.credentials = credentials;
     this.http = http;
+    this.disputeEvents = disputeEvents;
   }
 
   @Override
@@ -61,6 +70,11 @@ public class CustomerSourcesAdapter implements PlatformAdapter {
       case "trustpilot.reviews.list" -> trustpilotReviews(account, cursor, limit, timeout, system);
       case "stripe.disputes.list" -> stripeDisputes(account, cursor, limit, timeout, system);
       case "paypal.disputes.list" -> paypalDisputes(account, cursor, limit, timeout, system);
+      case "stripe.disputes.closures", "paypal.disputes.closures" ->
+          disputeEvents.inbox(op.platform(), account, params);
+      case "stripe.disputes.closure_history", "paypal.disputes.closure_history" ->
+          disputeEvents.history(op.platform(), account, params, system);
+      case "stripe.disputes.order_reference" -> disputeEvents.orderReference(account, params, system);
       case "rd.products.list" -> rdProducts(account, cursor, timeout, system);
       default -> throw GatewayException.config("未知客服来源操作: " + op.key());
     };

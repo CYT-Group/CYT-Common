@@ -55,7 +55,12 @@ class PublicCapabilitiesTest {
 
   private static void removeJavaOnlyOperations(Map<String, JsonNode> actual) {
     for (String key : List.of(
-        "shopify.orders.cancel")) {
+        "shopify.orders.cancel",
+        "stripe.disputes.closures",
+        "stripe.disputes.closure_history",
+        "stripe.disputes.order_reference",
+        "paypal.disputes.closures",
+        "paypal.disputes.closure_history")) {
       assertNotNull(actual.remove(key), key);
     }
   }

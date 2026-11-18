@@ -32,9 +32,9 @@
     }
   ],
   "depth_summary": {
-    "total": 172,
+    "total": 177,
     "counts": {
-      "enhanced": 84,
+      "enhanced": 89,
       "deep": 31,
       "test_only": 1,
       "basic": 51,
@@ -4109,6 +4109,111 @@
       "key": "shopify.orders.cancel",
       "platform": "shopify",
       "summary": "取消未履约订单"
+    },
+    {
+      "source": "src/main/java/group/cyt/common/module/callback/service/PaymentDisputeEvents.java",
+      "current": "按账号返回归一后的支付凭据字段。",
+      "proposal": "用于客服归集和历史回补。",
+      "caveat": "需配置平台授权与对应账号。",
+      "assessment": "recommended",
+      "depth": "enhanced",
+      "evidence": [
+        {
+          "path": "src/main/java/group/cyt/common/module/callback/service/PaymentDisputeEvents.java",
+          "line": 186,
+          "anchor": "public Object inbox("
+        }
+      ],
+      "recommended_operations": [],
+      "depth_reason": "验证回调或只读平台响应，只输出关联与结案字段。",
+      "remaining_gap": "历史范围受平台保留数据限制。",
+      "key": "stripe.disputes.closures",
+      "platform": "stripe",
+      "summary": "读取已验签的支付结案事件"
+    },
+    {
+      "source": "src/main/java/group/cyt/common/module/callback/service/PaymentDisputeEvents.java",
+      "current": "按账号返回归一后的支付凭据字段。",
+      "proposal": "用于客服归集和历史回补。",
+      "caveat": "需配置平台授权与对应账号。",
+      "assessment": "recommended",
+      "depth": "enhanced",
+      "evidence": [
+        {
+          "path": "src/main/java/group/cyt/common/module/callback/service/PaymentDisputeEvents.java",
+          "line": 214,
+          "anchor": "public Object history("
+        }
+      ],
+      "recommended_operations": [],
+      "depth_reason": "验证回调或只读平台响应，只输出关联与结案字段。",
+      "remaining_gap": "历史范围受平台保留数据限制。",
+      "key": "stripe.disputes.closure_history",
+      "platform": "stripe",
+      "summary": "读取支付平台结案历史"
+    },
+    {
+      "source": "src/main/java/group/cyt/common/module/callback/service/PaymentDisputeEvents.java",
+      "current": "按账号返回归一后的支付凭据字段。",
+      "proposal": "用于客服归集和历史回补。",
+      "caveat": "需配置平台授权与对应账号。",
+      "assessment": "recommended",
+      "depth": "enhanced",
+      "evidence": [
+        {
+          "path": "src/main/java/group/cyt/common/module/callback/service/PaymentDisputeEvents.java",
+          "line": 274,
+          "anchor": "public Object orderReference("
+        }
+      ],
+      "recommended_operations": [],
+      "depth_reason": "验证回调或只读平台响应，只输出关联与结案字段。",
+      "remaining_gap": "历史范围受平台保留数据限制。",
+      "key": "stripe.disputes.order_reference",
+      "platform": "stripe",
+      "summary": "读取 Stripe 交易的订单号"
+    },
+    {
+      "source": "src/main/java/group/cyt/common/module/callback/service/PaymentDisputeEvents.java",
+      "current": "按账号返回归一后的支付凭据字段。",
+      "proposal": "用于客服归集和历史回补。",
+      "caveat": "需配置平台授权与对应账号。",
+      "assessment": "recommended",
+      "depth": "enhanced",
+      "evidence": [
+        {
+          "path": "src/main/java/group/cyt/common/module/callback/service/PaymentDisputeEvents.java",
+          "line": 186,
+          "anchor": "public Object inbox("
+        }
+      ],
+      "recommended_operations": [],
+      "depth_reason": "验证回调或只读平台响应，只输出关联与结案字段。",
+      "remaining_gap": "历史范围受平台保留数据限制。",
+      "key": "paypal.disputes.closures",
+      "platform": "paypal",
+      "summary": "读取已验签的支付结案事件"
+    },
+    {
+      "source": "src/main/java/group/cyt/common/module/callback/service/PaymentDisputeEvents.java",
+      "current": "按账号返回归一后的支付凭据字段。",
+      "proposal": "用于客服归集和历史回补。",
+      "caveat": "需配置平台授权与对应账号。",
+      "assessment": "recommended",
+      "depth": "enhanced",
+      "evidence": [
+        {
+          "path": "src/main/java/group/cyt/common/module/callback/service/PaymentDisputeEvents.java",
+          "line": 214,
+          "anchor": "public Object history("
+        }
+      ],
+      "recommended_operations": [],
+      "depth_reason": "验证回调或只读平台响应，只输出关联与结案字段。",
+      "remaining_gap": "历史范围受平台保留数据限制。",
+      "key": "paypal.disputes.closure_history",
+      "platform": "paypal",
+      "summary": "读取支付平台结案历史"
     }
   ]
 }

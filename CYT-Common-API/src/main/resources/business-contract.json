@@ -4059,6 +4059,261 @@
       "http_method": "POST",
       "cost": "none",
       "official_docs": "https://shopify.dev/docs/api/admin-graphql/2026-07/mutations/orderCancel"
+    },
+    {
+      "key": "stripe.disputes.closures",
+      "platform": "stripe",
+      "summary": "读取已验签的支付结案事件",
+      "description": "按账号返回结案时间和裁决，保留稳定的分页续传游标。",
+      "quota": "30/min",
+      "sensitive": false,
+      "idempotent": false,
+      "since": "2026-11",
+      "deprecated": false,
+      "tags": [
+        "read"
+      ],
+      "category": "只读归集",
+      "path": "/integrations/stripe/disputes/closures",
+      "schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "account": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+          },
+          "cursor": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "after": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          }
+        },
+        "required": [
+          "account"
+        ]
+      },
+      "timeout_s": 30.0,
+      "retry_max": 1,
+      "sort_order": 0,
+      "transport": "json",
+      "http_method": "POST"
+    },
+    {
+      "key": "stripe.disputes.closure_history",
+      "platform": "stripe",
+      "summary": "读取支付平台结案历史",
+      "description": "按账号返回结案时间和裁决，保留稳定的分页续传游标。",
+      "quota": "30/min",
+      "sensitive": false,
+      "idempotent": false,
+      "since": "2026-11",
+      "deprecated": false,
+      "tags": [
+        "read"
+      ],
+      "category": "只读归集",
+      "path": "/integrations/stripe/disputes/closure-history",
+      "schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "account": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+          },
+          "cursor": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "after": {
+                "type": "string",
+                "maxLength": 2048
+              }
+            }
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 50
+          },
+          "from": {
+            "type": "string",
+            "maxLength": 48
+          },
+          "to": {
+            "type": "string",
+            "maxLength": 48
+          }
+        },
+        "required": [
+          "account",
+          "from",
+          "to"
+        ]
+      },
+      "timeout_s": 30.0,
+      "retry_max": 1,
+      "sort_order": 0,
+      "transport": "json",
+      "http_method": "POST"
+    },
+    {
+      "key": "stripe.disputes.order_reference",
+      "platform": "stripe",
+      "summary": "读取 Stripe 交易的订单号",
+      "description": "只返回指定交易的订单号元数据。",
+      "quota": "30/min",
+      "sensitive": false,
+      "idempotent": false,
+      "since": "2026-11",
+      "deprecated": false,
+      "tags": [
+        "read"
+      ],
+      "category": "只读归集",
+      "path": "/integrations/stripe/disputes/order-reference",
+      "schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "account",
+          "payment_id"
+        ],
+        "properties": {
+          "account": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+          },
+          "payment_id": {
+            "type": "string",
+            "pattern": "^(ch|pi)_[A-Za-z0-9]{1,100}$"
+          }
+        }
+      },
+      "timeout_s": 30.0,
+      "retry_max": 1,
+      "sort_order": 0,
+      "transport": "json",
+      "http_method": "POST"
+    },
+    {
+      "key": "paypal.disputes.closures",
+      "platform": "paypal",
+      "summary": "读取已验签的支付结案事件",
+      "description": "按账号返回结案时间和裁决，保留稳定的分页续传游标。",
+      "quota": "30/min",
+      "sensitive": false,
+      "idempotent": false,
+      "since": "2026-11",
+      "deprecated": false,
+      "tags": [
+        "read"
+      ],
+      "category": "只读归集",
+      "path": "/integrations/paypal/disputes/closures",
+      "schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "account": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+          },
+          "cursor": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "after": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          }
+        },
+        "required": [
+          "account"
+        ]
+      },
+      "timeout_s": 30.0,
+      "retry_max": 1,
+      "sort_order": 0,
+      "transport": "json",
+      "http_method": "POST"
+    },
+    {
+      "key": "paypal.disputes.closure_history",
+      "platform": "paypal",
+      "summary": "读取支付平台结案历史",
+      "description": "按账号返回结案时间和裁决，保留稳定的分页续传游标。",
+      "quota": "30/min",
+      "sensitive": false,
+      "idempotent": false,
+      "since": "2026-11",
+      "deprecated": false,
+      "tags": [
+        "read"
+      ],
+      "category": "只读归集",
+      "path": "/integrations/paypal/disputes/closure-history",
+      "schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "account": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+          },
+          "cursor": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "after": {
+                "type": "string",
+                "maxLength": 2048
+              }
+            }
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 50
+          },
+          "from": {
+            "type": "string",
+            "maxLength": 48
+          },
+          "to": {
+            "type": "string",
+            "maxLength": 48
+          }
+        },
+        "required": [
+          "account",
+          "from",
+          "to"
+        ]
+      },
+      "timeout_s": 30.0,
+      "retry_max": 1,
+      "sort_order": 0,
+      "transport": "json",
+      "http_method": "POST"
     }
   ],
   "native_extensions": [
@@ -4443,6 +4698,38 @@
           "hint": "优先使用具备企微人事助手权限的应用 Secret，未设置时使用当前系统应用",
           "per_system": true,
           "scoped": "WEWORK_{SYSTEM}_HR_SECRET"
+        }
+      ]
+    },
+    {
+      "platform": "paypal",
+      "vars": [
+        {
+          "name": "PAYPAL_{ACCOUNT}_WEBHOOK_ID",
+          "label": "WEBHOOK_ID",
+          "required": false,
+          "secret": true,
+          "hint": "",
+          "example": "",
+          "scoped": "",
+          "per_system": false,
+          "account_scoped": true
+        }
+      ]
+    },
+    {
+      "platform": "stripe",
+      "vars": [
+        {
+          "name": "STRIPE_{ACCOUNT}_WEBHOOK_SECRET",
+          "label": "WEBHOOK_SECRET",
+          "required": false,
+          "secret": true,
+          "hint": "",
+          "example": "",
+          "scoped": "",
+          "per_system": false,
+          "account_scoped": true
         }
       ]
     }
