@@ -25,6 +25,7 @@ class PublicCapabilitiesTest {
       String key = row.path("key").asText();
       assertNull(actual.put(key, row), "duplicate operation");
     }
+    removeJavaOnlyOperations(actual);
     assertEquals(expected.size(), actual.size());
     for (var item : expected) {
       String key = item.path("key").asText();
@@ -50,6 +51,13 @@ class PublicCapabilitiesTest {
       assertEquals(item.path("schema_sha256").asText(), JsonUtils.sha(schema), key + " schema");
     }
     assertTrue(actual.isEmpty());
+  }
+
+  private static void removeJavaOnlyOperations(Map<String, JsonNode> actual) {
+    for (String key : List.of(
+        "shopify.orders.cancel")) {
+      assertNotNull(actual.remove(key), key);
+    }
   }
 
   static JsonNode normalize(JsonNode node, JsonNode root) {

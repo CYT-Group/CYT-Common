@@ -3967,6 +3967,98 @@
         "title": "ReviewListParams",
         "type": "object"
       }
+    },
+    {
+      "key": "shopify.orders.cancel",
+      "platform": "shopify",
+      "summary": "取消未履约订单",
+      "description": "重新核对目标店铺、订单版本、履约状态和退款金额，再提交 Shopify 取消任务。",
+      "quota": "30/min",
+      "sensitive": true,
+      "idempotent": true,
+      "since": "2026-11",
+      "deprecated": false,
+      "tags": [
+        "write",
+        "danger",
+        "idempotency_required"
+      ],
+      "category": "订单",
+      "path": "/integrations/shopify/orders/cancel",
+      "schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "store",
+          "order_id",
+          "updated_at",
+          "refund_method",
+          "reason",
+          "restock",
+          "notify_customer"
+        ],
+        "properties": {
+          "store": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "order_id": {
+            "type": "string",
+            "pattern": "^gid://shopify/Order/[1-9][0-9]*$"
+          },
+          "updated_at": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 50
+          },
+          "refund_method": {
+            "type": "string",
+            "enum": [
+              "original",
+              "credit",
+              "later"
+            ]
+          },
+          "reason": {
+            "type": "string",
+            "enum": [
+              "CUSTOMER",
+              "DECLINED",
+              "FRAUD",
+              "INVENTORY",
+              "STAFF",
+              "OTHER"
+            ]
+          },
+          "restock": {
+            "type": "boolean"
+          },
+          "notify_customer": {
+            "type": "boolean"
+          },
+          "staff_note": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "amount": {
+            "type": "string",
+            "pattern": "^[0-9]+(\\.[0-9]+)?$",
+            "maxLength": 50
+          },
+          "currency": {
+            "type": "string",
+            "pattern": "^[A-Z]{3}$"
+          }
+        }
+      },
+      "timeout_s": 30.0,
+      "retry_max": 0,
+      "sort_order": 16,
+      "transport": "json",
+      "http_method": "POST",
+      "cost": "none",
+      "official_docs": "https://shopify.dev/docs/api/admin-graphql/2026-07/mutations/orderCancel"
     }
   ],
   "native_extensions": [

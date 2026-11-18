@@ -703,5 +703,26 @@
       "end_date": "2026-11-01",
       "sids": ""
     }
+  },
+  {
+    "operation": "shopify.orders.cancel",
+    "params": {
+      "store": "fixture.myshopify.com",
+      "order_id": "gid://shopify/Order/42",
+      "updated_at": "2026-11-18T01:00:00Z",
+      "refund_method": "later",
+      "reason": "CUSTOMER",
+      "restock": false,
+      "notify_customer": false
+    },
+    "normalized": {
+      "store": "fixture.myshopify.com",
+      "order_id": "gid://shopify/Order/42",
+      "updated_at": "2026-11-18T01:00:00Z",
+      "refund_method": "later",
+      "reason": "CUSTOMER",
+      "restock": false,
+      "notify_customer": false
+    }
   }
 ]

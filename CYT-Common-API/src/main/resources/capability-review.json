@@ -32,9 +32,9 @@
     }
   ],
   "depth_summary": {
-    "total": 171,
+    "total": 172,
     "counts": {
-      "enhanced": 83,
+      "enhanced": 84,
       "deep": 31,
       "test_only": 1,
       "basic": 51,
@@ -4088,6 +4088,27 @@
       "source": "src/main/java/group/cyt/common/module/adapter/lingxing/LingxingAdapter.java",
       "assessment": "enhance",
       "caveat": "真实账号权限和供应商网络需在目标环境联调。"
+    },
+    {
+      "source": "src/main/java/group/cyt/common/module/adapter/shopify/ShopifyAdapter.java",
+      "current": "按实时订单状态提交取消任务。",
+      "proposal": "根据订单状态核对取消结果。",
+      "caveat": "退款取决于 Shopify 和支付渠道处理结果。",
+      "assessment": "enhance",
+      "depth": "enhanced",
+      "evidence": [
+        {
+          "path": "src/main/java/group/cyt/common/module/adapter/shopify/ShopifyAdapter.java",
+          "line": 109,
+          "anchor": "case \"orders.cancel\""
+        }
+      ],
+      "recommended_operations": [],
+      "depth_reason": "核对店铺、版本、履约及付款金额后执行。",
+      "remaining_gap": "取消任务受理后需再次读取订单。",
+      "key": "shopify.orders.cancel",
+      "platform": "shopify",
+      "summary": "取消未履约订单"
     }
   ]
 }
