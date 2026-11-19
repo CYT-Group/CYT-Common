@@ -87,6 +87,57 @@ class GatewayIntegrationTest {
   }
 
   @Test
+  @Order(19)
+  void onlyRevokedCallerKeysCanBeDeletedAndDeletionIsAudited() {
+    String system = "test_key_deletion";
+    createSystem(system, false);
+    String token = admin();
+    String collection = "/admin/api/systems/" + system + "/apikeys";
+    var created = request(HttpMethod.POST, collection, Map.of("name", "cleanup fixture"), token);
+    assertEquals(200, created.getStatusCode().value());
+    var key = Objects.requireNonNull(created.getBody());
+    long id = ((Number) key.get("id")).longValue();
+    String path = collection + "/" + id;
+
+    assertEquals(401, request(HttpMethod.DELETE, path, null, null).getStatusCode().value());
+    var active = request(HttpMethod.DELETE, path, null, token);
+    assertEquals(409, active.getStatusCode().value());
+    assertEquals(
+        "key_must_be_revoked",
+        JsonUtils.map(Objects.requireNonNull(active.getBody()).get("error")).get("type"));
+
+    assertEquals(
+        200,
+        request(HttpMethod.DELETE, "/admin/api/apikeys/" + id, null, token)
+            .getStatusCode()
+            .value());
+    assertEquals(
+        404,
+        request(HttpMethod.DELETE, "/admin/api/systems/portal/apikeys/" + id, null, token)
+            .getStatusCode()
+            .value());
+    assertEquals(200, request(HttpMethod.DELETE, path, null, token).getStatusCode().value());
+    assertEquals(404, request(HttpMethod.DELETE, path, null, token).getStatusCode().value());
+    var listed = request(HttpMethod.GET, collection, null, token);
+    var remaining = JsonUtils.list(Objects.requireNonNull(listed.getBody()).get("items"));
+    assertEquals(1, remaining.size());
+    assertTrue(
+        remaining.stream()
+            .map(JsonUtils::map)
+            .noneMatch(item -> ((Number) item.get("id")).longValue() == id));
+
+    var audit =
+        store.one(
+            "SELECT actor,detail FROM gateway_admin_audit WHERE action='apikey_delete' AND target=?",
+            system);
+    assertNotNull(audit);
+    assertEquals("fixture-admin", audit.get("actor"));
+    var detail = JsonUtils.read((String) audit.get("detail"));
+    assertEquals(id, ((Number) detail.get("id")).longValue());
+    assertEquals(key.get("prefix"), detail.get("prefix"));
+  }
+
+  @Test
   @Order(20)
   void selectedBatchPreviewsEffectiveConflictsPreservesMetadataAndRejectsStaleChanges() {
     String system = "test_bulk_grants";

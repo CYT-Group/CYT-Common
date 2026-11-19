@@ -65,4 +65,11 @@ public class SystemController {
     service.revokeKey(id, AuthenticationService.actor(req));
     return JsonUtils.obj("ok", true);
   }
+
+  @DeleteMapping("/systems/{key}/apikeys/{id}")
+  public Object deleteRevoked(
+      @PathVariable String key, @PathVariable long id, HttpServletRequest req) {
+    service.deleteRevokedKey(key, id, AuthenticationService.actor(req));
+    return JsonUtils.obj("ok", true);
+  }
 }

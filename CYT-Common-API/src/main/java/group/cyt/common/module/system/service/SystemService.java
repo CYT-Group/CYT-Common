@@ -126,4 +126,20 @@ public class SystemService {
       throw GatewayException.missing("API Key 不存在");
     store.audit(actor, "apikey_revoke", Long.toString(id), Map.of());
   }
+
+  @Transactional
+  public void deleteRevokedKey(String system, long id, String actor) {
+    var deleted =
+        store.one(
+            "DELETE FROM gateway_system_apikey WHERE system=? AND id=? AND revoked=true RETURNING prefix",
+            system,
+            id);
+    if (deleted == null) {
+      if (store.one("SELECT id FROM gateway_system_apikey WHERE system=? AND id=?", system, id)
+          == null) throw GatewayException.missing("API Key 不存在");
+      throw new GatewayException(409, "key_must_be_revoked", "请先吊销密钥，再删除", false);
+    }
+    store.audit(
+        actor, "apikey_delete", system, JsonUtils.obj("id", id, "prefix", deleted.get("prefix")));
+  }
 }

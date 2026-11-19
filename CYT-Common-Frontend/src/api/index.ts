@@ -55,6 +55,7 @@ export const api = {
         name: string;
         prefix: string;
         revoked: boolean;
+        created_at: string;
         last_used_at: string | null;
       }[];
     }>(`${base}/systems/${encodeURIComponent(key)}/apikeys`),
@@ -63,6 +64,8 @@ export const api = {
       name,
     }),
   revokeKey: (id: number) => remove(`${base}/apikeys/${id}`),
+  deleteRevokedKey: (system: string, id: number) =>
+    remove(`${base}/systems/${encodeURIComponent(system)}/apikeys/${id}`),
   grants: () =>
     get<{ grants: Grant[]; systems: SystemItem[]; operations: Operation[] }>(`${base}/grants`),
   upsertGrant: (body: unknown) => post(`${base}/grants`, body),
