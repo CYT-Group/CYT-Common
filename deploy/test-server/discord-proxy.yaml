@@ -1,0 +1,21 @@
+# Test Discord egress; reuses the existing provider cache without changing shared proxy selection.
+port: 7890
+allow-lan: true
+bind-address: '*'
+mode: rule
+log-level: warning
+proxy-providers:
+  subscription:
+    type: file
+    path: ./providers/subscription.yaml
+proxy-groups:
+  - name: DISCORD_US
+    type: select
+    use: [subscription]
+    filter: '^US-B-x0$'
+rules:
+  - DOMAIN-SUFFIX,discord.com,DISCORD_US
+  - DOMAIN-SUFFIX,discord.gg,DISCORD_US
+  - DOMAIN-SUFFIX,discordapp.com,DISCORD_US
+  - DOMAIN-SUFFIX,discordapp.net,DISCORD_US
+  - MATCH,REJECT
