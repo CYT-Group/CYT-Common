@@ -3,6 +3,7 @@ package group.cyt.common.module.adapter;
 import group.cyt.common.core.config.GatewaySettings;
 import group.cyt.common.core.exception.GatewayException;
 import group.cyt.common.module.adapter.support.BusinessWorkflows;
+import group.cyt.common.module.adapter.shopify.ShopifyAdapter;
 import group.cyt.common.module.adapter.wecom.approval.WecomApprovalService;
 import group.cyt.common.module.registry.model.OperationDefinition;
 import group.cyt.common.module.registry.service.OperationRegistry;
@@ -71,6 +72,17 @@ public class AdapterDispatcher {
         .findFirst()
         .orElseThrow(() -> GatewayException.config("平台适配器未加载: " + op.platform()))
         .invoke(op, params, system);
+  }
+
+  public Object invokeCsOrderWriteback(
+      OperationDefinition op, Map<String, Object> params, String system) {
+    if (mock(op)) throw GatewayException.config("正式店铺订单回写需要真实 Shopify 连接");
+    return adapters.stream()
+        .filter(ShopifyAdapter.class::isInstance)
+        .map(ShopifyAdapter.class::cast)
+        .findFirst()
+        .orElseThrow(() -> GatewayException.config("Shopify 适配器未加载"))
+        .invokeCsOrderWriteback(op, params, system);
   }
 
   public Object upload(

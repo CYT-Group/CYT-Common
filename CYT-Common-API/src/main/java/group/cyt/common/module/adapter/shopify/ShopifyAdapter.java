@@ -39,6 +39,17 @@ public class ShopifyAdapter implements PlatformAdapter {
   }
 
   public Object invoke(OperationDefinition op, Map<String, Object> p, String system) {
+    return invoke(op, p, system, false);
+  }
+
+  public Object invokeCsOrderWriteback(OperationDefinition op, Map<String, Object> p, String system) {
+    if (!op.key().equals("shopify.orders.update") || !system.equals("cs"))
+      throw GatewayException.forbidden("正式店铺回写仅支持 CS 订单更新");
+    return invoke(op, p, system, true);
+  }
+
+  private Object invoke(
+      OperationDefinition op, Map<String, Object> p, String system, boolean csOrderWriteback) {
     String requested = normalize(JsonUtils.str(p, "store"));
     // 一个调用方身份按请求里的店铺自动取该店铺的专属凭据：上线时只需配置
     // SHOPIFY_<店铺>_STORE / _ACCESS_TOKEN，不必为每个店铺登记一个接入系统。
@@ -67,7 +78,14 @@ public class ShopifyAdapter implements PlatformAdapter {
                 "X-Shopify-Access-Token",
                 ShopifyStoreAccess.token(credentials, http, credentialSystem, actual, false)));
     String key = op.key().substring(8);
-    if (!op.readOnly()) writePolicy.requireTarget("shopify", requested);
+    if (csOrderWriteback) {
+      var access = graphql(c, "{ currentAppInstallation { accessScopes { handle } } }", Map.of());
+      var installation = JsonUtils.map(access.get("currentAppInstallation"));
+      if (!ShopifyStoreAccess.hasOrderWriteScope(installation))
+        throw GatewayException.forbidden("Shopify 应用缺少订单写入权限（write_orders）");
+    } else if (!op.readOnly()) {
+      writePolicy.requireTarget("shopify", requested);
+    }
     return switch (key) {
       case "orders.get" -> getOrder(c, p);
       case "products.get" ->

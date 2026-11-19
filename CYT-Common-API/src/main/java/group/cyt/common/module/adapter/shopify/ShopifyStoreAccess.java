@@ -21,6 +21,11 @@ final class ShopifyStoreAccess {
     return domain.matches(DOMAIN) ? domain : "";
   }
 
+  static boolean hasOrderWriteScope(Map<String, Object> installation) {
+    return JsonUtils.list(installation.get("accessScopes")).stream()
+        .anyMatch(scope -> "write_orders".equals(JsonUtils.str(JsonUtils.map(scope), "handle")));
+  }
+
   static String token(CredentialService credentials, UpstreamHttp http, String scope, String store,
       boolean exactScope) {
     if (scope.startsWith("cs_")) {

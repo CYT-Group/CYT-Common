@@ -65,7 +65,9 @@ class NasUploadTest {
             mock(WecomApprovalService.class),
             mock(BusinessWorkflows.class));
     final GatewayExecutor executor =
-        new GatewayExecutor(registry, authorization, quota, dispatcher, store, logs);
+        new GatewayExecutor(
+            registry, authorization, quota, dispatcher, store, logs,
+            mock(group.cyt.common.module.adapter.support.TestWritePolicy.class));
     final IntegrationController controller =
         new IntegrationController(authentication, executor, registry, settings);
     volatile List<Map<String, Object>> grants = List.of(grant("nas.objects.upload", "allow"));

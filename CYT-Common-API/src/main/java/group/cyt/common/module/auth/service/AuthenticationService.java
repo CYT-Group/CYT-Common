@@ -16,9 +16,12 @@ import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import org.springframework.stereotype.Service;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 @Service
 public class AuthenticationService {
+  private static final String API_KEY_ID = AuthenticationService.class.getName() + ".apiKeyId";
   private final GatewaySettings settings;
   private final GatewayStore store;
   private final Map<String, Deque<Long>> failures = new ConcurrentHashMap<>();
@@ -38,6 +41,7 @@ public class AuthenticationService {
   }
 
   public String system(HttpServletRequest request) {
+    request.removeAttribute(API_KEY_ID);
     if (settings.dev() && !header(request, "X-System-Id").isBlank())
       return enabled(header(request, "X-System-Id").trim().toLowerCase(Locale.ROOT));
     String token = bearer(request);
@@ -55,6 +59,7 @@ public class AuthenticationService {
           "UPDATE gateway_system_apikey SET last_used_at=? WHERE id=?",
           GatewayStore.now(),
           key.get("id"));
+      request.setAttribute(API_KEY_ID, key.get("id"));
       return system;
     }
     try {
@@ -89,6 +94,12 @@ public class AuthenticationService {
     } catch (Exception e) {
       throw GatewayException.unauth("调用方身份凭证无效");
     }
+  }
+
+  public static String authenticatedApiKeyId() {
+    if (RequestContextHolder.getRequestAttributes() instanceof ServletRequestAttributes attributes)
+      return Objects.toString(attributes.getRequest().getAttribute(API_KEY_ID), "");
+    return "";
   }
 
   public String enabled(String system) {

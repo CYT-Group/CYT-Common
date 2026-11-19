@@ -54,6 +54,8 @@ services:
       # 两个开关都由 .env 决定：切到真上游时 MOCK_ALL=false，调用方沿用 X-System-Id 免密钥时 GATEWAY_DEV_MODE=true
       MOCK_ALL: ${MOCK_ALL:-true}
       GATEWAY_DEV_MODE: ${GATEWAY_DEV_MODE:-false}
+      GATEWAY_CS_SHOPIFY_ORDER_WRITEBACK_STORES: ${GATEWAY_CS_SHOPIFY_ORDER_WRITEBACK_STORES:-}
+      GATEWAY_CS_SHOPIFY_ORDER_WRITEBACK_KEY_ID: ${GATEWAY_CS_SHOPIFY_ORDER_WRITEBACK_KEY_ID:-}
       JAVA_SEED_ENABLED: ${JAVA_SEED_ENABLED:-true}
       # 旧 Python 网关的 gmail / gdrive / gcs 三个平台一直是模拟态，其余平台真连。
       # 这里按平台单独放开，避免 MOCK_ALL=false 时这三个平台因为缺 Google 凭据直接 503。

@@ -5,6 +5,8 @@ import group.cyt.common.core.http.BinaryUpload;
 import group.cyt.common.core.persistence.GatewayStore;
 import group.cyt.common.core.util.JsonUtils;
 import group.cyt.common.module.adapter.AdapterDispatcher;
+import group.cyt.common.module.adapter.support.TestWritePolicy;
+import group.cyt.common.module.auth.service.AuthenticationService;
 import group.cyt.common.module.grant.service.*;
 import group.cyt.common.module.registry.model.OperationDefinition;
 import group.cyt.common.module.registry.service.OperationRegistry;
@@ -25,6 +27,7 @@ public class GatewayExecutor {
   private final AdapterDispatcher adapters;
   private final GatewayStore store;
   private final CallLogService logs;
+  private final TestWritePolicy writePolicy;
 
   public GatewayExecutor(
       OperationRegistry registry,
@@ -32,13 +35,15 @@ public class GatewayExecutor {
       QuotaService quota,
       AdapterDispatcher adapters,
       GatewayStore store,
-      CallLogService logs) {
+      CallLogService logs,
+      TestWritePolicy writePolicy) {
     this.registry = registry;
     this.authorization = authorization;
     this.quota = quota;
     this.adapters = adapters;
     this.store = store;
     this.logs = logs;
+    this.writePolicy = writePolicy;
   }
 
   public Map<String, Object> execute(
@@ -97,6 +102,11 @@ public class GatewayExecutor {
         if (p.path("platform").asText().equals(platform) && !p.path("platform_quota").isNull())
           quota.consume("platform:" + platform, p.path("platform_quota").asText());
       var validated = registry.validate(op, params);
+      boolean csOrderWriteback =
+          key.equals("shopify.orders.update")
+              && writePolicy.authorizeCsOrderUpdate(
+                  system, JsonUtils.str(validated, "store").trim(),
+                  AuthenticationService.authenticatedApiKeyId());
       if (op.rawBinary() && source == null)
         throw GatewayException.invalid("此操作只支持 PUT 原始文件流，不能通过 JSON、批量或管理 JSON 调试调用");
       if (source != null) source.prepare();
@@ -170,7 +180,7 @@ public class GatewayExecutor {
       if (!op.readOnly()) attempts = 1;
       for (int attempt = 0; attempt < attempts; attempt++) {
         try {
-          data = invokeWithTimeout(op, validated, system, source);
+          data = invokeWithTimeout(op, validated, system, source, csOrderWriteback);
           break;
         } catch (GatewayException e) {
           if (!e.retryable || attempt == attempts - 1) throw e;
@@ -236,13 +246,15 @@ public class GatewayExecutor {
   }
 
   private Object invokeWithTimeout(
-      OperationDefinition op, Map<String, Object> params, String system, BinaryUpload source) {
+      OperationDefinition op, Map<String, Object> params, String system, BinaryUpload source,
+      boolean csOrderWriteback) {
     Future<Object> future =
         upstreamExecutor.submit(
-            () ->
-                source == null
-                    ? adapters.invoke(op, params, system)
-                    : adapters.upload(op, params, system, source));
+            () -> {
+              if (source != null) return adapters.upload(op, params, system, source);
+              if (csOrderWriteback) return adapters.invokeCsOrderWriteback(op, params, system);
+              return adapters.invoke(op, params, system);
+            });
     try {
       return future.get(
           Math.max(

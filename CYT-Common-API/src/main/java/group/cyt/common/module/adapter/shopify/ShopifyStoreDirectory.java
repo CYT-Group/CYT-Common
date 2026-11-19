@@ -118,6 +118,7 @@ public class ShopifyStoreDirectory {
       result.put("currency", JsonUtils.str(shop, "currencyCode"));
       result.put("timezone", JsonUtils.str(shop, "ianaTimezone"));
       result.put("historical_orders", handles.contains("read_all_orders"));
+      result.put("write_orders", ShopifyStoreAccess.hasOrderWriteScope(installation));
       return result;
     } catch (GatewayException e) {
       boolean missing = e.status == 401 || e.status == 403 || e.type.equals("not_configured")

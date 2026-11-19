@@ -92,7 +92,8 @@ class ShopifyRefundDispatchTest {
         mock(QuotaService.class),
         adapters,
         store,
-        mock(CallLogService.class));
+        mock(CallLogService.class),
+        mock(group.cyt.common.module.adapter.support.TestWritePolicy.class));
   }
 
   @AfterEach

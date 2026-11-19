@@ -29,6 +29,18 @@ public class TestWritePolicy {
     this.settings = settings;
   }
 
+  public boolean authorizeCsOrderUpdate(String system, String store, String apiKeyId) {
+    if (!settings.current().equals("test")
+        || settings.production()
+        || settings.csv("GATEWAY_CS_SHOPIFY_ORDER_WRITEBACK_STORES", "").stream()
+            .noneMatch(store::equalsIgnoreCase)) return false;
+    if (!system.equals("cs")
+        || apiKeyId.isBlank()
+        || !apiKeyId.equals(settings.get("GATEWAY_CS_SHOPIFY_ORDER_WRITEBACK_KEY_ID")))
+      throw GatewayException.forbidden("正式店铺订单回写需要 CS 专用调用密钥");
+    return true;
+  }
+
   public void requireTarget(String platform, String target) {
     // The legacy Lingxing integration is explicitly read-only, including test accounts.
     // Keep the same boundary when switching between independently deployed gateways.
