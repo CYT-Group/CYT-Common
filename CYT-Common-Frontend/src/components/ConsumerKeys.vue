@@ -5,31 +5,35 @@ import { api } from '~/api';
 import { useRequest, useAction, confirm, dateTime } from '~/composables/useRequest';
 import PageState from './PageState.vue';
 const props = defineProps<{ system: string; enabled: boolean }>();
-const emit = defineEmits<{ changed: [] }>();
+const emit = defineEmits<{ countChange: [count: number] }>();
 const { data, loading, error, load } = useRequest(() => api.keys(props.system));
 const { busy, run } = useAction();
 const name = ref('');
-const created = ref('');
-onMounted(load);
-async function create() {
-  const result = await run(() => api.createKey(props.system, name.value));
-  if (!result) return;
-  created.value = result.key;
-  name.value = '';
+const created = ref<{ id: number; key: string }>();
+onMounted(refreshKeys);
+async function refreshKeys() {
   await load();
-  emit('changed');
+  if (data.value) emit('countChange', data.value.items.filter((key) => !key.revoked).length);
+}
+async function create() {
+  await run(async () => {
+    created.value = await api.createKey(props.system, name.value);
+    name.value = '';
+    await refreshKeys();
+  });
 }
 async function revoke(id: number) {
   if (!(await confirm('吊销后，该密钥将无法调用网关。确认吊销？'))) return;
   await run(async () => {
     await api.revokeKey(id);
-    await load();
-    emit('changed');
+    if (created.value?.id === id) created.value = undefined;
+    await refreshKeys();
   });
 }
 async function copy() {
+  if (!created.value) return;
   try {
-    await navigator.clipboard.writeText(created.value);
+    await navigator.clipboard.writeText(created.value.key);
     ElMessage.success('已复制调用密钥');
   } catch {
     ElMessage.info('请手动复制密钥并妥善保存');
@@ -46,7 +50,7 @@ async function copy() {
         title="这把密钥的明文只在创建后展示，请立即保存"
         type="warning"
         :closable="false"
-        ><p class="mono key-value">{{ created }}</p>
+        ><p class="mono key-value">{{ created.key }}</p>
         <el-button @click="copy">复制密钥</el-button></el-alert
       >
       <div class="inline-actions key-create">
@@ -58,7 +62,7 @@ async function copy() {
           >生成独立密钥</el-button
         >
       </div>
-      <PageState :loading="loading" :error="error" @retry="load"
+      <PageState :loading="loading" :error="error" @retry="refreshKeys"
         ><el-table :data="data?.items || []" empty-text="尚未生成密钥，生成后交由该系统后端保存"
           ><el-table-column prop="name" label="用途" min-width="150" /><el-table-column
             label="密钥前缀"
@@ -85,6 +89,7 @@ async function copy() {
 </template>
 <style scoped>
 .key-value {
+  user-select: all;
   word-break: break-all;
 }
 .key-create {

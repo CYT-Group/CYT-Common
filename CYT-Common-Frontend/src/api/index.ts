@@ -59,7 +59,9 @@ export const api = {
       }[];
     }>(`${base}/systems/${encodeURIComponent(key)}/apikeys`),
   createKey: (key: string, name: string) =>
-    post<{ key: string }>(`${base}/systems/${encodeURIComponent(key)}/apikeys`, { name }),
+    post<{ id: number; key: string }>(`${base}/systems/${encodeURIComponent(key)}/apikeys`, {
+      name,
+    }),
   revokeKey: (id: number) => remove(`${base}/apikeys/${id}`),
   grants: () =>
     get<{ grants: Grant[]; systems: SystemItem[]; operations: Operation[] }>(`${base}/grants`),

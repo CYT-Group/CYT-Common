@@ -35,6 +35,9 @@ const Grants = defineAsyncComponent(() => import('./Grants.vue'));
 const Docs = defineAsyncComponent(() => import('./Docs.vue'));
 onMounted(load);
 watch(system, load);
+function updateKeyCount(count: number) {
+  if (data.value) data.value = { ...data.value, keys: count };
+}
 </script>
 <template>
   <div>
@@ -115,7 +118,7 @@ watch(system, load);
               :key="system"
               :system="system"
               :enabled="data.caller.enabled"
-              @changed="load" /></el-tab-pane
+              @count-change="updateKeyCount" /></el-tab-pane
           ><el-tab-pane label="能力授权" name="access"
             ><Grants
               v-if="tab === 'access'"
