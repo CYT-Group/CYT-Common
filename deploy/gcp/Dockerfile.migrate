@@ -1,0 +1,5 @@
+# SQL 与 API 来自同一次源码上传；版本和本机/测试服迁移组件一致。
+FROM flyway/flyway:11.20.2-alpine
+COPY CYT-Common-API/src/main/resources/db/migration/ /flyway/sql/
+ENTRYPOINT ["/flyway/flyway"]
+CMD ["-locations=filesystem:/flyway/sql", "-encoding=UTF-8", "-cleanDisabled=true", "-baselineOnMigrate=false", "-validateOnMigrate=true", "-validateMigrationNaming=true", "-failOnMissingLocations=true", "-outOfOrder=false", "-ignoreMigrationPatterns=", "-placeholderReplacement=false", "-connectRetries=10", "migrate"]

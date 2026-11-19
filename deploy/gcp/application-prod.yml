@@ -1,0 +1,16 @@
+# 无凭据的 Cloud Run 专用配置；真实值只由 Secret Manager 注入。
+server:
+  address: ${HOST:0.0.0.0}
+  port: ${PORT:8080}
+spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+  flyway:
+    enabled: false
+ENV: production
+MOCK_ALL: false
+GATEWAY_DEV_MODE: false
+JAVA_SEED_ENABLED: false
+ADMIN_DEV_LOGIN: false

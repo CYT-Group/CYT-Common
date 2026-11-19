@@ -1,0 +1,26 @@
+# 从仓库根目录构建；Vue 静态资源与 Java API 同源部署到一个 JAR。
+FROM node:22-alpine AS frontend
+WORKDIR /build/frontend
+ENV CI=true
+COPY CYT-Common-Frontend/ ./
+RUN npm install -g pnpm@11.25.0 \
+    && pnpm install --frozen-lockfile \
+    && pnpm build
+
+FROM maven:3.9-eclipse-temurin-21 AS backend
+WORKDIR /build/CYT-Common-API
+COPY CYT-Common-API/pom.xml ./pom.xml
+COPY CYT-Common-API/src ./src
+COPY sdk/ /build/sdk/
+COPY --from=frontend /build/frontend/dist ./src/main/resources/web
+COPY deploy/gcp/application-prod.yml ./src/main/resources/application-prod.yml
+RUN mvn -B -q -Dmaven.test.skip=true -Dfmt.skip=true package
+
+FROM eclipse-temurin:21-jre-noble AS runtime
+RUN groupadd --gid 10001 app && useradd --uid 10001 --gid app --create-home app
+WORKDIR /app
+COPY --from=backend --chown=app:app /build/CYT-Common-API/target/common-api-1.0.0-SNAPSHOT.jar /app/app.jar
+ENV TZ=UTC HOST=0.0.0.0 PORT=8080 SPRING_PROFILES_ACTIVE=prod
+USER app
+EXPOSE 8080
+ENTRYPOINT ["java", "-jar", "/app/app.jar"]
