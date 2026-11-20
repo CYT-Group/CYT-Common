@@ -77,7 +77,7 @@ public class DiscordGatewayListener implements SmartLifecycle {
           (account, task) -> {
             if (!names.contains(account)) task.cancel(true);
           });
-      var systems = JsonUtils.read(settings.get("DISCORD_LISTENER_SYSTEMS_JSON", "{}"));
+      var systems = client.listenerSystems();
       for (String account : names)
         tasks.compute(
             account,

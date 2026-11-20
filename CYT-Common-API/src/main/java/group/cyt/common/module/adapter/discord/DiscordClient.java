@@ -47,6 +47,11 @@ public class DiscordClient {
     return names.isEmpty() && !credentials.raw("DISCORD_BOT_TOKEN").isBlank() ? List.of("") : names;
   }
 
+  Map<String, Object> listenerSystems() {
+    String value = credentials.raw("DISCORD_LISTENER_SYSTEMS_JSON");
+    return value.isBlank() ? Map.of() : JsonUtils.read(value);
+  }
+
   public Object request(
       String account,
       String system,
