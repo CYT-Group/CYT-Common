@@ -89,23 +89,38 @@ public class CredentialController {
   @GetMapping("/environments/{key}/secrets")
   public Object listSecrets(@PathVariable String key) {
     var e = env(key);
+    boolean current = settings.current().equals(key);
+    boolean managed = secrets.secretManager(key);
+    var stored = store.rows(
+        "SELECT name,CHAR_LENGTH(ciphertext) AS length,updated_by,updated_at FROM gateway_secret WHERE env=? ORDER BY name",
+        key);
+    if (managed)
+      stored = stored.stream().<Map<String, Object>>map(row -> {
+        var item = new LinkedHashMap<>(row);
+        String name = JsonUtils.str(item, "name");
+        if (secrets.sensitive(name)) {
+          item.put("manager_managed", true);
+          item.put("bound", current && !secrets.raw(name).isBlank());
+        }
+        return item;
+      }).toList();
     return JsonUtils.obj(
         "env",
         e,
         "is_current",
-        settings.current().equals(key),
+        current,
         "writable",
         secrets.writable(),
+        "secret_manager",
+        managed,
         "platforms",
-        settings.current().equals(key) ? secrets.inventory(enabledSystemKeys()) : List.of(),
+        current ? secrets.inventory(enabledSystemKeys()) : List.of(),
         "systems",
         store.rows("SELECT key,display_name FROM gateway_system WHERE enabled=true"),
         "portal_system",
         "portal",
         "db_secrets",
-        store.rows(
-            "SELECT name,CHAR_LENGTH(ciphertext) AS length,updated_by,updated_at FROM gateway_secret WHERE env=? ORDER BY name",
-            key));
+        stored);
   }
 
   @PutMapping("/environments/{key}/secrets")
@@ -143,6 +158,9 @@ public class CredentialController {
   public Object deleteSecret(
       @PathVariable String key, @PathVariable String name, HttpServletRequest req) {
     env(key);
+    if (secrets.secretManager(key) && secrets.sensitive(name)
+        && (!settings.current().equals(key) || secrets.raw(name).isBlank()))
+      throw GatewayException.forbidden("请先在该生产环境绑定 Secret Manager 版本");
     return store.atomic(
         () -> {
           store.update("DELETE FROM gateway_secret WHERE env=? AND name=?", key, name);
@@ -160,14 +178,16 @@ public class CredentialController {
     String platform = JsonUtils.str(body, "platform"), system = JsonUtils.str(body, "system");
     if (store.one("SELECT id FROM gateway_system WHERE key=?", system) == null)
       throw GatewayException.invalid("系统不存在");
+    boolean managed = secrets.secretManager(key);
     Map<String, String> values = new LinkedHashMap<>();
     for (var p : registry.contract().path("credentials"))
       if (p.path("platform").asText().equals(platform))
         for (var v : p.path("vars"))
-          if (v.path("per_system").asBoolean()) {
-            String value = secrets.raw(v.path("name").asText()),
-                name =
-                    v.path("scoped").asText().replace("{SYSTEM}", system.toUpperCase(Locale.ROOT));
+          if (secrets.isPerSystem(v.path("name").asText())) {
+            String shared = v.path("name").asText();
+            String name = secrets.scopedName(shared, system);
+            if (name == null || managed && secrets.sensitive(name)) continue;
+            String value = secrets.raw(shared);
             if (!value.isBlank()
                 && !name.isBlank()
                 && store.count(

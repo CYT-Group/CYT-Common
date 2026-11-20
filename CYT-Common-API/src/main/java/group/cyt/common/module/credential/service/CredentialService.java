@@ -21,6 +21,7 @@ public class CredentialService {
   private final GatewayStore store;
   private final GatewaySettings settings;
   private final OperationRegistry registry;
+  private volatile CredentialStorage storage;
 
   public CredentialService(
       GatewayStore store, GatewaySettings settings, OperationRegistry registry) {
@@ -31,6 +32,28 @@ public class CredentialService {
 
   public boolean writable() {
     return !settings.get("CREDENTIAL_MASTER_KEY").isBlank();
+  }
+
+  public boolean sensitive(String name) {
+    return storagePolicy().sensitive(name);
+  }
+
+  private CredentialStorage storagePolicy() {
+    var policy = storage;
+    if (policy == null) storage = policy = new CredentialStorage(registry.contract());
+    return policy;
+  }
+
+  public boolean secretManager(String env) {
+    if (settings.production() || GatewaySettings.isProductionName(env)) return true;
+    if (settings.current().equals(env)) return false;
+    var row = store.one("SELECT is_production FROM gateway_environment WHERE key=?", env);
+    return row != null && JsonUtils.bool(row.get("is_production"));
+  }
+
+  private void requireDatabaseCredential(boolean managed, String name) {
+    if (managed && sensitive(name))
+      throw GatewayException.forbidden("生产敏感凭据由 Secret Manager 管理: " + name);
   }
 
   private byte[] key() {
@@ -95,15 +118,22 @@ public class CredentialService {
   }
 
   public String raw(String name) {
-    if (writable()) {
+    boolean managed = settings.production() && sensitive(name);
+    if (writable() && !managed) {
       var row =
           store.one(
               "SELECT ciphertext FROM gateway_secret WHERE env=? AND name=?",
               settings.current(),
               name);
-      if (row != null) return decrypt(JsonUtils.str(row, "ciphertext"));
+      if (row != null) {
+        String value = decrypt(JsonUtils.str(row, "ciphertext"));
+        if (!settings.production() || !looksSensitive(value)) return value;
+      }
     }
-    return settings.get(name);
+    String value = settings.get(name);
+    if (!managed || !value.isBlank()) return value;
+    String alias = storagePolicy().defaultAccountAlias(name);
+    return alias.isBlank() ? "" : settings.get(alias);
   }
 
   private static final String ACCOUNT_TOKEN = "{ACCOUNT}";
@@ -111,13 +141,20 @@ public class CredentialService {
 
   /** (value, source)：db = 后台存的，env = 环境变量。和适配器 raw() 同一优先级。 */
   public String[] readWithSource(String name) {
+    if (settings.production() && sensitive(name)) {
+      String value = raw(name);
+      return new String[] {value, value.isBlank() ? "" : "secret_manager"};
+    }
     if (writable()) {
       var row =
           store.one(
               "SELECT ciphertext FROM gateway_secret WHERE env=? AND name=?",
               settings.current(),
               name);
-      if (row != null) return new String[] {decrypt(JsonUtils.str(row, "ciphertext")), "db"};
+      if (row != null) {
+        String value = decrypt(JsonUtils.str(row, "ciphertext"));
+        if (!settings.production() || !looksSensitive(value)) return new String[] {value, "db"};
+      }
     }
     var value = settings.get(name);
     if (!value.isBlank()) return new String[] {value, "env"};
@@ -135,6 +172,8 @@ public class CredentialService {
       String env, String name, String action, String actor, List<String> systems) {
     if (!name.matches("[A-Z][A-Z0-9_]{0,63}") || !Set.of("view", "copy").contains(action))
       throw GatewayException.invalid("凭据名称或读取操作无效");
+    boolean managerEnvironment = secretManager(env);
+    requireDatabaseCredential(managerEnvironment, name);
     var stored =
         store.one("SELECT ciphertext FROM gateway_secret WHERE env=? AND name=?", env, name);
     String value;
@@ -159,6 +198,8 @@ public class CredentialService {
       source = resolved[1];
     }
     if (value.isEmpty()) throw GatewayException.missing("该凭据尚未配置");
+    if (managerEnvironment && looksSensitive(value))
+      throw GatewayException.forbidden("此值包含敏感凭据");
     store.audit(actor, "secrets_" + action, env + ":" + name, JsonUtils.obj("source", source));
     return JsonUtils.obj("name", name, "value", value, "source", source);
   }
@@ -179,15 +220,22 @@ public class CredentialService {
 
   private static String preview(boolean secret, String raw) {
     if (raw == null || raw.isBlank()) return "";
-    // ADC accepts either a file path or inline JSON; metadata alone cannot classify it.
-    var lower = raw.toLowerCase(Locale.ROOT);
-    boolean sensitivePayload =
-        lower.contains("\"private_key\"")
-            || lower.contains("\"client_secret\"")
-            || lower.contains("\"refresh_token\"")
-            || (lower.contains("-----begin ") && lower.contains("private key-----"));
-    return secret || sensitivePayload ? raw.length() + " 字符" : raw;
+    return secret || looksSensitive(raw) ? raw.length() + " 字符" : raw;
   }
+
+  private static boolean looksSensitive(String value) {
+    var lower = value.toLowerCase(Locale.ROOT);
+    return lower.contains("\"private_key\"")
+        || lower.contains("\"client_secret\"")
+        || lower.contains("\"refresh_token\"")
+        || lower.contains("\"access_token\"")
+        || (lower.contains("-----begin ") && lower.contains("private key-----"))
+        || AUTH_URL.matcher(lower).find();
+  }
+
+  private static final java.util.regex.Pattern AUTH_URL =
+      java.util.regex.Pattern.compile(
+          "://[^/\\s]+@|[?&](?:token|secret|password|signature|access_token|api_key|client_secret|x-amz-signature)=");
 
   /** 变量名 → (平台, scoped 模板, 代码默认是否按系统分)。只收录显式写了模板的变量。 */
   private Map<String, String[]> scopedTemplates() {
@@ -211,8 +259,8 @@ public class CredentialService {
   private Set<String> splitOverride(String platform) {
     var read = readWithSource("CRED_SPLIT_" + platform.toUpperCase(Locale.ROOT));
     if (read[1].isBlank()) return null;
-    var raw = read[0].strip().toLowerCase(Locale.ROOT);
-    if (raw.isBlank() || raw.equals("none") || raw.equals("-")) return Set.of();
+    var raw = read[0].strip().toUpperCase(Locale.ROOT);
+    if (raw.isBlank() || raw.equals("NONE") || raw.equals("-")) return Set.of();
     return Arrays.stream(raw.split(","))
         .map(String::strip)
         .filter(x -> !x.isBlank())
@@ -231,13 +279,17 @@ public class CredentialService {
     return scopedTemplates().containsKey(name);
   }
 
-  /** 共享变量名 + 系统 → 系统级变量名。门户直接回落共享那份。 */
+  /** 共享变量名 + 系统 → 系统级变量名。门户默认可使用共享配置。 */
   public String scopedName(String name, String system) {
     var entry = scopedTemplates().get(name);
-    if (entry == null || system == null || system.isBlank() || system.equals(PORTAL_SYSTEM))
-      return null;
+    if (entry == null || system == null || system.isBlank()) return null;
     if (!isPerSystem(name)) return null;
-    return entry[1].replace("{SYSTEM}", system.toUpperCase(Locale.ROOT).replace("-", "_"));
+    String scoped = entry[1].replace("{SYSTEM}", accountKey(system));
+    return system.equals(PORTAL_SYSTEM)
+            && !requiresDedicated(entry[0], system)
+            && raw(scoped).isBlank()
+        ? null
+        : scoped;
   }
 
   private String defaultPolicy(String platform) {
@@ -253,11 +305,45 @@ public class CredentialService {
         readWithSource("CRED_SCOPE_" + platform.toUpperCase(Locale.ROOT))[0]
             .strip()
             .toLowerCase(Locale.ROOT);
-    return raw.equals("inherit") || raw.equals("strict") ? raw : defaultPolicy(platform);
+    return raw.isBlank() ? defaultPolicy(platform) : validateScopePolicy(raw);
+  }
+
+  private static String validateScopePolicy(String policy) {
+    if (!Set.of("strict", "inherit").contains(policy))
+      throw GatewayException.invalid("凭据共享策略只能是 strict 或 inherit");
+    return policy;
+  }
+
+  public boolean requiresDedicated(String platform, String system) {
+    if (system == null || system.isBlank()) return false;
+    String policy =
+        raw("CRED_SCOPE_" + accountKey(platform) + "_" + accountKey(system))
+            .strip()
+            .toLowerCase(Locale.ROOT);
+    if (!policy.isBlank()) validateScopePolicy(policy);
+    return switch (policy) {
+      case "strict" -> true;
+      case "inherit" -> false;
+      default -> !system.equals(PORTAL_SYSTEM) && effectivePolicy(platform).equals("strict");
+    };
+  }
+
+  public void requireAccount(String platform, String account, String system) {
+    if (system == null || system.isBlank()) return;
+    var setting =
+        readWithSource("CRED_ACCOUNTS_" + accountKey(platform) + "_" + accountKey(system));
+    if (setting[1].isBlank() && !requiresDedicated(platform, system)) return;
+    String selected = account == null || account.isBlank() ? "DEFAULT" : accountKey(account);
+    boolean allowed =
+        Arrays.stream(setting[0].split(","))
+            .map(CredentialService::accountKey)
+            .anyMatch(selected::equals);
+    if (!allowed) throw GatewayException.forbidden("该调用系统未获准使用此上游账号");
   }
 
   private Map<String, Object> scopedState(String varName, boolean secret, String system) {
     var scoped = scopedName(varName, system);
+    if (WEWORK_NAMED.contains(varName)) scoped = "WEWORK_APP_" + accountKey(system) + varName.substring(6);
     var resolved = scoped == null ? varName : scoped;
     var read = readWithSource(resolved);
     return JsonUtils.obj(
@@ -271,6 +357,12 @@ public class CredentialService {
         read[1],
         "preview",
         preview(secret, read[0]),
+        "manager_managed",
+        settings.production() && sensitive(resolved),
+        "scope_policy",
+        requiresDedicated(WEWORK_NAMED.contains(varName) ? "wecom" : scopedTemplates().get(varName)[0], system)
+            ? "strict"
+            : "inherit",
         "is_shared",
         resolved.equals(varName));
   }
@@ -280,6 +372,9 @@ public class CredentialService {
       if (v.path("name").asText().contains(ACCOUNT_TOKEN)) return true;
     return false;
   }
+
+  private static final Set<String> WEWORK_NAMED =
+      Set.of("WEWORK_CORP_ID", "WEWORK_SECRET", "WEWORK_CONTACT_SECRET", "WEWORK_AGENT_ID");
 
   /** 账号列表：声明变量 + 默认账号 + 从已有变量名反推，兜底 account_fallback。 */
   public List<String> accounts(String platform) {
@@ -355,18 +450,20 @@ public class CredentialService {
         for (var ex : expanded) {
           var varName = JsonUtils.str(ex, "name");
           var read = readWithSource(varName);
-          var perSystem = isPerSystem(varName);
+          var perSystem = isPerSystem(varName) || WEWORK_NAMED.contains(varName);
+          var sensitive = v.path("secret").asBoolean() || settings.production() && sensitive(varName);
           var item =
               JsonUtils.obj(
                   "name", varName,
                   "label", v.path("label").asText(),
                   "required", v.path("required").asBoolean(),
-                  "secret", v.path("secret").asBoolean(),
+                  "secret", sensitive,
                   "hint", v.path("hint").asText(),
                   "example", v.path("example").asText(),
                   "set", !read[0].isBlank(),
                   "source", read[1],
-                  "preview", preview(v.path("secret").asBoolean(), read[0]),
+                  "preview", preview(sensitive, read[0]),
+                  "manager_managed", settings.production() && sensitive,
                   "per_system", perSystem,
                   "splittable", isSplittable(varName),
                   "account", JsonUtils.str(ex, "account"));
@@ -374,7 +471,7 @@ public class CredentialService {
             item.put(
                 "scoped",
                 sys.stream()
-                    .map(s -> scopedState(varName, v.path("secret").asBoolean(), s))
+                    .map(s -> scopedState(varName, sensitive, s))
                     .toList());
           varsOut.add(item);
         }
@@ -522,21 +619,20 @@ public class CredentialService {
   }
 
   public String resolve(String name, String system) {
-    for (var platform : registry.contract().path("credentials"))
-      for (var variable : platform.path("vars"))
-        if (name.equals(variable.path("name").asText())
-            && !system.isBlank()
-            && variable.path("per_system").asBoolean()) {
-          String scoped =
-              variable.path("scoped").asText().replace("{SYSTEM}", system.toUpperCase(Locale.ROOT));
-          String value = raw(scoped);
-          if (!value.isBlank()) return value;
-          String policy =
-              raw("CRED_SCOPE_" + platform.path("platform").asText().toUpperCase(Locale.ROOT));
-          if (policy.isBlank()) policy = platform.path("scope_policy").asText("inherit");
-          if (!system.equals("portal") && policy.equals("strict"))
-            throw GatewayException.config("系统 " + system + " 必须配置专属凭据: " + scoped);
-        }
+    if (name.startsWith("CUSTOM_") && system != null && !system.isBlank()) {
+      String dedicated = "CUSTOM_" + accountKey(system) + "_" + name.substring("CUSTOM_".length());
+      String value = raw(dedicated);
+      if (!value.isBlank()) return value;
+      if (requiresDedicated("custom", system))
+        throw GatewayException.config("缺少系统专属凭据: " + dedicated);
+    }
+    String scoped = scopedName(name, system);
+    if (scoped != null) {
+      String value = raw(scoped);
+      if (!value.isBlank()) return value;
+      if (requiresDedicated(scopedTemplates().get(name)[0], system))
+        throw GatewayException.config("系统 " + system + " 必须配置专属凭据: " + scoped);
+    }
     return raw(name);
   }
 
@@ -548,12 +644,21 @@ public class CredentialService {
 
   public void save(String env, Map<String, String> values, String actor) {
     if (!writable()) throw GatewayException.config("未启用凭据加密存储");
+    boolean managed = secretManager(env);
+    for (var e : values.entrySet()) {
+      if (!e.getKey().matches("[A-Z][A-Z0-9_]{0,63}")
+          || e.getValue() == null
+          || e.getValue().length() > 1_000_000)
+        throw GatewayException.invalid("凭据名称或长度无效");
+      requireDatabaseCredential(managed, e.getKey());
+      if (e.getKey().startsWith("CRED_SCOPE_"))
+        validateScopePolicy(e.getValue().strip().toLowerCase(Locale.ROOT));
+      if (managed && looksSensitive(e.getValue()))
+        throw GatewayException.invalid("请将带有密钥材料或 URL 凭据的值保存到 Secret Manager");
+    }
     store.atomic(
         () -> {
           for (var e : values.entrySet()) {
-            if (!e.getKey().matches("[A-Z][A-Z0-9_]{0,63}")
-                || e.getValue() == null
-                || e.getValue().length() > 1_000_000) throw GatewayException.invalid("凭据名称或长度无效");
             var old =
                 store.one("SELECT id FROM gateway_secret WHERE env=? AND name=?", env, e.getKey());
             var data =

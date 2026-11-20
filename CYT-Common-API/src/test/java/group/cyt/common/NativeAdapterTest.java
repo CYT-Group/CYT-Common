@@ -501,7 +501,7 @@ class NativeAdapterTest {
   @Test
   void gmailRejectsUnknownMailboxBeforeReadingMessages() throws Exception {
     var token = mock(GoogleTokenService.class);
-    when(token.user("fixture")).thenReturn("fixture-token");
+    when(token.user(eq("fixture"), anyString())).thenReturn("fixture-token");
     var http = mock(UpstreamHttp.class);
     when(http.object(eq("GET"), contains("/profile"), anyMap(), isNull()))
         .thenReturn(JsonUtils.obj("emailAddress", "actual@example.invalid"));

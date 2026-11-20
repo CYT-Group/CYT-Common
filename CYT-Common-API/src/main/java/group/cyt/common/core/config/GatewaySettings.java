@@ -43,7 +43,11 @@ public class GatewaySettings {
   }
 
   public boolean production() {
-    return productionEnvironment || Set.of("prod", "production", "prd").contains(current());
+    return productionEnvironment || isProductionName(current());
+  }
+
+  public static boolean isProductionName(String name) {
+    return Set.of("prod", "production", "prd").contains(name);
   }
 
   public void markProductionEnvironment() {

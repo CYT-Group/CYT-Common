@@ -32,6 +32,7 @@ public class DiscordClient {
   }
 
   public String token(String account, String system) {
+    credentials.requireAccount("discord", account, system);
     String key =
         account.isBlank()
             ? "DISCORD_BOT_TOKEN"

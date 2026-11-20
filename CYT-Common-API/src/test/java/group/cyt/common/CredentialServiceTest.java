@@ -6,6 +6,11 @@ import static org.mockito.Mockito.*;
 import com.fasterxml.jackson.databind.JsonNode;
 import group.cyt.common.core.config.GatewaySettings;
 import group.cyt.common.core.exception.GatewayException;
+import group.cyt.common.core.http.UpstreamHttp;
+import group.cyt.common.module.adapter.support.TokenCache;
+import group.cyt.common.module.adapter.wecom.WecomAdapter;
+import group.cyt.common.module.adapter.wecom.approval.WecomApprovalClient;
+import group.cyt.common.module.grant.service.QuotaService;
 import group.cyt.common.core.persistence.GatewayStore;
 import group.cyt.common.core.util.JsonUtils;
 import group.cyt.common.module.credential.service.CredentialService;
@@ -180,6 +185,101 @@ class CredentialServiceTest {
     assertEquals(List.of(), docusign.get("systems_ready"));
     var summary = service(env).summary(items);
     assertEquals(List.of("docusign"), summary.get("strict_platforms"));
+  }
+
+  @Test
+  void productionUsesSecretBindingsAndDatabaseConfigurationEvenWithLegacyRows() throws Exception {
+    var store = mock(GatewayStore.class);
+    var registry = new OperationRegistry(store);
+    var env = new MockEnvironment()
+        .withProperty("ENV", "production")
+        .withProperty("CREDENTIAL_MASTER_KEY", "fixture-master")
+        .withProperty("NAS_MINIO_ACCESS_KEY", "shared-fixture")
+        .withProperty("CRED_SCOPE_NAS_DEFAULT", "strict")
+        .withProperty("WEWORK_APP_FINANCIAL_SECRET", "financial-fixture")
+        .withProperty("NAS_MINIO_ENDPOINT", "https://deployment.example");
+    var service = new CredentialService(store, new GatewaySettings(env), registry);
+    when(store.one("SELECT ciphertext FROM gateway_secret WHERE env=? AND name=?",
+        "production", "WEWORK_APP_FINANCIAL_SECRET"))
+        .thenReturn(JsonUtils.obj("ciphertext", "unreadable-legacy-value"));
+    when(store.one("SELECT ciphertext FROM gateway_secret WHERE env=? AND name=?",
+        "production", "NAS_MINIO_ENDPOINT"))
+        .thenReturn(JsonUtils.obj("ciphertext", service.encrypt("https://database.example")));
+
+    assertEquals("financial-fixture", service.raw("WEWORK_APP_FINANCIAL_SECRET"));
+    assertArrayEquals(
+        new String[] {"financial-fixture", "secret_manager"},
+        service.readWithSource("WEWORK_APP_FINANCIAL_SECRET"));
+    assertEquals("https://database.example", service.raw("NAS_MINIO_ENDPOINT"));
+    assertEquals("", service.raw("WEWORK_APP_OA_SECRET"));
+    assertThrows(GatewayException.class, () -> service.resolve("NAS_MINIO_ACCESS_KEY", "default"));
+    assertTrue(service.sensitive("QUICKCEP_WEST_ACCESS_ID"));
+    assertTrue(service.sensitive("GOOGLE_APPLICATION_CREDENTIALS"));
+    assertTrue(service.sensitive("CUSTOM_FINANCIAL_VENDOR_TOKEN"));
+    assertFalse(service.sensitive("WEWORK_APP_FINANCIAL_CORP_ID"));
+    assertFalse(service.sensitive("SHOPIFY_CS_WEST_CLIENT_ID"));
+    assertFalse(service.sensitive("LINGXING_MAIL_EMAIL"));
+    assertThrows(GatewayException.class,
+        () -> service.disclose("production", "WEWORK_APP_FINANCIAL_SECRET", "copy", "admin", List.of()));
+    assertThrows(GatewayException.class,
+        () -> service.save("production", Map.of("WEWORK_APP_FINANCIAL_SECRET", "fixture"), "admin"));
+    assertThrows(GatewayException.class,
+        () -> service.save("production",
+            Map.of("NAS_MINIO_ENDPOINT", "https://account:fixture@storage.example"), "admin"));
+    verify(store, never()).one("SELECT ciphertext FROM gateway_secret WHERE env=? AND name=?",
+        "production", "WEWORK_APP_FINANCIAL_SECRET");
+    verify(store, never()).atomic(any());
+  }
+
+  @Test
+  void splitAndDedicatedPolicyAreEnforcedForReadsAndAccountSelection() throws Exception {
+    var store = mock(GatewayStore.class);
+    var registry = new OperationRegistry(store);
+    var env = new MockEnvironment()
+        .withProperty("CRED_SPLIT_NAS", "nas_minio_access_key")
+        .withProperty("CRED_SCOPE_NAS_FINANCIAL", "strict")
+        .withProperty("NAS_MINIO_ACCESS_KEY", "shared")
+        .withProperty("NAS_MINIO_SECRET_KEY", "shared-signing-key")
+        .withProperty("NAS_MINIO_RD_ACCESS_KEY", "rd")
+        .withProperty("CRED_SCOPE_STRIPE_FINANCIAL", "strict")
+        .withProperty("CRED_ACCOUNTS_STRIPE_FINANCIAL", "ledger")
+        .withProperty("CRED_SCOPE_CUSTOM_FINANCIAL", "strict")
+        .withProperty("CUSTOM_VENDOR_TOKEN", "shared")
+        .withProperty("CUSTOM_FINANCIAL_VENDOR_TOKEN", "dedicated");
+    var service = new CredentialService(store, new GatewaySettings(env), registry);
+
+    assertEquals("rd", service.resolve("NAS_MINIO_ACCESS_KEY", "rd"));
+    assertEquals("shared", service.resolve("NAS_MINIO_ACCESS_KEY", "oa"));
+    assertThrows(GatewayException.class, () -> service.resolve("NAS_MINIO_ACCESS_KEY", "financial"));
+    assertEquals("shared-signing-key", service.resolve("NAS_MINIO_SECRET_KEY", "financial"));
+    assertDoesNotThrow(() -> service.requireAccount("stripe", "ledger", "financial"));
+    assertThrows(GatewayException.class, () -> service.requireAccount("stripe", "other", "financial"));
+    assertThrows(GatewayException.class, () -> service.requireAccount("stripe", "", "financial"));
+    assertEquals("dedicated", service.resolve("CUSTOM_VENDOR_TOKEN", "financial"));
+  }
+
+  @Test
+  void financialWecomCannotUseTheSharedApplicationOrCallbackSecret() throws Exception {
+    var store = mock(GatewayStore.class);
+    var registry = new OperationRegistry(store);
+    var env = new MockEnvironment()
+        .withProperty("ENV", "production")
+        .withProperty("CRED_SCOPE_WECOM_FINANCIAL", "strict")
+        .withProperty("WEWORK_SECRET", "shared-fixture")
+        .withProperty("WEWORK_CALLBACK_TOKEN", "shared-callback")
+        .withProperty("WEWORK_APP_FINANCIAL_CORP_ID", "financial-corp");
+    var service = new CredentialService(store, new GatewaySettings(env), registry);
+    var upstream = mock(UpstreamHttp.class);
+    var adapter = new WecomAdapter(service, upstream, mock(TokenCache.class), registry);
+    var approvals = new WecomApprovalClient(
+        service, upstream, mock(TokenCache.class), mock(QuotaService.class));
+    assertThrows(GatewayException.class,
+        () -> adapter.invoke(registry.get("wecom.directory.list"), Map.of(), "financial"));
+    assertEquals("", approvals.credential("CALLBACK_TOKEN", "financial"));
+    assertThrows(GatewayException.class, () -> approvals.profile("financial"));
+    env.setProperty("WEWORK_APP_FINANCIAL_SECRET", "dedicated-fixture");
+    assertEquals(JsonUtils.sha("financial-corp:dedicated-fixture"), approvals.profile("financial"));
+    verifyNoInteractions(upstream);
   }
 
   @Test

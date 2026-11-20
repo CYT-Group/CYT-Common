@@ -9624,8 +9624,8 @@
           "secret": false,
           "hint": "登录万邑联的账号；沙箱固定 rebecca",
           "example": "rebecca",
-          "per_system": false,
-          "scoped": "",
+          "per_system": true,
+          "scoped": "WINIT_{SYSTEM}_APP_KEY",
           "account_scoped": false
         },
         {
@@ -9635,8 +9635,8 @@
           "secret": true,
           "hint": "万邑联 → 个人中心 → 系统设置 → 获取 Token；沙箱有公共值",
           "example": "",
-          "per_system": false,
-          "scoped": "",
+          "per_system": true,
+          "scoped": "WINIT_{SYSTEM}_TOKEN",
           "account_scoped": false
         },
         {
@@ -9646,8 +9646,8 @@
           "secret": false,
           "hint": "开发者平台创建应用时填的 Code，同时是签名参数 platform（大小写敏感）",
           "example": "",
-          "per_system": false,
-          "scoped": "",
+          "per_system": true,
+          "scoped": "WINIT_{SYSTEM}_PLATFORM",
           "account_scoped": false
         },
         {
@@ -9657,8 +9657,8 @@
           "secret": false,
           "hint": "【沙箱测试→沙箱应用】或【我的应用】里查看；两个环境不通用",
           "example": "",
-          "per_system": false,
-          "scoped": "",
+          "per_system": true,
+          "scoped": "WINIT_{SYSTEM}_CLIENT_ID",
           "account_scoped": false
         },
         {
@@ -9668,8 +9668,8 @@
           "secret": true,
           "hint": "和 client_id 配套，用来算 client_sign",
           "example": "",
-          "per_system": false,
-          "scoped": "",
+          "per_system": true,
+          "scoped": "WINIT_{SYSTEM}_CLIENT_SECRET",
           "account_scoped": false
         },
         {
@@ -9715,8 +9715,8 @@
           "secret": false,
           "hint": "马帮开放平台的应用 appkey；与 CYT-Buyer 用同一套即可",
           "example": "",
-          "per_system": false,
-          "scoped": "",
+          "per_system": true,
+          "scoped": "MABANG_{SYSTEM}_APP_KEY",
           "account_scoped": false
         },
         {
@@ -9726,8 +9726,8 @@
           "secret": true,
           "hint": "与 appkey 配套，用于 HMAC-SHA256 签名",
           "example": "",
-          "per_system": false,
-          "scoped": "",
+          "per_system": true,
+          "scoped": "MABANG_{SYSTEM}_SECRET",
           "account_scoped": false
         },
         {

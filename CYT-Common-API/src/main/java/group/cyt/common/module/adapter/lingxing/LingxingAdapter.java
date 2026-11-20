@@ -81,6 +81,7 @@ public class LingxingAdapter implements PlatformAdapter {
 
   private Cred cred(String name, String system) {
     String account = account(name, system);
+    credentials.requireAccount("lingxing", account, system);
     String key = accountKey(account);
     Cred cred =
         new Cred(

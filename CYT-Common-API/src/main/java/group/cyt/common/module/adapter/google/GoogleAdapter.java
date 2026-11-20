@@ -45,7 +45,7 @@ public class GoogleAdapter implements PlatformAdapter {
 
   private Object gmail(OperationDefinition op, Map<String, Object> p, String system) {
     String base = "https://gmail.googleapis.com/gmail/v1/users/me";
-    Map<String, String> headers = Map.of("Authorization", "Bearer " + tokens.user(system));
+    Map<String, String> headers = Map.of("Authorization", "Bearer " + tokens.user(system, "gmail"));
     String account = JsonUtils.str(p, "account");
     boolean write =
         op.key().equals("gmail.messages.send") || op.key().endsWith("restore_from_spam");
@@ -178,7 +178,7 @@ public class GoogleAdapter implements PlatformAdapter {
   private Object drive(OperationDefinition op, Map<String, Object> p, String system) {
     String base = "https://www.googleapis.com/drive/v3/files";
     Map<String, String> headers =
-        new HashMap<>(Map.of("Authorization", "Bearer " + tokens.user(system)));
+        new HashMap<>(Map.of("Authorization", "Bearer " + tokens.user(system, "gdrive")));
     Map<String, Object> q =
         JsonUtils.obj("fields", p.get("fields"), "supportsAllDrives", p.get("supports_all_drives"));
     if (op.key().equals("gdrive.files.list")) {

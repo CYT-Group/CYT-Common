@@ -59,11 +59,12 @@ public class ShopifyStoreDirectory {
       candidates.add(ShopifyStoreAccess.domain(text));
     }
     var names = new TreeSet<>(System.getenv().keySet());
-    if (credentials.writable())
+    boolean dedicated = credentials.requiresDedicated("shopify", consumer);
+    if (!dedicated && credentials.writable())
       for (var row : store.rows("SELECT name FROM gateway_secret WHERE env=? AND name LIKE ?",
           settings.current(), "SHOPIFY%STORE")) names.add(JsonUtils.str(row, "name"));
     for (String name : names) {
-      if (!name.matches("SHOPIFY_CS_[A-Z0-9_]+_STORE")) continue;
+      if (dedicated || !name.matches("SHOPIFY_CS_[A-Z0-9_]+_STORE")) continue;
       String domain = ShopifyStoreAccess.domain(credentials.raw(name));
       if (!domain.isEmpty()) candidates.add(domain);
     }
@@ -72,7 +73,7 @@ public class ShopifyStoreDirectory {
     List<Map<String, Object>> items = new ArrayList<>();
     try (var executor = Executors.newFixedThreadPool(8)) {
       var checks = candidates.stream().<Callable<Map<String, Object>>>map(domain ->
-          () -> describe(domain, defaultShop, consumer)).toList();
+          () -> describe(domain, defaultShop, consumer, dedicated)).toList();
       var results = executor.invokeAll(checks, 50, TimeUnit.SECONDS);
       int index = 0;
       for (String domain : candidates) {
@@ -90,9 +91,11 @@ public class ShopifyStoreDirectory {
         JsonUtils.obj("stores", items, "mock", false));
   }
 
-  private Map<String, Object> describe(String domain, String defaultShop, String consumer) {
+  private Map<String, Object> describe(
+      String domain, String defaultShop, String consumer, boolean dedicated) {
     try {
       boolean own = domain.equals(defaultShop);
+      if (!own && dedicated) return status(domain, "pending");
       String scope = own ? consumer : credentials.systemForStore("SHOPIFY_STORE", domain);
       if (scope == null) return status(domain, "pending");
       String version = credentials.resolve("SHOPIFY_API_VERSION", scope);

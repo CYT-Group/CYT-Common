@@ -90,8 +90,16 @@ export const api = {
   deleteEnvironment: (id: number) => remove(`${base}/environments/${id}`),
   secrets: (env: string) =>
     get<{
-      db_secrets: { name: string; length: number; updated_at: string; updated_by: string }[];
+      db_secrets: {
+        name: string;
+        length: number;
+        updated_at: string;
+        updated_by: string;
+        manager_managed?: boolean;
+        bound?: boolean;
+      }[];
       writable: boolean;
+      secret_manager?: boolean;
       platforms: CredentialPlatform[];
       systems?: { key: string; display_name: string }[];
     }>(`${base}/environments/${encodeURIComponent(env)}/secrets`),

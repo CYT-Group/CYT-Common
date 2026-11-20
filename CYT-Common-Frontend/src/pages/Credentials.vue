@@ -82,6 +82,8 @@ interface CredentialRow {
   source: string;
   preview: string;
   hint: string;
+  managerManaged: boolean;
+  scopeLabel: string;
   stored?: Stored;
   cloud?: CloudSource;
 }
@@ -136,6 +138,10 @@ const rows = computed(() => {
         source: selected.source,
         preview: selected.preview || '',
         hint: variable.hint || '',
+        managerManaged: !!(selected.manager_managed || record?.manager_managed),
+        scopeLabel: selected.system && !selected.is_shared
+          ? selected.scope_policy === 'strict' ? '系统专属' : '缺省可用共享项'
+          : '平台共享',
         stored: record,
         cloud:
           record?.updated_by === 'gcloud-import' ? imported.value.get(selected.name) : undefined,
@@ -150,10 +156,12 @@ const rows = computed(() => {
         platformLabels: ['自定义 / 专属变量'],
         required: false,
         secret: true,
-        set: Boolean(secrets.data.value?.writable),
-        source: 'db',
+        set: record.manager_managed ? !!record.bound : Boolean(secrets.data.value?.writable),
+        source: record.manager_managed ? 'secret_manager' : 'db',
         preview: '',
         hint: '',
+        managerManaged: !!record.manager_managed,
+        scopeLabel: '',
         stored: record,
         cloud: record.updated_by === 'gcloud-import' ? imported.value.get(record.name) : undefined,
       });
@@ -171,7 +179,7 @@ const filtered = computed(() =>
       (state.value === 'all' ||
         (state.value === 'missing' && row.required && !row.set) ||
         (state.value === 'set' && row.set) ||
-        (state.value === 'cloud' && !!row.cloud)) &&
+        (state.value === 'cloud' && (!!row.cloud || row.source === 'secret_manager'))) &&
       (row.name + ' ' + row.label + ' ' + row.platformLabels.join(' '))
         .toLowerCase()
         .includes(q.value.trim().toLowerCase()),
@@ -182,7 +190,9 @@ const visible = computed(() =>
 );
 const configuredCount = computed(() => rows.value.filter((r) => r.set).length);
 const missingCount = computed(() => rows.value.filter((r) => r.required && !r.set).length);
-const cloudCount = computed(() => rows.value.filter((r) => r.cloud).length);
+const cloudCount = computed(
+  () => rows.value.filter((r) => r.cloud || r.source === 'secret_manager').length,
+);
 const scopeOptions = computed(() => secrets.data.value?.systems || []);
 watch([q, platform, state, system, size], () => {
   page.value = 1;
@@ -216,6 +226,7 @@ function openSecret(row?: CredentialRow) {
   secretDialog.value = true;
 }
 function sourceLabel(row: CredentialRow) {
+  if (row.managerManaged) return 'Secret Manager';
   if (row.cloud) return 'GCP 导入';
   if (row.stored) return '加密数据库';
   return row.source === 'env' ? '部署配置' : '尚未配置';
@@ -236,9 +247,9 @@ async function saveSecret() {
 async function deleteSecret(row: CredentialRow) {
   if (
     !(await confirm(
-      '仅删除「' +
-        row.name +
-        '」在此环境的数据库值；同名部署配置仍可能生效。上游令牌的撤销需要在供应商侧处理。',
+      row.managerManaged
+        ? '删除「' + row.name + '」的旧数据库副本？'
+        : '删除「' + row.name + '」在此环境的数据库配置？同名部署配置仍可能生效。',
     ))
   )
     return;
@@ -277,9 +288,9 @@ async function deleteEnv() {
   <div>
     <PageHeader
       title="环境与凭据"
-      description="按平台和调用系统管理上游凭据，查看来源、复制密钥与更新凭据。"
+      description="查看各平台和调用系统的凭据绑定、来源和共享范围。"
     >
-      <el-button :icon="InfoFilled" @click="cloudHelp = true">GCP 同步说明</el-button>
+      <el-button v-if="!secrets.data.value?.secret_manager" :icon="InfoFilled" @click="cloudHelp = true">GCP 同步说明</el-button>
       <el-button :icon="Refresh" :loading="secrets.loading.value" @click="reload"
         >刷新状态</el-button
       >
@@ -405,7 +416,7 @@ async function deleteEnv() {
             ><template #default="{ row }"
               ><div class="credential-stack">
                 <span>{{ row.platformLabels.join(' / ') }}</span
-                ><span class="subtext">{{ row.required ? '必填' : '可选 / 扩展' }}</span>
+                ><span class="subtext">{{ row.required ? '必填' : '可选 / 扩展' }}{{ row.scopeLabel ? ' · ' + row.scopeLabel : '' }}</span>
               </div></template
             ></el-table-column
           >
@@ -421,7 +432,9 @@ async function deleteEnv() {
                     >{{
                       row.set
                         ? '已配置'
-                        : row.stored
+                        : row.managerManaged
+                          ? '待绑定'
+                          : row.stored
                           ? '已保存 · 待加载'
                           : row.required
                             ? '缺少凭据'
@@ -447,7 +460,7 @@ async function deleteEnv() {
                         : row.preview || '已保存'
                       : '—'
                   }}</span>
-                  <div v-if="row.set || row.stored" class="credential-value-actions">
+                  <div v-if="!row.managerManaged && (row.set || row.stored)" class="credential-value-actions">
                     <el-tooltip content="查看完整值"
                       ><el-button
                         :icon="View"
@@ -473,7 +486,7 @@ async function deleteEnv() {
                 <span class="subtext">{{
                   row.stored
                     ? dateTime(row.stored.updated_at)
-                    : row.source === 'env'
+                    : row.source === 'env' || row.source === 'secret_manager'
                       ? '随部署加载'
                       : '尚未保存'
                 }}</span>
@@ -483,6 +496,7 @@ async function deleteEnv() {
           <el-table-column label="操作" width="140" fixed="right"
             ><template #default="{ row }"
               ><el-button
+                v-if="!row.managerManaged"
                 link
                 type="primary"
                 :disabled="!secrets.data.value?.writable"
@@ -492,9 +506,9 @@ async function deleteEnv() {
                 v-if="row.stored"
                 link
                 type="danger"
-                :disabled="!secrets.data.value?.writable"
+                :disabled="!secrets.data.value?.writable || (row.managerManaged && !row.stored?.bound)"
                 @click="deleteSecret(row)"
-                >删除</el-button
+                >{{ row.managerManaged ? '清理旧记录' : '删除' }}</el-button
               ></template
             ></el-table-column
           >
@@ -514,13 +528,16 @@ async function deleteEnv() {
     <section class="panel">
       <div class="panel-body credential-guidance">
         <strong>日常更新与轮换</strong>
-        <p>
+        <p v-if="secrets.data.value?.secret_manager">
+          生产敏感凭据由 Secret Manager 管理，使用新版本发布以完成轮换。本页用于核对绑定状态和维护非敏感配置。
+        </p>
+        <p v-else>
           列表默认遮罩显示，点“查看”或“复制”读取完整值。平台密钥到期后，点“更新 / 轮换”保存新值。GCP
           导入项会标记云端版本，手动更新后改为数据库管理；重新同步不同值需要显式覆盖。
         </p>
         <strong>环境、作用域与主密钥</strong>
         <p>
-          页面选择环境只用于管理，不切换服务的运行环境。调用方专属凭据优先，其次是环境数据库和部署变量，具体回退遵循平台策略。主密钥仅保存在部署配置中，轮换主密钥前必须重加密已有密文。
+          页面所选环境用于管理配置。系统专属策略要求配置独立凭据，允许共享时会在专属项缺失后使用共享项。非敏感配置优先读取当前环境的数据库值。
         </p>
         <p>这里管理的是上游凭据；业务系统访问网关使用的 API Key，请到“调用方系统”管理。</p>
       </div>

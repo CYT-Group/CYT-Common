@@ -29,9 +29,16 @@ public class WecomApprovalClient {
   }
 
   public String credential(String name, String system) {
-    String scoped = "WEWORK_" + system.toUpperCase(Locale.ROOT).replace('-', '_') + "_" + name;
+    String systemKey = CredentialService.accountKey(system);
+    String scoped = "WEWORK_" + systemKey + "_" + name;
     String value = credentials.resolve(scoped, system);
-    return value.isBlank() ? credentials.resolve("WEWORK_" + name, system) : value;
+    if (!value.isBlank()) return value;
+    if (credentials.requiresDedicated("wecom", system)) {
+      if (!name.equals("CORP_ID")) return "";
+      String appCorp = credentials.resolve("WEWORK_APP_" + systemKey + "_CORP_ID", system);
+      if (!appCorp.isBlank()) return appCorp;
+    }
+    return credentials.resolve("WEWORK_" + name, system);
   }
 
   public String corp(String system) {
@@ -41,11 +48,17 @@ public class WecomApprovalClient {
   }
 
   private String secret(String system) {
+    String systemKey = CredentialService.accountKey(system);
+    if (credentials.requiresDedicated("wecom", system)) {
+      String approval = credentials.raw("WEWORK_" + systemKey + "_APPROVAL_SECRET");
+      if (!approval.isBlank()) return approval;
+      return credentials.required("WEWORK_APP_" + systemKey + "_SECRET", system);
+    }
     String value = credential("APPROVAL_SECRET", system);
     if (value.isBlank())
       value =
           credentials.resolve(
-              "WEWORK_APP_" + system.toUpperCase(Locale.ROOT).replace('-', '_') + "_SECRET",
+              "WEWORK_APP_" + systemKey + "_SECRET",
               system);
     if (value.isBlank()) value = credentials.resolve("WEWORK_SECRET", system);
     if (value.isBlank()) throw GatewayException.config("请配置企微审批应用或具有审批权限的自建应用凭据");

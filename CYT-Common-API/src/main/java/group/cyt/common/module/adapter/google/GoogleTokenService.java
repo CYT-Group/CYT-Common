@@ -25,11 +25,24 @@ public class GoogleTokenService {
     this.cache = cache;
   }
 
-  public String user(String system) {
-    String id = credentials.required("GOOGLE_CLIENT_ID", system),
-        secret = credentials.required("GOOGLE_CLIENT_SECRET", system),
-        refresh = credentials.resolve("GOOGLE_REFRESH_TOKEN", system);
-    if (refresh.isBlank()) refresh = credentials.required("GMAIL_REFRESH_TOKEN", system);
+  public String user(String system, String platform) {
+    boolean dedicated = credentials.requiresDedicated(platform, system);
+    String scope = CredentialService.accountKey(system);
+    String clientPrefix = dedicated ? "GOOGLE_" + scope : "GOOGLE";
+    String id = credentials.required(clientPrefix + "_CLIENT_ID", system),
+        secret = credentials.required(clientPrefix + "_CLIENT_SECRET", system);
+    String refresh;
+    if (dedicated) {
+      String prefix = platform.equals("gmail") ? "GMAIL_" : "GOOGLE_";
+      refresh = credentials.required(prefix + scope + "_REFRESH_TOKEN", system);
+    } else {
+      refresh = credentials.requiresDedicated("gdrive", system)
+          ? ""
+          : credentials.resolve("GOOGLE_REFRESH_TOKEN", system);
+      if (refresh.isBlank() && !credentials.requiresDedicated("gmail", system))
+        refresh = credentials.resolve("GMAIL_REFRESH_TOKEN", system);
+      if (refresh.isBlank()) throw GatewayException.config("缺少此平台可用的 Google 刷新令牌");
+    }
     String refreshToken = refresh;
     return cache.get(
         "google-user:" + system + ":" + id + ":" + secret + ":" + refresh,
@@ -51,9 +64,14 @@ public class GoogleTokenService {
   }
 
   public String service(String system) {
-    String raw = credentials.resolve("GOOGLE_SA_JSON", system);
-    if (raw.isBlank()) raw = credentials.resolve("GCS_SA_JSON", system);
-    if (raw.isBlank()) raw = credentials.required("GOOGLE_APPLICATION_CREDENTIALS", system);
+    String raw;
+    if (credentials.requiresDedicated("gcs", system)) {
+      raw = credentials.required("GCS_" + CredentialService.accountKey(system) + "_SA_JSON", system);
+    } else {
+      raw = credentials.resolve("GOOGLE_SA_JSON", system);
+      if (raw.isBlank()) raw = credentials.resolve("GCS_SA_JSON", system);
+      if (raw.isBlank()) raw = credentials.required("GOOGLE_APPLICATION_CREDENTIALS", system);
+    }
     try {
       if (!raw.strip().startsWith("{")) raw = Files.readString(Path.of(raw));
     } catch (Exception e) {

@@ -28,6 +28,7 @@ public class QuickcepAdapter implements PlatformAdapter {
   public Object invoke(OperationDefinition op, Map<String, Object> p, String system) {
     String account = JsonUtils.str(p, "account");
     if (account.isBlank()) account = credentials.resolve("QUICKCEP_ACCOUNT", system);
+    credentials.requireAccount("quickcep", account.isBlank() ? "default" : account, system);
     if (account.isBlank()) throw GatewayException.config("请指定 QuickCEP 账号");
     String prefix = "QUICKCEP_" + CredentialService.accountKey(account);
     String access = credentials.required(prefix + "_ACCESS_ID", system),

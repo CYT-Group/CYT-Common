@@ -69,7 +69,7 @@ class CredentialImportTest(unittest.TestCase):
                 tool.local_connection({'spring.datasource.url': 'jdbc:mysql://127.0.0.1/cyt_common_api'})
             connect.assert_not_called()
 
-    def test_production_partition_requires_matching_plan_and_explicit_target(self):
+    def test_production_partition_cannot_receive_imported_payloads(self):
         config = {'ENV': 'local'}
         args = SimpleNamespace(env='production', allow_production=False)
         with self.assertRaises(tool.ImportFailure):
@@ -79,7 +79,8 @@ class CredentialImportTest(unittest.TestCase):
             tool.validate_environment_target(config, {}, args)
         with self.assertRaises(tool.ImportFailure):
             tool.validate_environment_target(config, {'target_environment': 'local'}, args)
-        tool.validate_environment_target(config, {'target_environment': 'production'}, args)
+        with self.assertRaisesRegex(tool.ImportFailure, 'Secret Manager'):
+            tool.validate_environment_target(config, {'target_environment': 'production'}, args)
         with self.assertRaises(tool.ImportFailure):
             tool.validate_environment_target({'ENV': 'production'}, {'target_environment': 'production'}, args)
 

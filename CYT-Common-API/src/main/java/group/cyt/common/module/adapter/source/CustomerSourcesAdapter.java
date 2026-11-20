@@ -61,6 +61,7 @@ public class CustomerSourcesAdapter implements PlatformAdapter {
   public Object invoke(OperationDefinition op, Map<String, Object> params, String system) {
     double timeout = op.timeoutSeconds();
     String account = JsonUtils.str(params, "account");
+    credentials.requireAccount(op.platform(), account, system);
     Map<String, Object> cursor = JsonUtils.map(params.get("cursor"));
     int limit = JsonUtils.integer(params.get("limit"), 100);
     return switch (op.key()) {

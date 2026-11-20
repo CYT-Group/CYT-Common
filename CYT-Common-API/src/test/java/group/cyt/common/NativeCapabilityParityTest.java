@@ -27,7 +27,7 @@ class NativeCapabilityParityTest {
   void attachmentReadsVerifyIdentityAndOriginalMimeOwnership() throws Exception {
     var http = mock(UpstreamHttp.class);
     var tokens = mock(GoogleTokenService.class);
-    when(tokens.user("cs")).thenReturn("fixture-token");
+    when(tokens.user(eq("cs"), anyString())).thenReturn("fixture-token");
     when(http.object(eq("GET"), endsWith("/profile"), anyMap(), isNull()))
         .thenReturn(JsonUtils.obj("emailAddress", "fixture@example.invalid"));
     byte[] bytes = "%PDF-fixture".getBytes(StandardCharsets.US_ASCII);

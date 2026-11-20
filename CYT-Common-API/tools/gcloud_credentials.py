@@ -188,13 +188,13 @@ def local_connection(config):
 
 
 def validate_environment_target(config, document, args):
-    if config.get('ENV', 'local') != 'local' or args.env not in ('local', 'staging', 'test', 'production'):
+    if args.env == 'production':
+        raise ImportFailure('Production credentials must be bound from Secret Manager at deployment')
+    if config.get('ENV', 'local') != 'local' or args.env not in ('local', 'staging', 'test'):
         raise ImportFailure('Import requires a local development connection and an existing environment partition')
     planned = document.get('target_environment')
     if planned is not None and planned != args.env:
         raise ImportFailure('Plan environment does not match the explicit import target')
-    if args.env == 'production' and (not getattr(args, 'allow_production', False) or planned != 'production'):
-        raise ImportFailure('The production partition requires a production-targeted plan and --allow-production')
 
 
 def apply(args):
@@ -298,7 +298,6 @@ def main():
     parser.add_argument('--region', default='us-central1')
     parser.add_argument('--plan-file', type=Path, default=DEFAULT_PLAN)
     parser.add_argument('--env', default='local')
-    parser.add_argument('--allow-production', action='store_true', help='Import into the explicitly selected production partition of the local credential store')
     parser.add_argument('--overwrite', action='store_true', help='Replace different local values after reviewing the plan')
     args = parser.parse_args()
     try:

@@ -210,6 +210,8 @@ export interface CredentialState {
   preview?: string;
   system?: string;
   is_shared?: boolean;
+  manager_managed?: boolean;
+  scope_policy?: 'inherit' | 'strict';
 }
 export interface CredentialVariable extends CredentialState {
   label: string;

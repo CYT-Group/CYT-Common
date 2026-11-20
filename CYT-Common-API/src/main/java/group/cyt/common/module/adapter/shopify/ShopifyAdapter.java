@@ -57,6 +57,8 @@ public class ShopifyAdapter implements PlatformAdapter {
     String credentialSystem = system;
     if (!requested.isBlank()
         && !normalize(credentials.resolve("SHOPIFY_STORE", system)).equalsIgnoreCase(requested)) {
+      if (credentials.requiresDedicated("shopify", system))
+        throw GatewayException.forbidden("请求店铺与调用系统的专属店铺不一致");
       String scoped = credentials.systemForStore("SHOPIFY_STORE", requested);
       if (scoped != null) credentialSystem = scoped;
     }

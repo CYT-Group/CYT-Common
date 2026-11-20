@@ -170,6 +170,14 @@ public class ConfigurationService {
         List.of("headers_json", "pagination_json", "base_urls_json", "response_schema_json"))
       if (d.get(field) != null && !(JsonUtils.parse(JsonUtils.str(d, field)) instanceof Map<?, ?>))
         throw GatewayException.invalid(field + " 必须是 JSON 对象");
+    if (settings.production() && d.get("headers_json") != null) {
+      var headers = JsonUtils.map(JsonUtils.parse(JsonUtils.str(d, "headers_json")));
+      for (String header : headers.keySet()) {
+        String name = header.toLowerCase(Locale.ROOT);
+        if (name.equals("cookie") || name.matches(".*(?:authorization|token|api[-_]?key|secret).*"))
+          throw GatewayException.invalid("生产鉴权请求头请使用 Secret Manager 凭据引用: " + header);
+      }
+    }
     if (d.get("response_schema_json") != null) {
       var response = JsonUtils.tree(JsonUtils.parse(JsonUtils.str(d, "response_schema_json")));
       validateResponseRefs(response);

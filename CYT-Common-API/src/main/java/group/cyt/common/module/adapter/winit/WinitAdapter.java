@@ -96,7 +96,15 @@ public class WinitAdapter implements PlatformAdapter {
    * reads as "application not found", not as "wrong environment".
    */
   private String cfg(String field, String system) {
-    String generic = credentials.resolve("WINIT_" + field, system).strip();
+    String name = "WINIT_" + field;
+    String dedicated = credentials.scopedName(name, system);
+    if (dedicated != null) {
+      String value = credentials.raw(dedicated).strip();
+      if (!value.isEmpty()) return value;
+      if (credentials.requiresDedicated("winit", system))
+        throw GatewayException.config("缺少系统专属凭据: " + dedicated);
+    }
+    String generic = credentials.resolve(name, system).strip();
     if (field.equals("ENV")) return generic;
     String scoped =
         credentials

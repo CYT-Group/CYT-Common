@@ -61,7 +61,11 @@ public class WecomAdapter implements PlatformAdapter {
     if (key.startsWith("hr.")) {
       String prefix = c.app().equals("default") ? "WEWORK" : "WEWORK_APP_" + c.app().toUpperCase(Locale.ROOT);
       String hrSecret = credentials.resolve(prefix + "_HR_SECRET", system);
-      if (hrSecret.isBlank()) hrSecret = credentials.resolve("WEWORK_HR_SECRET", system);
+      if (hrSecret.isBlank()) {
+        hrSecret = credentials.requiresDedicated("wecom", system)
+            ? credentials.raw("WEWORK_" + CredentialService.accountKey(system) + "_HR_SECRET")
+            : credentials.resolve("WEWORK_HR_SECRET", system);
+      }
       if (!hrSecret.isBlank()) c = new Context(c.app(), c.corp(), hrSecret, c.contactSecret(), c.agent(), c.base(), c.headers());
       if (key.equals("hr.get_fields"))
         return call(c, "GET", "/hr/get_fields", Map.of(), null, false);
@@ -261,7 +265,9 @@ public class WecomAdapter implements PlatformAdapter {
     String app = requested.isBlank() ? selected : requested;
     String prefix = "WEWORK_APP_" + app.toUpperCase(Locale.ROOT);
     String secret = credentials.resolve(prefix + "_SECRET", system);
+    boolean dedicated = credentials.requiresDedicated("wecom", system);
     if (secret.isBlank()) {
+      if (dedicated) throw GatewayException.config("缺少系统专属凭据: " + prefix + "_SECRET");
       app = "default";
       prefix = "WEWORK";
       secret = credentials.required(prefix + "_SECRET", system);
@@ -269,7 +275,7 @@ public class WecomAdapter implements PlatformAdapter {
     String corp = credentials.resolve(prefix + "_CORP_ID", system);
     if (corp.isBlank()) corp = credentials.required("WEWORK_CORP_ID", system);
     String contact = credentials.resolve(prefix + "_CONTACT_SECRET", system);
-    if (contact.isBlank()) contact = credentials.resolve("WEWORK_CONTACT_SECRET", system);
+    if (contact.isBlank() && !dedicated) contact = credentials.resolve("WEWORK_CONTACT_SECRET", system);
     int agent = JsonUtils.integer(credentials.resolve(prefix + "_AGENT_ID", system), 0);
     String proxy = credentials.resolve("WEWORK_PROXY_TOKEN", system),
         base = "https://qyapi.weixin.qq.com/cgi-bin";
