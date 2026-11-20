@@ -32,6 +32,7 @@ steps:
       - '--vpc-connector=${_VPC_CONNECTOR}'
       - '--vpc-egress=${_VPC_EGRESS}'
       - '--set-secrets=${_MIGRATION_SECRETS}'
+      - '--set-env-vars=FLYWAY_DEFAULT_SCHEMA=${_DB_SCHEMA},FLYWAY_SCHEMAS=${_DB_SCHEMA},FLYWAY_CREATE_SCHEMAS=true'
       - '--tasks=1'
       - '--parallelism=1'
       - '--max-retries=0'

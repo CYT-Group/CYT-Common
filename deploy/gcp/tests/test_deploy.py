@@ -55,6 +55,8 @@ class DeploymentArgumentsTests(unittest.TestCase):
         self.assertNotIn('REDIS_URL', runtime)
         environment = decode_dictionary(values['_RUNTIME_ENV'])
         self.assertEqual('prod', environment['SPRING_PROFILES_ACTIVE'])
+        self.assertEqual('cyt_common', environment['COMMON_DATABASE_SCHEMA'])
+        self.assertEqual(environment['COMMON_DATABASE_SCHEMA'], values['_DB_SCHEMA'])
         self.assertEqual('production', environment['ENV'])
         for name in ['SPRING_FLYWAY_ENABLED', 'MOCK_ALL', 'GATEWAY_DEV_MODE', 'JAVA_SEED_ENABLED', 'ADMIN_DEV_LOGIN']:
             self.assertEqual('false', environment[name])

@@ -7,6 +7,8 @@ spring:
     url: ${SPRING_DATASOURCE_URL}
     username: ${SPRING_DATASOURCE_USERNAME}
     password: ${SPRING_DATASOURCE_PASSWORD}
+    hikari:
+      schema: ${COMMON_DATABASE_SCHEMA:cyt_common}
   flyway:
     enabled: false
 ENV: production

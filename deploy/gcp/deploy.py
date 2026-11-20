@@ -23,6 +23,8 @@ RESERVED_ALIASES = {
     'SPRING_CONFIG_IMPORT', 'SPRING_CONFIG_ADDITIONAL_LOCATION', 'SPRING_APPLICATION_JSON',
     'JAVA_TOOL_OPTIONS', 'JDK_JAVA_OPTIONS', 'JAVA_OPTS', 'REDIS_URL',
     'COMMON_RELEASE_BUILD_ID',
+    'SPRING_DATASOURCE_HIKARI_SCHEMA', 'SPRING_DATASOURCE_HIKARI_JDBC_URL',
+    'SPRING_DATASOURCE_HIKARI_CONNECTION_INIT_SQL',
 }
 STALE_ALIASES = RESERVED_ALIASES - {'PORT', 'REDIS_URL', 'COMMON_RELEASE_BUILD_ID'}
 
@@ -130,6 +132,8 @@ def substitutions(args):
         raise ValueError('cyt-common-api 是现有 Python 网关，请使用独立 Java 服务名，如 cyt-common-java')
     if not re.fullmatch(r'[a-z]+-[a-z]+[0-9]+', args.region):
         raise ValueError('无效的 GCP region')
+    if not re.fullmatch(r'cyt_common(?:_[a-z][a-z0-9_]{0,41})?', args.db_schema):
+        raise ValueError('schema 必须使用 Common 专属名称 cyt_common 或 cyt_common_<环境>')
     if not re.fullmatch(r'[a-z][a-z0-9-]{0,23}[a-z0-9]|[a-z]', args.vpc_connector):
         raise ValueError('请提供同区域 VPC 连接器的短名称')
     for account in (args.service_account, args.migration_service_account or args.service_account,
@@ -156,6 +160,7 @@ def substitutions(args):
     environment = {
         'SPRING_PROFILES_ACTIVE': 'prod', 'SPRING_FLYWAY_ENABLED': 'false', 'HOST': '0.0.0.0',
         'ENV': 'production', 'MOCK_ALL': 'false', 'GATEWAY_DEV_MODE': 'false',
+        'COMMON_DATABASE_SCHEMA': args.db_schema,
         'JAVA_SEED_ENABLED': 'false', 'ADMIN_DEV_LOGIN': 'false', 'CUSTOM_API_ALLOW_LOOPBACK': 'false',
         'DISCORD_GATEWAY_ENABLED': 'true' if args.discord_listener else 'false',
     }
@@ -177,6 +182,7 @@ def substitutions(args):
     secrets.update(extra_secrets)
     values = {
         '_SERVICE': args.service, '_REGION': args.region, '_REGISTRY': registry,
+        '_DB_SCHEMA': args.db_schema,
         '_JOB_PREFIX': job_prefix, '_VPC_CONNECTOR': args.vpc_connector, '_VPC_EGRESS': args.vpc_egress,
         '_RUNTIME_SA': args.service_account,
         '_MIGRATION_SA': args.migration_service_account or args.service_account,
@@ -223,6 +229,7 @@ def parser():
     result.add_argument('--vpc-egress', choices=('all-traffic', 'private-ranges-only'), default='all-traffic')
     result.add_argument('--registry', help='默认 gcr.io/项目；可指定已有 Artifact Registry 仓库')
     result.add_argument('--migration-job-prefix')
+    result.add_argument('--db-schema', default='cyt_common', help='目标 PostgreSQL 数据库内由 Flyway 创建的独立 schema')
     result.add_argument('--db-url-secret', required=True, help='PostgreSQL JDBC URL Secret 名称:版本')
     result.add_argument('--db-user-secret', required=True)
     result.add_argument('--db-password-secret', required=True)
