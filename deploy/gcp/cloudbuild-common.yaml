@@ -52,6 +52,7 @@ steps:
       - '--service=${_SERVICE}'
       - '--build-id=$BUILD_ID'
       - '--digest-file=/workspace/common-api-image-digest.txt'
+      - '--secret-bindings-file=${_SECRET_BINDINGS_FILE}'
       - '--image=${_REGISTRY}/cyt-common-java:$BUILD_ID'
       - '--'
       - '--platform=managed'

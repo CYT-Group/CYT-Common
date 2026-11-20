@@ -102,6 +102,30 @@ class DeploymentArgumentsTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, '4000'):
             MODULE.substitutions(arguments('--env', 'LONG_VALUE=' + '中' * 1500))
 
+    def test_large_binding_manifest_passes_only_its_path_to_cloud_build(self):
+        manifest = 'deploy/gcp/unit-bindings.json'
+        references = {f'CUSTOM_VENDOR_{i}_TOKEN': f'common-prod-vendor-token-{i}:7'
+                      for i in range(150)}
+        original = Path.read_text
+        def read_text(path, *args, **kwargs):
+            if path.name == 'unit-bindings.json':
+                return json.dumps(references)
+            return original(path, *args, **kwargs)
+        self.assertGreater(len(json.dumps(references)), 4000)
+        with patch.object(Path, 'read_text', read_text):
+            self.assertEqual(references, MODULE.load_secret_bindings(manifest))
+            values = MODULE.substitutions(arguments('--secret-bindings-file', manifest))
+            self.assertEqual(manifest, values['_SECRET_BINDINGS_FILE'])
+            self.assertNotIn('CUSTOM_VENDOR_149_TOKEN', values['_RUNTIME_SECRETS'])
+            with self.assertRaises(ValueError):
+                MODULE.substitutions(arguments('--secret-bindings-file', manifest,
+                    '--secret', 'CUSTOM_VENDOR_149_TOKEN=another:8'))
+
+    def test_credential_catalog_rejects_literal_quickcep_and_custom_secrets(self):
+        for name in ['QUICKCEP_SHOP_ACCESS_ID', 'CUSTOM_VENDOR', 'GOOGLE_APPLICATION_CREDENTIALS']:
+            with self.subTest(name=name), self.assertRaisesRegex(ValueError, 'Secret Manager'):
+                MODULE.substitutions(arguments('--env', name + '=fixture'))
+
     def test_redis_is_optional_but_required_for_more_than_one_instance(self):
         with self.assertRaisesRegex(ValueError, 'redis-secret'):
             MODULE.substitutions(arguments('--max-instances', '2'))

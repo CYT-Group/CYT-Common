@@ -1,46 +1,65 @@
 # 上游凭据管理
 
-上游凭据用于网关连接供应商；调用方 API Key 和操作授权用于业务系统访问网关，两者独立管理。管理入口为“环境与凭据”，支持平台、调用方作用域、缺失项、来源和关键词筛选。列表只显示状态、长度或非敏感配置，不返回密钥原文。
+生产 Common 从部署读取 Secret Manager 注入的敏感凭据，从当前环境的 PostgreSQL 读取非敏感配置。凭据页展示绑定状态、来源和作用域。运维在 Secret Manager 中新增版本，再由 Cloud Run 以固定版本发布。
 
-## 从 Google Cloud 同步到本地
+## 变量清单
 
-工具使用电脑上现有的 `gcloud` 登录访问 Secret Manager，不复制个人 CLI 登录令牌。默认读取 `cyt-digital` 项目、`us-central1` 区域的 `cyt-common-api` 服务绑定，并按当前操作契约匹配同项目中的平台密钥。别名只采用代码中显式确认的映射；无关密钥和网关主密钥不在导入范围。
+`{SYSTEM}` 表示调用系统或店铺作用域，`{ACCOUNT}` 表示上游账号。实例化时使用大写，分隔符用下划线。旧的默认账号别名沿用同一分类。
 
-在 `CYT-Common-API` 目录执行：
+### 存 Google Secret Manager
+
+- 企业微信应用和通讯录。 `WEWORK_SECRET`、`WEWORK_CONTACT_SECRET`、`WEWORK_APP_{SYSTEM}_SECRET`、`WEWORK_APP_{SYSTEM}_CONTACT_SECRET`、`WEWORK_APP_{SYSTEM}_HR_SECRET`。审批、HR 和回调使用 `WEWORK_APPROVAL_SECRET`、`WEWORK_HR_SECRET`、`WEWORK_CALLBACK_TOKEN`、`WEWORK_CALLBACK_AES_KEY` 及对应 `WEWORK_{SYSTEM}_*` 形式。代理使用 `WEWORK_PROXY_TOKEN`。
+- Shopify。 `SHOPIFY_ACCESS_TOKEN`、`SHOPIFY_{SYSTEM}_ACCESS_TOKEN`、`SHOPIFY_{SYSTEM}_CLIENT_SECRET`。
+- NAS。 `NAS_MINIO_ACCESS_KEY`、`NAS_MINIO_SECRET_KEY`、`NAS_MINIO_{SYSTEM}_ACCESS_KEY`、`NAS_MINIO_{SYSTEM}_SECRET_KEY`。
+- DocuSign。 `DOCUSIGN_INTEGRATION_KEY`、`DOCUSIGN_PRIVATE_KEY` 及系统专属形式，还有 `DOCUSIGN_HMAC_KEY`。
+- Gmail、Drive 和 GCS。 `GOOGLE_CLIENT_SECRET`、`GOOGLE_{SYSTEM}_CLIENT_SECRET`、`GMAIL_REFRESH_TOKEN`、`GMAIL_{SYSTEM}_REFRESH_TOKEN`、`GOOGLE_REFRESH_TOKEN`、`GOOGLE_{SYSTEM}_REFRESH_TOKEN`、`GCS_SA_JSON`、`GCS_{SYSTEM}_SA_JSON`、`GOOGLE_SA_JSON`、`GOOGLE_APPLICATION_CREDENTIALS`。
+- 领星、马帮和万邑通。 `LINGXING_{ACCOUNT}_APP_SECRET`、`LINGXING_PROXY_TOKEN`、`MABANG_SECRET`、`MABANG_{SYSTEM}_SECRET`、`MABANG_PROXY_TOKEN`、`ERP_PROXY_TOKEN`、`WINIT_TOKEN`、`WINIT_CLIENT_SECRET` 及生产、沙箱和系统专属变体。
+- QuickCEP。 `QUICKCEP_{ACCOUNT}_ACCESS_ID`、`QUICKCEP_{ACCOUNT}_PUBLIC_KEY` 按平台凭据成组保护。
+- 客服、支付及 Discord。 `JUDGEME_{ACCOUNT}_API_TOKEN`、`TRUSTPILOT_{ACCOUNT}_API_KEY`、`TRUSTPILOT_{ACCOUNT}_ACCESS_TOKEN`、`PAYPAL_{ACCOUNT}_CLIENT_ID`、`PAYPAL_{ACCOUNT}_CLIENT_SECRET`、`PAYPAL_{ACCOUNT}_WEBHOOK_ID`、`STRIPE_{ACCOUNT}_API_KEY`、`STRIPE_{ACCOUNT}_WEBHOOK_SECRET`、`RD_{ACCOUNT}_ACCESS_TOKEN`、`DISCORD_{ACCOUNT}_BOT_TOKEN`、`DISCORD_PROXY`。
+- 自定义和扩展凭据。 `CUSTOM_*` 及未登记为非敏感配置的凭据。数据库保存变量名引用。迁移自定义接口时，将既有请求头或 URL 中的鉴权值改为引用。
+- 部署启动。数据库连接引用、管理员密码或摘要、JWT 签名密钥、`CREDENTIAL_MASTER_KEY`、Redis 连接凭据、Portal 签名和代理密钥。网关在连接数据库前读取这些部署配置。
+
+### 入 PostgreSQL
+
+- 应用和账号标识。企业微信 `CORP_ID`、`AGENT_ID`，Google 和 Shopify 的 `CLIENT_ID`，DocuSign 的 `USER_ID`、`ACCOUNT_ID`，领星的 `APP_ID`、`MAIL_EMAIL`，马帮和万邑通的账号 `APP_KEY`，万邑通 `CLIENT_ID`，Trustpilot `BUSINESS_UNIT_ID`，以及这些项目的已登记作用域变体。
+- 域名、地址和资源。Shopify `STORE`、`API_VERSION`，NAS `ENDPOINT`、`BUCKET`、`REGION`，GCS `BUCKET`，DocuSign `ENV`、`BASE_URI`，无鉴权信息的企业微信、领星、马帮和 ERP 代理地址，QuickCEP `DOMAIN`，Judge.me `SHOP_DOMAIN`，RD `BASE_URL`，PayPal `ENV`，万邑通 `ENV`、`PLATFORM`、`API_URL`。已有非敏感部署变量仍可作为兼容来源，数据库优先。
+- 账号选择和权限。各平台的 `*_ACCOUNTS`、默认 `*_ACCOUNT`、下述共享策略，以及系统、操作授权、配额、接口配置、审计记录。
+- Common 签发给业务系统的 API Key。库里保存前缀和 SHA-256 哈希。完整 Key 由调用方保管。
+
+逐项变量与模板以 [接口契约](../CYT-Common-API/src/main/resources/contract.json)、[业务契约](../CYT-Common-API/src/main/resources/business-contract.json)、[Discord 契约](../CYT-Common-API/src/main/resources/discord-contract.json) 和 [补充分类](../CYT-Common-API/src/main/resources/credential-storage.json) 为准。
+
+## 共享与专属
+
+- `CRED_SCOPE_<PLATFORM>=inherit` 允许专属项缺失时使用共享项。对指定系统使用 `CRED_SCOPE_<PLATFORM>_<SYSTEM>=strict` 禁止回退，系统级策略优先。现有配置沿用平台默认策略。
+- 有系统模板的平台可用 `CRED_SPLIT_<PLATFORM>` 指定按系统拆分的变量名。配套的标识和密钥应成组配置。代理等平台基础设施可继续显式共享。
+- 财务企业微信专属配置。数据库保存 `CRED_SCOPE_WECOM_FINANCIAL=strict` 和 `WEWORK_APP_FINANCIAL_CORP_ID`，Cloud Run 绑定 `WEWORK_APP_FINANCIAL_SECRET`。通讯录缺少专属通讯录 Secret 时使用财务应用自己的 Secret。审批可另配 `WEWORK_FINANCIAL_APPROVAL_SECRET`。
+- 多账号平台使用 `CRED_ACCOUNTS_<PLATFORM>_<SYSTEM>` 限制系统可以选用的上游账号。适用于 Stripe、PayPal、Judge.me、Trustpilot、RD、Discord、领星和 QuickCEP。严格模式要求账号在清单内，`default` 表示允许默认账号。两个系统显式登记同一个账号即可共享。
+- Shopify 严格模式以系统对应的店铺为边界。Gmail、Drive 严格模式需要系统专属的 Google OAuth 客户端和对应刷新令牌，GCS 需要专属服务账号凭据。自定义 HTTP 严格模式将 `CUSTOM_VENDOR_TOKEN` 映射为 `CUSTOM_<SYSTEM>_VENDOR_TOKEN`。
+- Secret Manager 的 IAM 约束 Cloud Run 的运行身份。单个 Common 实例可以读取它绑定的各系统密钥，各业务系统之间的边界由 Common 的授权和凭据策略执行。
+
+## 绑定与上线
+
+1. 先按环境、平台和系统核对现有生产凭据。在 `gateway_secret` 按环境盘点 `name`，给生产服务账号逐项授予所需的 Secret 读取权限。
+2. 在生产“环境与凭据”登记非敏感项和共享策略。使用 [云发布入口](../deploy/gcp/README.md) 注入敏感项。批量绑定使用 `--secret-bindings-file deploy/gcp/production-secrets.json`，文件只包含变量名和固定版本引用。
+
+```json
+{
+  "WEWORK_APP_FINANCIAL_SECRET": "common-prod-wecom-financial-app-secret:7",
+  "WEWORK_APP_OA_SECRET": "common-prod-wecom-oa-app-secret:3",
+  "NAS_MINIO_RD_ACCESS_KEY": "common-prod-nas-rd-access-key:2",
+  "NAS_MINIO_RD_SECRET_KEY": "common-prod-nas-rd-secret-key:2"
+}
+```
+
+3. 发布后在凭据页核对绑定状态，按调用系统验证。后台仅展示生产敏感项的状态和来源。部署已绑定同名 Secret 后，才能从后台清理旧数据库副本。
+4. 轮换时先增加 Secret 版本，更新绑定并发布。验证完成后再按供应商要求撤销旧凭据。
+
+## 同步到本地开发环境
+
+在 `CYT-Common-API` 中用现有的 `gcloud` 登录生成元数据计划，核对后将开发凭据加密写入本机 PostgreSQL。不同的已有值默认保留。生产使用上面的部署模式。
 
 ```powershell
 python -m pip install -r tools/requirements-credentials.txt
 python tools/gcloud_credentials.py plan
-# 检查 target/gcloud-credential-plan.json 中的变量、Secret ID 和固定版本号
 python tools/gcloud_credentials.py apply
 ```
-
-计划文件只包含资源与版本元数据，`plan` 不读取密钥值。`apply` 将值保留在进程内，加密后写入 `application-local.properties` 所配置的本机 `cyt_common*` MySQL 数据库，默认环境为 `local`。已有不同值会保留；整个数据库写入事务成功后才提交。日志和审计不记录原文。工具不更新云端 Secret、IAM 或服务配置，也不切换模拟模式。
-
-首次导入时，如果本地没有主密钥且凭据库为空，工具会生成本地专用 `CREDENTIAL_MASTER_KEY` 并写入已忽略的 `application-local.properties`；重启 Java 网关一次以加载它。已有加密数据必须使用原主密钥。数据库与主密钥需要分别备份；更换主密钥必须重加密已有数据，不能直接覆盖配置。
-
-本次匹配并导入了 8 个平台的 30 个变量：DocuSign、企业微信、Shopify、领星、马帮、Winit、QuickCEP 和 NAS MinIO。具体变量与固定云端版本可从本地导入计划及 `secrets_import_gcloud` 审计查看。凭据存在只表示已配置，不代表供应商授权、账号环境或接口真实调用已经验收；缺少的 endpoint、账号参数仍需在页面中补全。
-
-## 新增与轮换
-
-同步到管理页面中的“生产环境”分区时，明确指定目标：
-
-```powershell
-python tools/gcloud_credentials.py plan --env production --plan-file target/gcloud-production-plan.json
-python tools/gcloud_credentials.py apply --env production --allow-production --plan-file target/gcloud-production-plan.json
-```
-
-此操作写入本机凭据库的 `production` 分区，保留已有不同值；导入前需核对计划中的平台、Secret 和数字版本。它不切换网关运行环境，也不更新云端部署。
-
-1. 本地新增：选择环境和调用方作用域，点击“新增凭据”，选择变量并填写新值。私钥、证书和 JSON 使用多行输入，保持换行。`CUSTOM_` 变量用于自定义 HTTP 平台的鉴权引用。
-2. 本地更新：点击“更新 / 轮换”，输入框保持空白，填写新的供应商凭据后加密保存；后续请求读取新值。页面显示来源、云端版本与更新时间，修改记录进入审计。保存本地值不会更新云端。
-3. 云端轮换：先在 Secret Manager 中增加版本，再重新生成并检查计划；确认选中的版本后执行 `python tools/gcloud_credentials.py apply --overwrite`。该选项会替换计划中已有的不同本地值。保留原版本以便供应商允许时回退，验收完成后再按供应商规则撤销旧令牌。
-4. 删除：删除页面中的变量仅移除本地数据库值，同名部署配置可能继续生效；撤销供应商凭据需在供应商侧完成。
-
-环境下拉框只选择维护目标，不会切换网关运行环境。当前运行环境使用 `ENV` 配置，数据库凭据优先于同名部署配置。需要调用方隔离的平台应配置对应的系统专属变量，结合调用授权控制业务系统权限。
-
-## Google API 与生产环境
-
-`gcloud` 登录、应用默认凭据（ADC）、Gmail/Drive 用户 OAuth 是不同用途。此次 Secret Manager 同步没有发现可明确对应的 Google 用户 OAuth 组合，因此没有借用其他业务密钥或个人 CLI refresh token。Gmail/Drive 需按本项目的 `GOOGLE_CLIENT_ID`、`GOOGLE_CLIENT_SECRET`、`GOOGLE_REFRESH_TOKEN` 配置，并确保目标账号与 scopes 正确；GCS 按项目支持的服务账号/ADC 配置单独接入。
-
-生产部署应使用服务身份访问 Secret Manager，只授予需要的 Secret 权限，部署时固定版本并按环境隔离。此工具同步到本机凭据库中的指定分区；发布到云端需使用部署流程。参见 Google 官方 [ADC 说明](https://docs.cloud.google.com/docs/authentication/application-default-credentials) 与 [Secret Manager 最佳实践](https://docs.cloud.google.com/secret-manager/docs/best-practices)。

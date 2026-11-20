@@ -46,6 +46,7 @@ class ReleaseTests(unittest.TestCase):
     def arguments(self):
         return SimpleNamespace(project='cyt-digital', region='us-central1', service='cyt-common-java', build_id=BUILD,
             image='gcr.io/cyt-digital/cyt-common-java:' + BUILD, digest_file=self.digest_file,
+            secret_bindings_file='',
             gcloud_args=['--', '--update-env-vars=^|^ENV=production|MOCK_ALL=false|GMAIL_MOCK=false',
                          '--update-secrets=SPRING_DATASOURCE_URL=DB_URL:1,ADMIN_PASSWORD=ADMIN:1',
                          '--remove-env-vars=POSTGRES_URL,SPRING_DATASOURCE_URL,ADMIN_PASSWORD',
@@ -75,6 +76,25 @@ class ReleaseTests(unittest.TestCase):
         self.assertEqual({'other.cyt.group/value': 'preserved', MODULE.BUILD_TIME: STAMP, MODULE.BUILD_ID: BUILD}, body['annotations'])
         self.assertEqual(REVISION, body['traffic'][0]['revision'])
         self.assertEqual(100, body['traffic'][0]['percent'])
+
+    def test_manifest_converts_existing_literal_to_versioned_secret(self):
+        current = service()
+        current['template']['containers'][0]['env'].append(
+            {'name': 'QUICKCEP_SHOP_ACCESS_ID', 'value': 'legacy-fixture'})
+        args = self.arguments()
+        args.secret_bindings_file = 'deploy/gcp/unit-bindings.json'
+        with patch.dict(MODULE.DEPLOY, {'load_secret_bindings': lambda _: {
+                'QUICKCEP_SHOP_ACCESS_ID': 'common-prod-quickcep-shop-access-id:7'}}):
+            with patch.object(MODULE, 'cli', side_effect=[STAMP, 'fixture-token', '']) as cli:
+                with patch.object(MODULE, 'api', side_effect=[current, service(), snapshot(), {'done': True}]):
+                    with redirect_stdout(io.StringIO()):
+                        MODULE.release(args)
+        command = cli.call_args_list[2].args[0]
+        self.assertTrue(any('QUICKCEP_SHOP_ACCESS_ID=common-prod-quickcep-shop-access-id:7' in arg
+                            for arg in command if arg.startswith('--update-secrets=')))
+        self.assertTrue(any('QUICKCEP_SHOP_ACCESS_ID' in arg
+                            for arg in command if arg.startswith('--remove-env-vars=')))
+        self.assertFalse(any('legacy-fixture' in arg for arg in command))
 
     def test_first_service_creation_omits_unsupported_no_traffic_flag(self):
         with patch.object(MODULE, 'cli', side_effect=[STAMP, 'fixture-token', '']) as cli:

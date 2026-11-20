@@ -13,7 +13,8 @@ from urllib.error import HTTPError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
-dictionary_flag = runpy.run_path(str(Path(__file__).with_name('deploy.py')))['dictionary_flag']
+DEPLOY = runpy.run_path(str(Path(__file__).with_name('deploy.py')))
+dictionary_flag = DEPLOY['dictionary_flag']
 
 
 BUILD_TIME = 'deploy.cyt.group/build-created-at'
@@ -130,16 +131,37 @@ def release(args):
     environment = {key: value for key, value in environment.items() if not key.endswith('_MOCK')}
     environment['COMMON_RELEASE_BUILD_ID'] = args.build_id
     command[index] = '--update-env-vars=' + dictionary_flag(environment)
+    secret_index = next(i for i, value in enumerate(command) if value.startswith('--update-secrets='))
+    encoded = command[secret_index].split('=', 1)[1]
+    if encoded.startswith('^'):
+        delimiter, encoded = encoded[1:].split('^', 1)
+    else:
+        delimiter = ','
+    secrets = dict(item.split('=', 1) for item in encoded.split(delimiter) if item)
+    bindings = DEPLOY['load_secret_bindings'](args.secret_bindings_file)
+    if bindings.keys() & (secrets.keys() | environment.keys() | DEPLOY['RESERVED_ALIASES']):
+        raise ReleaseFailure('Secret 绑定清单与发布参数重复')
+    secrets.update(bindings)
+    if bindings:
+        command[secret_index] = '--update-secrets=' + dictionary_flag(secrets)
     if existing:
-        mock_names = {item['name'] for container in existing.get('template', {}).get('containers', [])
-                      for item in container.get('env', []) if item['name'].endswith('_MOCK')}
+        existing_env = [item for container in existing.get('template', {}).get('containers', [])
+                        for item in container.get('env', [])]
+        mock_names = {item['name'] for item in existing_env if item['name'].endswith('_MOCK')}
+        literal_secrets = {item['name'] for item in existing_env
+                           if 'value' in item and (DEPLOY['sensitive_environment'](item['name'])
+                               or DEPLOY['AUTH_URL'].search(item['value']))}
+        if literal_secrets - secrets.keys() - DEPLOY['STALE_ALIASES']:
+            missing = literal_secrets - secrets.keys() - DEPLOY['STALE_ALIASES']
+            raise ReleaseFailure('以下旧明文变量需要绑定 Secret Manager：' + ', '.join(sorted(missing)))
         for flag in ('--remove-env-vars=', '--remove-secrets='):
+            removed = mock_names | (bindings.keys() if flag == '--remove-env-vars=' else set())
             position = next((i for i, value in enumerate(command) if value.startswith(flag)), None)
             if position is None:
-                if mock_names:
-                    command.append(flag + ','.join(sorted(mock_names)))
-            elif mock_names:
-                names = set(command[position][len(flag):].split(',')) | mock_names
+                if removed:
+                    command.append(flag + ','.join(sorted(removed)))
+            elif removed:
+                names = set(command[position][len(flag):].split(',')) | removed
                 command[position] = flag + ','.join(sorted(names))
     revision = revision_name(args.service, args.build_id)
     deployment = ['run', 'deploy', args.service, '--project=' + args.project, '--region=' + args.region,
@@ -159,6 +181,7 @@ def main(argv=None):
     for name in ('project', 'region', 'service', 'build-id', 'image'):
         parser.add_argument('--' + name, required=True)
     parser.add_argument('--digest-file', type=Path, required=True)
+    parser.add_argument('--secret-bindings-file', default='')
     parser.add_argument('gcloud_args', nargs=argparse.REMAINDER)
     release(parser.parse_args(argv))
     return 0

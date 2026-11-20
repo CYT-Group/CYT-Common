@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Google CLI 发布 Common：构建同源 JAR 镜像 → Flyway Job → Cloud Run。"""
 import argparse
+from functools import lru_cache
 import json
 import os
 from pathlib import Path
@@ -16,6 +17,7 @@ SECRET_REF = re.compile(r'[A-Za-z0-9_-]{1,255}:(?:latest|[1-9][0-9]*)\Z')
 ACCOUNT = re.compile(r'[A-Za-z0-9._-]+@[A-Za-z0-9.-]+\.gserviceaccount\.com\Z')
 ENV_NAME = re.compile(r'[A-Z][A-Z0-9_]*\Z')
 SENSITIVE_NAME = re.compile(r'(?:^|_)(?:PASSWORD|PASSWORD_HASH|SECRET|TOKEN|API_KEY|ACCESS_KEY|PRIVATE_KEY|MASTER_KEY|CREDENTIALS|SA_JSON)$')
+AUTH_URL = re.compile(r'://[^/\s]+@|[?&](?:token|secret|password|signature|access_token|api_key|client_secret|x-amz-signature)=', re.I)
 RESERVED_ALIASES = {
     'PORT', 'POSTGRES_URL', 'POSTGRES_USERNAME', 'POSTGRES_PASSWORD',
     'SPRING_CONFIG_IMPORT', 'SPRING_CONFIG_ADDITIONAL_LOCATION', 'SPRING_APPLICATION_JSON',
@@ -23,6 +25,41 @@ RESERVED_ALIASES = {
     'COMMON_RELEASE_BUILD_ID',
 }
 STALE_ALIASES = RESERVED_ALIASES - {'PORT', 'REDIS_URL', 'COMMON_RELEASE_BUILD_ID'}
+
+
+@lru_cache(maxsize=1)
+def credential_patterns():
+    directory = ROOT / 'CYT-Common-API/src/main/resources'
+    extra = json.loads((directory / 'credential-storage.json').read_text(encoding='utf-8'))
+    private = set(extra['secret_manager'])
+    public = set(extra['database_config'])
+    for filename in ('contract.json', 'business-contract.json', 'discord-contract.json'):
+        contract = json.loads((directory / filename).read_text(encoding='utf-8'))
+        for platform in contract.get('credentials', []):
+            for variable in platform['vars']:
+                names = private if variable.get('secret') else public
+                name = variable['name']
+                names.update((name, name.replace('{ACCOUNT}_', '')))
+                if variable.get('scoped'):
+                    names.add(variable['scoped'])
+
+    def compile_names(names):
+        return tuple(re.compile(re.escape(name).replace(r'\{SYSTEM\}', '[A-Z0-9_]+')
+                                .replace(r'\{ACCOUNT\}', '[A-Z0-9_]+')) for name in sorted(names))
+
+    return compile_names(private), compile_names(public)
+
+
+def sensitive_environment(name):
+    private, _ = credential_patterns()
+    return (name in {'REDIS_URL', 'SPRING_DATASOURCE_URL', 'SPRING_DATASOURCE_USERNAME'}
+            or name.startswith('CUSTOM_') or SENSITIVE_NAME.search(name) is not None
+            or any(pattern.fullmatch(name) for pattern in private))
+
+
+def database_configuration(name):
+    _, public = credential_patterns()
+    return not sensitive_environment(name) and any(pattern.fullmatch(name) for pattern in public)
 
 
 def dictionary_flag(values):
@@ -43,11 +80,44 @@ def assignments(items, kind):
             raise ValueError(kind + ' 参数重复：' + key)
         if kind == 'secret' and not SECRET_REF.fullmatch(value):
             raise ValueError('Secret 应为名称:版本，不接受明文值：' + key)
-        if kind == 'env' and SENSITIVE_NAME.search(key):
+        if kind == 'secret' and database_configuration(key):
+            raise ValueError('非敏感项应在数据库中配置：' + key)
+        if kind == 'env' and (sensitive_environment(key) or AUTH_URL.search(value)):
             raise ValueError('敏感变量请使用 --secret 引用 Secret Manager：' + key)
         if kind == 'env' and key.endswith('_MOCK') and value.lower() in ('1', 'true', 'yes', 'on'):
             raise ValueError('生产发布不能开启平台模拟：' + key)
         values[key] = value
+    return values
+
+
+def load_secret_bindings(filename):
+    if not filename:
+        return {}
+    if not re.fullmatch(r'deploy/gcp/[A-Za-z0-9_-]+\.json', filename):
+        raise ValueError('Secret 绑定清单必须位于 deploy/gcp/，并使用简单的 JSON 文件名')
+    path = (ROOT / filename).resolve()
+    if path.parent != (ROOT / 'deploy/gcp').resolve():
+        raise ValueError('Secret 绑定清单路径无效')
+
+    def unique(entries):
+        result = dict(entries)
+        if len(result) != len(entries):
+            raise ValueError('Secret 绑定清单中包含重复变量')
+        return result
+
+    try:
+        values = json.loads(path.read_text(encoding='utf-8'), object_pairs_hook=unique)
+    except (UnicodeError, json.JSONDecodeError):
+        raise ValueError('Secret 绑定清单必须是有效的 UTF-8 JSON') from None
+    if not isinstance(values, dict):
+        raise ValueError('Secret 绑定清单必须是变量名到 Secret 引用的 JSON 对象')
+    for name, ref in values.items():
+        if not ENV_NAME.fullmatch(name):
+            raise ValueError('Secret 绑定清单包含非法变量名')
+        if not isinstance(ref, str) or not SECRET_REF.fullmatch(ref) or ref.endswith(':latest'):
+            raise ValueError('Secret 绑定清单只允许固定数字版本的引用：' + name)
+        if database_configuration(name):
+            raise ValueError('非敏感项应在数据库中配置：' + name)
     return values
 
 
@@ -98,7 +168,10 @@ def substitutions(args):
         secrets['REDIS_URL'] = args.redis_secret
     extra_env, extra_secrets = assignments(args.env, 'env'), assignments(args.secret, 'secret')
     managed = set(environment) | set(secrets) | RESERVED_ALIASES
-    if managed & (set(extra_env) | set(extra_secrets)) or set(extra_env) & set(extra_secrets):
+    bindings = load_secret_bindings(args.secret_bindings_file)
+    if (managed & (extra_env.keys() | extra_secrets.keys() | bindings.keys())
+            or extra_env.keys() & extra_secrets.keys()
+            or bindings.keys() & (extra_env.keys() | extra_secrets.keys())):
         raise ValueError('额外参数不能覆盖部署入口管理的生产、数据库或运行配置')
     environment.update(extra_env)
     secrets.update(extra_secrets)
@@ -111,6 +184,7 @@ def substitutions(args):
                                               'FLYWAY_USER': args.db_user_secret,
                                               'FLYWAY_PASSWORD': args.db_password_secret}),
         '_RUNTIME_SECRETS': dictionary_flag(secrets), '_RUNTIME_ENV': dictionary_flag(environment),
+        '_SECRET_BINDINGS_FILE': args.secret_bindings_file,
         '_AUTH_FLAG': '--allow-unauthenticated' if args.public else '--no-allow-unauthenticated',
         '_MIN_INSTANCES': '1' if args.discord_listener else '0', '_MAX_INSTANCES': str(args.max_instances),
         '_CPU_FLAG': '--no-cpu-throttling' if args.discord_listener else '--cpu-throttling',
@@ -160,6 +234,7 @@ def parser():
     result.add_argument('--discord-listener', action='store_true', help='启用后台监听，并配置常驻实例及持续 CPU')
     result.add_argument('--env', action='append', default=[], metavar='NAME=VALUE')
     result.add_argument('--secret', action='append', default=[], metavar='ENV=NAME:VERSION')
+    result.add_argument('--secret-bindings-file', default='', metavar='deploy/gcp/NAME.json')
     result.add_argument('--public', action='store_true', help='允许浏览器到达服务，网关与管理端仍执行应用认证')
     result.add_argument('--dry-run', action='store_true', help='仅校验本地 SQL 并输出发布计划，不调用云端')
     return result

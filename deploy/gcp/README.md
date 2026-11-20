@@ -74,6 +74,10 @@ Windows 自动调用 Google Cloud SDK 的 Python 入口，避免 `.cmd` 二次�
 ## 平台配置与运行方式
 
 非敏感变量使用多个 `--env NAME=VALUE`，凭据使用多个 `--secret ENV_NAME=SECRET_NAME:VERSION`。
+生产的上游非敏感配置由 Common 的“环境与凭据”维护。大量敏感变量可以通过
+`--secret-bindings-file deploy/gcp/production-secrets.json` 批量绑定，绕开 Cloud Build 单个参数
+4,000 字节的限制。JSON 键为网关变量名，值为 `Secret ID:数字版本`，只保存引用。
+按环境和系统的分类、共享规则和切换步骤见 [上游凭据管理](../../docs/credentials.md)。
 例如：
 
 ```text
