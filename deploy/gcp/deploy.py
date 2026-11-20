@@ -10,6 +10,7 @@ import runpy
 import shutil
 import subprocess
 import sys
+import tempfile
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -27,6 +28,12 @@ RESERVED_ALIASES = {
     'SPRING_DATASOURCE_HIKARI_CONNECTION_INIT_SQL',
 }
 STALE_ALIASES = RESERVED_ALIASES - {'PORT', 'REDIS_URL', 'COMMON_RELEASE_BUILD_ID'}
+BOOTSTRAP_OPTIONS = ('db_url_secret', 'db_user_secret', 'db_password_secret',
+                     'admin_jwt_secret', 'credential_master_key_secret')
+BOOTSTRAP_NAMES = {
+    'SPRING_DATASOURCE_URL', 'SPRING_DATASOURCE_USERNAME', 'SPRING_DATASOURCE_PASSWORD',
+    'ADMIN_PASSWORD', 'ADMIN_PASSWORD_HASH', 'ADMIN_JWT_SECRET', 'CREDENTIAL_MASTER_KEY',
+}
 
 
 @lru_cache(maxsize=1)
@@ -138,13 +145,17 @@ def substitutions(args):
         raise ValueError('请提供同区域 VPC 连接器的短名称')
     for account in (args.service_account, args.migration_service_account or args.service_account,
                     args.build_service_account or args.service_account):
-        if not ACCOUNT.fullmatch(account):
+        if not account or not ACCOUNT.fullmatch(account):
             raise ValueError('服务账号应为 gserviceaccount.com 邮箱')
-    references = [args.db_url_secret, args.db_user_secret, args.db_password_secret,
-                  args.admin_password_secret, args.admin_jwt_secret, args.credential_master_key_secret]
+    if bool(args.admin_password_secret) == bool(args.admin_password_hash_secret):
+        raise ValueError('请配置管理员密码或 SHA-256 摘要中的一项')
+    admin_variable = 'ADMIN_PASSWORD' if args.admin_password_secret else 'ADMIN_PASSWORD_HASH'
+    admin_reference = args.admin_password_secret or args.admin_password_hash_secret
+    other_admin = {'ADMIN_PASSWORD', 'ADMIN_PASSWORD_HASH'} - {admin_variable}
+    references = [getattr(args, option) for option in BOOTSTRAP_OPTIONS] + [admin_reference]
     if args.redis_secret:
         references.append(args.redis_secret)
-    if any(not SECRET_REF.fullmatch(value) for value in references):
+    if any(not value or not SECRET_REF.fullmatch(value) for value in references):
         raise ValueError('数据库、管理员和加密密钥均应使用 Secret 名称:版本格式')
     if not 1 <= args.max_instances <= 100:
         raise ValueError('max-instances 必须在 1–100 之间')
@@ -166,13 +177,13 @@ def substitutions(args):
     }
     secrets = {
         'SPRING_DATASOURCE_URL': args.db_url_secret, 'SPRING_DATASOURCE_USERNAME': args.db_user_secret,
-        'SPRING_DATASOURCE_PASSWORD': args.db_password_secret, 'ADMIN_PASSWORD': args.admin_password_secret,
+        'SPRING_DATASOURCE_PASSWORD': args.db_password_secret, admin_variable: admin_reference,
         'ADMIN_JWT_SECRET': args.admin_jwt_secret, 'CREDENTIAL_MASTER_KEY': args.credential_master_key_secret,
     }
     if args.redis_secret:
         secrets['REDIS_URL'] = args.redis_secret
     extra_env, extra_secrets = assignments(args.env, 'env'), assignments(args.secret, 'secret')
-    managed = set(environment) | set(secrets) | RESERVED_ALIASES
+    managed = set(environment) | BOOTSTRAP_NAMES | RESERVED_ALIASES
     bindings = load_secret_bindings(args.secret_bindings_file)
     if (managed & (extra_env.keys() | extra_secrets.keys() | bindings.keys())
             or extra_env.keys() & extra_secrets.keys()
@@ -194,8 +205,8 @@ def substitutions(args):
         '_AUTH_FLAG': '--allow-unauthenticated' if args.public else '--no-allow-unauthenticated',
         '_MIN_INSTANCES': '1' if args.discord_listener else '0', '_MAX_INSTANCES': str(args.max_instances),
         '_CPU_FLAG': '--no-cpu-throttling' if args.discord_listener else '--cpu-throttling',
-        '_REMOVE_ENV_VARS': ','.join(sorted(STALE_ALIASES | set(secrets))),
-        '_REMOVE_SECRET_VARS': ','.join(sorted(STALE_ALIASES)),
+        '_REMOVE_ENV_VARS': ','.join(sorted(STALE_ALIASES | set(secrets) | other_admin)),
+        '_REMOVE_SECRET_VARS': ','.join(sorted(STALE_ALIASES | other_admin)),
     }
     if any(len(value.encode('utf-8')) > 4000 for value in values.values()):
         raise ValueError('Cloud Build 单个 substitution 不能超过 4000 字节，请缩短额外配置')
@@ -222,7 +233,7 @@ def parser():
     result.add_argument('--project', default='cyt-digital')
     result.add_argument('--region', default='us-central1')
     result.add_argument('--service', default='cyt-common-java', help='独立的 Java 服务名；拒绝覆盖 cyt-common-api')
-    result.add_argument('--service-account', required=True)
+    result.add_argument('--service-account')
     result.add_argument('--migration-service-account')
     result.add_argument('--build-service-account')
     result.add_argument('--vpc-connector', default='cyt-vpc-connector')
@@ -230,12 +241,17 @@ def parser():
     result.add_argument('--registry', help='默认 gcr.io/项目；可指定已有 Artifact Registry 仓库')
     result.add_argument('--migration-job-prefix')
     result.add_argument('--db-schema', default='cyt_common', help='目标 PostgreSQL 数据库内由 Flyway 创建的独立 schema')
-    result.add_argument('--db-url-secret', required=True, help='PostgreSQL JDBC URL Secret 名称:版本')
-    result.add_argument('--db-user-secret', required=True)
-    result.add_argument('--db-password-secret', required=True)
-    result.add_argument('--admin-password-secret', required=True)
-    result.add_argument('--admin-jwt-secret', required=True)
-    result.add_argument('--credential-master-key-secret', required=True)
+    result.add_argument('--db-url-secret', help='PostgreSQL JDBC URL Secret 名称:版本')
+    result.add_argument('--db-user-secret')
+    result.add_argument('--db-password-secret')
+    result.add_argument('--admin-password-secret')
+    result.add_argument('--admin-password-hash-secret')
+    result.add_argument('--admin-jwt-secret')
+    result.add_argument('--credential-master-key-secret')
+    result.add_argument('--reuse-common-api', action='store_true', help='核验并复用旧服务的数据库连接及管理员登录')
+    result.add_argument('--inspect-common-api', action='store_true', help='只输出旧服务可复用的 Secret 版本清单')
+    result.add_argument('--secret-from-env', action='append', default=[], metavar='ENV_NAME=SECRET_ID',
+                        help='从发布进程环境写入上游 Secret，复用内容相同的版本')
     result.add_argument('--redis-secret', help='可选；多实例时必须显式配置')
     result.add_argument('--max-instances', type=int, default=1)
     result.add_argument('--discord-listener', action='store_true', help='启用后台监听，并配置常驻实例及持续 CPU')
@@ -247,18 +263,60 @@ def parser():
     return result
 
 
-def main(argv=None):
-    args = parser().parse_args(argv)
-    values = substitutions(args)
-    checker = runpy.run_path(str(ROOT / 'deploy/test-server/migrate-database.py'))
-    files = checker['check_migrations'](ROOT / checker['MIGRATION_PATH'])
-    print('Common Java deployment: ' + args.project + '/' + args.region + '/' + args.service)
-    print('SQL versions: ' + str(len(files)))
-    print('Pipeline: build same-origin JAR + SQL images -> push -> Flyway Job (wait) -> Cloud Run')
-    if args.dry_run:
-        print(json.dumps(values, ensure_ascii=False, indent=2))
-        print('Dry run complete: no build, database migration or deployment submitted.')
-        return 0
+def provision_arguments(args):
+    planned = {}
+    used_ids = set()
+    reserved = BOOTSTRAP_NAMES | RESERVED_ALIASES | {'ADMIN_USERNAME'}
+    explicit = assignments(args.secret, 'secret')
+    manifest = load_secret_bindings(args.secret_bindings_file)
+    overrides = explicit.keys() | manifest.keys() | assignments(args.env, 'env').keys()
+    prefix = args.service.replace('-', '_').upper() + '_'
+    protected_ids = {prefix + name for name in reserved}
+    protected_ids.update(ref.split(':', 1)[0] for ref in [*explicit.values(), *manifest.values()])
+    for assignment in args.secret_from_env:
+        name, separator, identifier = assignment.partition('=')
+        if not separator or not ENV_NAME.fullmatch(name) or not re.fullmatch(r'[A-Za-z0-9_-]{1,255}', identifier):
+            raise ValueError('自动写入格式为 ENV_NAME=SECRET_ID')
+        if (name in reserved or name in overrides or name in planned or identifier in used_ids
+                or database_configuration(name)):
+            raise ValueError('自动写入变量重复、属于启动绑定或不应写入 Secret Manager：' + name)
+        if not identifier.startswith(prefix) or len(identifier) == len(prefix) or identifier in protected_ids:
+            raise ValueError('自动写入只能使用当前服务的专属 Secret ID 前缀 ' + prefix + '：' + identifier)
+        planned[name] = identifier
+        used_ids.add(identifier)
+    return planned
+
+
+def validate_reuse_arguments(args):
+    database = [getattr(args, option) for option in BOOTSTRAP_OPTIONS[:3]]
+    if any(database) and not all(database):
+        raise ValueError('请同时提供数据库 JDBC 地址、账号和密码三项引用')
+    preview = argparse.Namespace(**vars(args))
+    for index, option in enumerate(BOOTSTRAP_OPTIONS):
+        if not getattr(preview, option):
+            setattr(preview, option, f'DRY_RUN_{index}:1')
+    if not (preview.admin_password_secret or preview.admin_password_hash_secret):
+        preview.admin_password_secret = 'DRY_RUN_ADMIN:1'
+    substitutions(preview)
+
+
+def apply_reuse(cloud, tool, args):
+    result = tool['legacy_reuse'](cloud, args.region, database=not args.db_url_secret)
+    for option, reference in zip(BOOTSTRAP_OPTIONS[:3], result['database']):
+        setattr(args, option, reference)
+    if not (args.admin_password_secret or args.admin_password_hash_secret):
+        if not result['administrator']:
+            raise ValueError('旧服务未从 Secret Manager 绑定管理员密码，请显式提供密码引用')
+        name, reference = result['administrator']
+        option = 'admin_password_secret' if name == 'ADMIN_PASSWORD' else 'admin_password_hash_secret'
+        setattr(args, option, reference)
+    if not any(pair.startswith('ADMIN_USERNAME=') for pair in [*args.env, *args.secret]):
+        username = 'ADMIN_USERNAME=' + result['username']
+        (args.secret if result['username_is_secret'] else args.env).append(username)
+    tool['initialize_internal_secrets'](cloud, args)
+
+
+def submit(args, values, environment=None):
     command = gcloud_command() + [
         'builds', 'submit', str(ROOT), '--project=' + args.project, '--region=' + args.region,
         '--config=' + str(ROOT / 'deploy/gcp/cloudbuild-common.yaml'),
@@ -267,7 +325,78 @@ def main(argv=None):
     ]
     if args.build_service_account:
         command.append('--service-account=projects/' + args.project + '/serviceAccounts/' + args.build_service_account)
-    return subprocess.run(command, cwd=ROOT, check=False).returncode
+    options = {} if environment is None else {'env': environment}
+    return subprocess.run(command, cwd=ROOT, check=False, **options).returncode
+
+
+def main(argv=None):
+    args = parser().parse_args(argv)
+    if args.inspect_common_api:
+        tool = runpy.run_path(str(ROOT / 'deploy/gcp/provision.py'))
+        cloud = tool['Cloud'](gcloud_command(), args.project)
+        report = tool['legacy_reuse'](cloud, args.region, inventory=True)
+        del report['username']
+        print(json.dumps(report, ensure_ascii=False, indent=2))
+        return 0
+    sources = provision_arguments(args)
+    checker = runpy.run_path(str(ROOT / 'deploy/test-server/migrate-database.py'))
+    files = checker['check_migrations'](ROOT / checker['MIGRATION_PATH'])
+    print('Common Java deployment: ' + args.project + '/' + args.region + '/' + args.service)
+    print('SQL versions: ' + str(len(files)))
+    print('Pipeline: secret provisioning -> schema and data migrations -> Cloud Run')
+    if args.reuse_common_api:
+        validate_reuse_arguments(args)
+        if args.dry_run:
+            print(json.dumps({'schema': args.db_schema, 'reuse': 'cyt-common-api',
+                              'secret_sources': sources}, ensure_ascii=False, indent=2))
+            print('Dry run complete: no build, database migration or deployment submitted.')
+            return 0
+    else:
+        values = substitutions(args)
+    if args.dry_run:
+        if sources:
+            values['secret_sources'] = sources
+        print(json.dumps(values, ensure_ascii=False, indent=2))
+        print('Dry run complete: no build, database migration or deployment submitted.')
+        return 0
+    if not args.reuse_common_api and not sources:
+        return submit(args, values)
+
+    payloads = {}
+    for name in sources:
+        value = os.environ.get(name, '').encode('utf-8')
+        if not value.strip() or len(value) > 65_536:
+            raise ValueError('发布环境未提供有效的 Secret 内容：' + name)
+        payloads[name] = value
+    tool = runpy.run_path(str(ROOT / 'deploy/gcp/provision.py'))
+    cloud = tool['Cloud'](gcloud_command(), args.project, sources)
+    if args.reuse_common_api:
+        apply_reuse(cloud, tool, args)
+    values = substitutions(args)
+    bindings = load_secret_bindings(args.secret_bindings_file)
+    boot_refs = {getattr(args, option) for option in BOOTSTRAP_OPTIONS}
+    boot_refs.add(args.admin_password_secret or args.admin_password_hash_secret)
+    if args.redis_secret:
+        boot_refs.add(args.redis_secret)
+    for identifier in sources.values():
+        if identifier in {ref.split(':', 1)[0] for ref in boot_refs}:
+            raise ValueError('上游 Secret ID 与启动凭据重叠：' + identifier)
+    if not sources:
+        return submit(args, values, cloud.environment)
+
+    for name, identifier in sources.items():
+        reference = cloud.provision(identifier, payloads[name])
+        cloud.grant_read(reference, args.service_account)
+        bindings[name] = reference
+    with tempfile.NamedTemporaryFile(mode='w', encoding='utf-8', suffix='.json', prefix='release-bindings-',
+                                     dir=ROOT / 'deploy/gcp', delete=False) as staged:
+        json.dump(bindings, staged)
+        generated = Path(staged.name)
+    try:
+        args.secret_bindings_file = generated.relative_to(ROOT).as_posix()
+        return submit(args, substitutions(args), cloud.environment)
+    finally:
+        generated.unlink()
 
 
 if __name__ == '__main__':

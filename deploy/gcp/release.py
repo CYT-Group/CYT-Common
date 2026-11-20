@@ -151,8 +151,10 @@ def release(args):
         literal_secrets = {item['name'] for item in existing_env
                            if 'value' in item and (DEPLOY['sensitive_environment'](item['name'])
                                or DEPLOY['AUTH_URL'].search(item['value']))}
-        if literal_secrets - secrets.keys() - DEPLOY['STALE_ALIASES']:
-            missing = literal_secrets - secrets.keys() - DEPLOY['STALE_ALIASES']
+        removals = next((arg.split('=', 1)[1] for arg in command
+                         if arg.startswith('--remove-env-vars=')), '')
+        missing = literal_secrets - secrets.keys() - set(removals.split(','))
+        if missing:
             raise ReleaseFailure('以下旧明文变量需要绑定 Secret Manager：' + ', '.join(sorted(missing)))
         for flag in ('--remove-env-vars=', '--remove-secrets='):
             removed = mock_names | (bindings.keys() if flag == '--remove-env-vars=' else set())

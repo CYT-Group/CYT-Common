@@ -10,7 +10,7 @@ import runpy
 import subprocess
 import tempfile
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import yaml
 
@@ -55,9 +55,9 @@ class DeploymentArgumentsTests(unittest.TestCase):
         self.assertNotIn('REDIS_URL', runtime)
         environment = decode_dictionary(values['_RUNTIME_ENV'])
         self.assertEqual('prod', environment['SPRING_PROFILES_ACTIVE'])
+        self.assertEqual('production', environment['ENV'])
         self.assertEqual('cyt_common', environment['COMMON_DATABASE_SCHEMA'])
         self.assertEqual(environment['COMMON_DATABASE_SCHEMA'], values['_DB_SCHEMA'])
-        self.assertEqual('production', environment['ENV'])
         for name in ['SPRING_FLYWAY_ENABLED', 'MOCK_ALL', 'GATEWAY_DEV_MODE', 'JAVA_SEED_ENABLED', 'ADMIN_DEV_LOGIN']:
             self.assertEqual('false', environment[name])
         self.assertEqual('--allow-unauthenticated', values['_AUTH_FLAG'])
@@ -103,6 +103,56 @@ class DeploymentArgumentsTests(unittest.TestCase):
     def test_cloud_build_substitution_size_is_checked_before_submission(self):
         with self.assertRaisesRegex(ValueError, '4000'):
             MODULE.substitutions(arguments('--env', 'LONG_VALUE=' + '中' * 1500))
+
+    def test_cannot_target_a_shared_schema_or_override_hikari_schema(self):
+        for case in [('--db-schema', 'cyt_portal'), ('--db-schema', 'public'),
+                     ('--env', 'SPRING_DATASOURCE_HIKARI_SCHEMA=cyt_portal')]:
+            with self.subTest(case=case), self.assertRaises(ValueError):
+                MODULE.substitutions(arguments(*case))
+
+    def test_automatic_secret_plan_is_offline_and_uses_a_service_specific_id(self):
+        with patch.object(MODULE, 'gcloud_command', side_effect=AssertionError('no cloud calls')):
+            with redirect_stdout(io.StringIO()) as output:
+                self.assertEqual(0, MODULE.main([
+                    '--reuse-common-api', '--service-account', 'common@cyt-digital.iam.gserviceaccount.com',
+                    '--secret-from-env', 'CUSTOM_PAYMENT_TOKEN=CYT_COMMON_JAVA_PAYMENT_TOKEN', '--dry-run',
+                ]))
+        self.assertIn('CYT_COMMON_JAVA_PAYMENT_TOKEN', output.getvalue())
+        for target in ('PORTAL_OA_DB_PASSWORD', 'CYT_COMMON_JAVA_CREDENTIAL_MASTER_KEY'):
+            with self.subTest(target=target), self.assertRaises(ValueError):
+                MODULE.provision_arguments(arguments('--secret-from-env', 'CUSTOM_PAYMENT_TOKEN=' + target))
+
+    def test_release_provisions_environment_payload_and_only_submits_version_references(self):
+        cloud = Mock(environment={'PATH': 'fixture'})
+        cloud.provision.return_value = 'CYT_COMMON_JAVA_PAYMENT_TOKEN:7'
+        password = 'synthetic-deployment-password'
+        produced = []
+        run_path = runpy.run_path
+
+        def load(path):
+            if path.endswith('provision.py'):
+                return {'Cloud': Mock(return_value=cloud)}
+            return run_path(path)
+
+        def submit(args, values, environment):
+            config = MODULE.load_secret_bindings(values['_SECRET_BINDINGS_FILE'])
+            self.assertEqual({'CUSTOM_PAYMENT_TOKEN': 'CYT_COMMON_JAVA_PAYMENT_TOKEN:7'}, config)
+            self.assertNotIn(password, repr(values))
+            self.assertEqual({'PATH': 'fixture'}, environment)
+            produced.append(ROOT / args.secret_bindings_file)
+            return 0
+
+        with patch.dict(os.environ, {'CUSTOM_PAYMENT_TOKEN': password}):
+            with patch.object(MODULE.runpy, 'run_path', side_effect=load):
+                with patch.object(MODULE, 'gcloud_command', return_value=['fixture-cloud']):
+                    with patch.object(MODULE, 'submit', side_effect=submit):
+                        with redirect_stdout(io.StringIO()) as output:
+                            self.assertEqual(0, MODULE.main(argv(
+                                '--secret-from-env', 'CUSTOM_PAYMENT_TOKEN=CYT_COMMON_JAVA_PAYMENT_TOKEN')))
+        cloud.provision.assert_called_once_with('CYT_COMMON_JAVA_PAYMENT_TOKEN', password.encode())
+        self.assertNotIn(password, output.getvalue())
+        self.assertEqual(1, len(produced))
+        self.assertFalse(produced[0].exists())
 
     def test_large_binding_manifest_passes_only_its_path_to_cloud_build(self):
         manifest = 'deploy/gcp/unit-bindings.json'

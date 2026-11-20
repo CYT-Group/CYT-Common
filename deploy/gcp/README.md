@@ -11,24 +11,56 @@ Vue 管理页面随 JAR 一起交付，无需另建前端站点。
 ```
 
 这个入口仅发布独立 Java 服务，默认名称为 `cyt-common-java`；拒绝覆盖旧 Python 服务
-`cyt-common-api`。数据复制和业务流量切换使用现有迁移流程，不随发布自动发生。
+`cyt-common-api`。发布自动建 Common schema、迁移表结构并初始化生产环境记录。已有系统和业务数据的复制使用独立迁移流程。
 
 ## 首次准备
 
-准备独立 PostgreSQL 数据库、同区域 VPC 连接器和已授权的运行账号。数据库 Secret 存放
-PostgreSQL JDBC URL，例如 `jdbc:postgresql://数据库私网地址:5432/cyt_common_java`；账号与口令分开保存。
-迁移 Job 与 Java 服务使用同一组数据库 Secret，运行时统一注入 `SPRING_DATASOURCE_*`，
-避免升级和运行指向不同库。发布时移除相关旧 `POSTGRES_*` 别名和可能覆盖生产配置的导入/JVM 参数；
+准备一个可访问的 PostgreSQL 数据库、同区域 VPC 连接器和已授权的运行账号。
+Flyway 在现有数据库内创建 `cyt_common` schema，数据库角色须有 `CREATE` 权限。
+Flyway 的默认 schema、迁移历史和 Hikari 运行 schema 都由 `--db-schema` 指定。
+即使 JDBC URL 预设了 `currentSchema=cyt_portal`，发布也使用 Common 自己的 schema。
+迁移 Job 与 Java 服务使用同一组数据库 Secret。发布时移除旧 `POSTGRES_*` 别名及可能覆盖 schema 的配置；
 更新 Secret 前先移除同名 literal，支持从旧明文环境配置升级为 Secret。
 
-必须提供以下 Secret Manager 引用，格式为 `名称:版本`，支持固定版本或 `latest`：
+显式发布可提供以下 Secret Manager 引用，格式为 `名称:版本`：
 
 - 数据库 JDBC URL、数据库用户名、数据库密码。
 - `ADMIN_PASSWORD`、`ADMIN_JWT_SECRET`、`CREDENTIAL_MASTER_KEY`。
 - 可选 `REDIS_URL`；指定多于一个实例时必须显式提供。
 
-引用可沿用原服务已有的管理员及主密钥 Secret，迁移密文时必须保持原主密钥值。
-主密钥和数据库数据应分别备份。真实值不通过命令行、源码或镜像传递。
+引用可沿用原服务已有的管理员凭据。另行迁移旧密文时必须显式保留原主密钥版本。
+主密钥和数据库数据应分别备份。
+
+## 复用旧服务并自动写入密钥
+
+先运行只读检查。报告只列 Secret 资源和已启用的固定版本。
+
+```powershell
+python deploy/gcp/deploy.py --inspect-common-api
+```
+
+`--reuse-common-api` 核验旧 `cyt-common-api` 的 PostgreSQL 连接和 Portal OA JDBC
+是否指向同一个数据库并使用相同的账号和密码。匹配后使用 Portal OA 已拆分的 JDBC 地址、用户名和密码
+引用。旧管理员用户名和密码也可直接复用。要改用另一组 PostgreSQL 凭据，需同时提供三个数据库引用。
+Java 服务独立生成 JWT 签名密钥和凭据加密主密钥。重复发布保留 Java 服务已经绑定的版本；
+空环境初始化时，自动生成的 Secret 以新服务名作为前缀。
+
+新上游密钥通过 `--secret-from-env ENV_NAME=SECRET_ID` 交给发布脚本。由 CI 或受控发布进程
+提供同名环境变量的值。Secret ID 使用目标服务专属前缀，例如 `cyt-common` 使用 `CYT_COMMON_`。
+脚本从标准输入写入 Secret Manager，已有相同值时复用版本，变化时创建新版本，并把得到的数字版本绑定到应用。
+发布临时清单只包含引用，可与现有 `--secret-bindings-file` 一起使用。已有共享 Secret 使用固定版本引用。
+
+```powershell
+python deploy/gcp/deploy.py --reuse-common-api `
+  --service cyt-common `
+  --service-account common@cyt-digital.iam.gserviceaccount.com `
+  --secret-from-env WEWORK_APP_FINANCIAL_SECRET=CYT_COMMON_WECOM_FINANCIAL_APP_SECRET `
+  --dry-run
+```
+
+发布账号需要读取旧服务和已复用的 Secret。自动创建或追加版本时还需要相应的 Secret Manager 权限，
+并为新建密钥授予应用运行账号读取权限。已有引用由对应的 Cloud Run 或迁移 Job 服务账号按 Secret 授权。
+财务专属密钥仍按独立作用域绑定。企业 ID、应用 ID 和代理地址作为非敏感配置保存到 PostgreSQL。
 
 Cloud Build 执行账号需要推送镜像、创建和执行 Cloud Run Job、更新 Java 服务，以及使用指定服务账号
 的权限，还需读取当前构建的创建时间及服务/revision，切流使用 Cloud Run v2 API；
@@ -103,6 +135,8 @@ SQL 仍来自 `CYT-Common-API/src/main/resources/db/migration/`，保留已有 V
 Cloud Run 不在应用启动时升级数据库；独立 Job 使用与测试服一致的 Flyway `11.20.2-alpine`、
 历史校验、禁止自动 baseline、乱序和 clean 的策略。新空库执行全部版本，已纳管的 PostgreSQL 库只执行新增版本。
 有业务表但无 Flyway 历史的库必须先核验接管方案，不能通过自动 baseline 跳过结构检查。
+成功迁移后，云端回调会补齐 `production` 环境记录，已存在的记录保持原值。
+需要随版本添加的其他初始业务配置应放在版本化迁移中，并按唯一键处理重复执行。
 
 镜像和迁移 Job 名称包含本次 Cloud Build `BUILD_ID`，不同构建不会互相覆盖迁移 Job。
 应用按推送后的镜像 digest 发布，revision 名称使用构建摘要并控制在 63 字符内，完整构建 ID 保存在 revision 环境中。
