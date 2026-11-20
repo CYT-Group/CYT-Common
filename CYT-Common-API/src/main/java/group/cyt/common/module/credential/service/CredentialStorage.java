@@ -18,7 +18,9 @@ final class CredentialStorage {
   private final Map<String, String> accountAliases = new HashMap<>();
 
   CredentialStorage(JsonNode contract) {
-    for (var platform : contract.path("credentials"))
+    for (var platform : contract.path("credentials")) {
+      add(databaseConfig, platform.path("accounts_var").asText());
+      add(databaseConfig, platform.path("default_account_var").asText());
       for (var variable : platform.path("vars")) {
         String name = variable.path("name").asText();
         List<Pattern> target = variable.path("secret").asBoolean() ? secrets : databaseConfig;
@@ -30,6 +32,7 @@ final class CredentialStorage {
           accountAliases.put(name.replace("{ACCOUNT}", "DEFAULT"), alias);
         }
       }
+    }
     EXTRA.path("database_config").forEach(name -> add(databaseConfig, name.asText()));
     EXTRA.path("secret_manager").forEach(name -> add(secrets, name.asText()));
     add(databaseConfig, "CRED_SCOPE_{SYSTEM}");
