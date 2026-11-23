@@ -45,6 +45,32 @@ python deploy/gcp/deploy.py --inspect-common-api
 Java 服务独立生成 JWT 签名密钥和凭据加密主密钥。重复发布保留 Java 服务已经绑定的版本；
 空环境初始化时，自动生成的 Secret 以新服务名作为前缀。
 
+## 首次发布迁入测试配置
+
+先用只读检查查看当前测试服的字段数量。发布机需要已配好的测试服 SSH 登录和 Docker 读取权限，
+以及 Python 的 `cryptography` 依赖。当前测试服 SSH 目标已设为默认值，也可用 `--test-ssh` 指定。
+
+```powershell
+python -m pip install "cryptography>=44,<51"
+python deploy/gcp/deploy.py --inspect-test-promotion
+python deploy/gcp/deploy.py --reuse-common-api --promote-test `
+  --service-account 634741927064-compute@developer.gserviceaccount.com --public
+```
+
+`--promote-test` 导入当前测试环境的系统、授权、配额、调用方 API Key 的前缀和哈希、
+自定义接口、模块、分类排序、回调、企微表单和环境配置。调用日志、审计日志、事件队列、
+历史请求和会话状态留在原环境。测试服的管理员登录、模拟开关和免密配置由生产发布参数独立控制。
+
+敏感配置按原系统和账号变量名查找可复用的固定版本。来源和内容都匹配时直接绑定，
+否则创建目标服务专属的 Secret 或追加版本。非敏感项由生产主密钥加密后写入数据库。
+财务企微有专属 Secret 时补齐缺省的严格策略，并保留测试中显式设置的策略。
+
+Cloud Build 上传加密快照和版本引用。Flyway 成功后，在同一个 VPC 内运行导入 Job。
+Job 在一个数据库事务中导入配置，成功后才更新 Cloud Run 服务。生产已有业务配置时停止导入，
+同一批配置重试会跳过已完成的复制。后续日常发布省略 `--promote-test`。
+
+## 手动补充上游凭据
+
 新上游密钥通过 `--secret-from-env ENV_NAME=SECRET_ID` 交给发布脚本。由 CI 或受控发布进程
 提供同名环境变量的值。Secret ID 使用目标服务专属前缀，例如 `cyt-common` 使用 `CYT_COMMON_`。
 脚本从标准输入写入 Secret Manager，已有相同值时复用版本，变化时创建新版本，并把得到的数字版本绑定到应用。

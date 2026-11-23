@@ -13,3 +13,5 @@ work/
 __pycache__/
 *.pyc
 **/tools/backups/
+deploy/gcp/release-*/
+deploy/gcp/release-bindings-*.json

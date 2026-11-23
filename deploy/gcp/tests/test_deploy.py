@@ -247,8 +247,11 @@ class CloudBuildContractTests(unittest.TestCase):
         self.assertLess(sequence.index('push-api'), sequence.index('configure-migration-job'))
         self.assertLess(sequence.index('push-migrations'), sequence.index('configure-migration-job'))
         self.assertLess(sequence.index('configure-migration-job'), sequence.index('migrate'))
-        self.assertLess(sequence.index('migrate'), sequence.index('deploy-api'))
+        self.assertLess(sequence.index('migrate'), sequence.index('build-test-promotion'))
+        self.assertLess(sequence.index('build-test-promotion'), sequence.index('import-test-snapshot'))
+        self.assertLess(sequence.index('import-test-snapshot'), sequence.index('deploy-api'))
         self.assertIn('--wait', self.steps['migrate']['args'])
+        self.assertIn('--wait', self.steps['import-test-snapshot']['args'][-1])
         self.assertIn('--max-retries=0', self.steps['configure-migration-job']['args'])
         for step in self.steps.values():
             self.assertFalse({'allowFailure', 'allowExitCodes', 'waitFor'} & step.keys())

@@ -29,3 +29,4 @@ work
 **/application-prod.yml
 **/application-prod.yaml
 !deploy/gcp/application-prod.yml
+deploy/gcp/release-*/

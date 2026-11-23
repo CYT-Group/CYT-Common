@@ -1,0 +1,5 @@
+FROM python:3.12-slim
+RUN pip install --no-cache-dir "cryptography>=44,<51" "psycopg[binary]>=3.2,<4"
+WORKDIR /app
+COPY import_test.py promotion_snapshot.py test-promotion.enc ./
+ENTRYPOINT ["python", "/app/import_test.py", "/app/test-promotion.enc"]

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Google CLI 发布 Common：构建同源 JAR 镜像 → Flyway Job → Cloud Run。"""
 import argparse
+from contextlib import ExitStack
 from functools import lru_cache
 import json
 import os
@@ -42,9 +43,12 @@ def credential_patterns():
     extra = json.loads((directory / 'credential-storage.json').read_text(encoding='utf-8'))
     private = set(extra['secret_manager'])
     public = set(extra['database_config'])
+    public.update(('CRED_SCOPE_{SYSTEM}', 'CRED_SPLIT_{SYSTEM}', 'CRED_ACCOUNTS_{SYSTEM}'))
     for filename in ('contract.json', 'business-contract.json', 'discord-contract.json'):
         contract = json.loads((directory / filename).read_text(encoding='utf-8'))
         for platform in contract.get('credentials', []):
+            public.update(value for key in ('accounts_var', 'default_account_var')
+                          if (value := platform.get(key)))
             for variable in platform['vars']:
                 names = private if variable.get('secret') else public
                 name = variable['name']
@@ -191,17 +195,21 @@ def substitutions(args):
         raise ValueError('额外参数不能覆盖部署入口管理的生产、数据库或运行配置')
     environment.update(extra_env)
     secrets.update(extra_secrets)
+    migration_secrets = {'FLYWAY_URL': args.db_url_secret, 'FLYWAY_USER': args.db_user_secret,
+                         'FLYWAY_PASSWORD': args.db_password_secret}
+    promotion_key = getattr(args, 'promotion_key', '')
     values = {
         '_SERVICE': args.service, '_REGION': args.region, '_REGISTRY': registry,
         '_DB_SCHEMA': args.db_schema,
         '_JOB_PREFIX': job_prefix, '_VPC_CONNECTOR': args.vpc_connector, '_VPC_EGRESS': args.vpc_egress,
         '_RUNTIME_SA': args.service_account,
         '_MIGRATION_SA': args.migration_service_account or args.service_account,
-        '_MIGRATION_SECRETS': dictionary_flag({'FLYWAY_URL': args.db_url_secret,
-                                              'FLYWAY_USER': args.db_user_secret,
-                                              'FLYWAY_PASSWORD': args.db_password_secret}),
+        '_MIGRATION_SECRETS': dictionary_flag(migration_secrets),
         '_RUNTIME_SECRETS': dictionary_flag(secrets), '_RUNTIME_ENV': dictionary_flag(environment),
         '_SECRET_BINDINGS_FILE': args.secret_bindings_file,
+        '_PROMOTION_SNAPSHOT': getattr(args, 'promotion_snapshot', ''),
+        '_PROMOTION_SECRETS': (
+            dictionary_flag({**migration_secrets, 'PROMOTION_SNAPSHOT_KEY': promotion_key}) if promotion_key else ''),
         '_AUTH_FLAG': '--allow-unauthenticated' if args.public else '--no-allow-unauthenticated',
         '_MIN_INSTANCES': '1' if args.discord_listener else '0', '_MAX_INSTANCES': str(args.max_instances),
         '_CPU_FLAG': '--no-cpu-throttling' if args.discord_listener else '--cpu-throttling',
@@ -250,6 +258,10 @@ def parser():
     result.add_argument('--credential-master-key-secret')
     result.add_argument('--reuse-common-api', action='store_true', help='核验并复用旧服务的数据库连接及管理员登录')
     result.add_argument('--inspect-common-api', action='store_true', help='只输出旧服务可复用的 Secret 版本清单')
+    result.add_argument('--promote-test', action='store_true', help='首次上线时迁入当前测试环境的数据和配置')
+    result.add_argument('--inspect-test-promotion', action='store_true', help='只读核对测试配置与凭据数量')
+    result.add_argument('--test-ssh', default=os.environ.get('COMMON_TEST_SSH', 'lrb@192.168.1.182'),
+                        help='测试环境 SSH 目标，默认使用当前测试服务器')
     result.add_argument('--secret-from-env', action='append', default=[], metavar='ENV_NAME=SECRET_ID',
                         help='从发布进程环境写入上游 Secret，复用内容相同的版本')
     result.add_argument('--redis-secret', help='可选；多实例时必须显式配置')
@@ -272,6 +284,7 @@ def provision_arguments(args):
     overrides = explicit.keys() | manifest.keys() | assignments(args.env, 'env').keys()
     prefix = args.service.replace('-', '_').upper() + '_'
     protected_ids = {prefix + name for name in reserved}
+    protected_ids.add(prefix + 'TEST_PROMOTION_SNAPSHOT_KEY')
     protected_ids.update(ref.split(':', 1)[0] for ref in [*explicit.values(), *manifest.values()])
     for assignment in args.secret_from_env:
         name, separator, identifier = assignment.partition('=')
@@ -329,6 +342,57 @@ def submit(args, values, environment=None):
     return subprocess.run(command, cwd=ROOT, check=False, **options).returncode
 
 
+def provision_and_submit(args, sources, payloads):
+    with ExitStack() as resources:
+        if args.promote_test:
+            promotion = runpy.run_path(str(ROOT / 'deploy/gcp/promote_test.py'))
+            directory = resources.enter_context(tempfile.TemporaryDirectory(prefix='release-', dir=ROOT / 'deploy/gcp'))
+            path = Path(directory) / 'test-promotion.enc'
+            snapshot = promotion['read_test'](args.test_ssh, database_configuration, sensitive_environment)
+
+        tool = runpy.run_path(str(ROOT / 'deploy/gcp/provision.py'))
+        cloud = tool['Cloud'](gcloud_command(), args.project, sources)
+        if args.reuse_common_api:
+            apply_reuse(cloud, tool, args)
+        values = substitutions(args)
+        bindings = load_secret_bindings(args.secret_bindings_file)
+        boot_refs = {getattr(args, option) for option in BOOTSTRAP_OPTIONS}
+        boot_refs.add(args.admin_password_secret or args.admin_password_hash_secret)
+        if args.redis_secret:
+            boot_refs.add(args.redis_secret)
+        for identifier in sources.values():
+            if identifier in {ref.split(':', 1)[0] for ref in boot_refs}:
+                raise ValueError('上游 Secret ID 与启动凭据重叠：' + identifier)
+        if not sources and not args.promote_test:
+            return submit(args, values, cloud.environment)
+
+        for name, identifier in sources.items():
+            reference = cloud.provision(identifier, payloads[name])
+            cloud.grant_read(reference, args.service_account)
+            bindings[name] = reference
+        if args.promote_test:
+            for option in BOOTSTRAP_OPTIONS[:3]:
+                reference = cloud.version(getattr(args, option))
+                setattr(args, option, reference)
+                for account in dict.fromkeys((args.service_account,
+                                              args.migration_service_account or args.service_account)):
+                    cloud.grant_read(reference, account)
+            for option in ('admin_password_secret', 'admin_password_hash_secret', 'admin_jwt_secret',
+                           'credential_master_key_secret', 'redis_secret'):
+                if getattr(args, option):
+                    reference = cloud.version(getattr(args, option))
+                    setattr(args, option, reference)
+                    cloud.grant_read(reference, args.service_account)
+            promotion['stage'](snapshot, path, args, cloud, tool, bindings, assignments)
+        with tempfile.NamedTemporaryFile(mode='w', encoding='utf-8', suffix='.json', prefix='release-bindings-',
+                                         dir=ROOT / 'deploy/gcp', delete=False) as staged:
+            generated = Path(staged.name)
+            resources.callback(generated.unlink)
+            json.dump(bindings, staged)
+        args.secret_bindings_file = generated.relative_to(ROOT).as_posix()
+        return submit(args, substitutions(args), cloud.environment)
+
+
 def main(argv=None):
     args = parser().parse_args(argv)
     if args.inspect_common_api:
@@ -337,6 +401,12 @@ def main(argv=None):
         report = tool['legacy_reuse'](cloud, args.region, inventory=True)
         del report['username']
         print(json.dumps(report, ensure_ascii=False, indent=2))
+        return 0
+    if args.inspect_test_promotion:
+        promotion = runpy.run_path(str(ROOT / 'deploy/gcp/promote_test.py'))
+        _, configs, credentials = promotion['read_test'](
+            args.test_ssh, database_configuration, sensitive_environment)
+        print(f'测试环境只读检查：{len(configs)} 个入库字段，{len(credentials)} 个密钥字段。')
         return 0
     sources = provision_arguments(args)
     checker = runpy.run_path(str(ROOT / 'deploy/test-server/migrate-database.py'))
@@ -347,7 +417,7 @@ def main(argv=None):
     if args.reuse_common_api:
         validate_reuse_arguments(args)
         if args.dry_run:
-            print(json.dumps({'schema': args.db_schema, 'reuse': 'cyt-common-api',
+            print(json.dumps({'schema': args.db_schema, 'reuse': 'cyt-common-api', 'promote_test': args.promote_test,
                               'secret_sources': sources}, ensure_ascii=False, indent=2))
             print('Dry run complete: no build, database migration or deployment submitted.')
             return 0
@@ -356,10 +426,12 @@ def main(argv=None):
     if args.dry_run:
         if sources:
             values['secret_sources'] = sources
+        if args.promote_test:
+            values['promote_test'] = True
         print(json.dumps(values, ensure_ascii=False, indent=2))
         print('Dry run complete: no build, database migration or deployment submitted.')
         return 0
-    if not args.reuse_common_api and not sources:
+    if not args.reuse_common_api and not sources and not args.promote_test:
         return submit(args, values)
 
     payloads = {}
@@ -368,35 +440,7 @@ def main(argv=None):
         if not value.strip() or len(value) > 65_536:
             raise ValueError('发布环境未提供有效的 Secret 内容：' + name)
         payloads[name] = value
-    tool = runpy.run_path(str(ROOT / 'deploy/gcp/provision.py'))
-    cloud = tool['Cloud'](gcloud_command(), args.project, sources)
-    if args.reuse_common_api:
-        apply_reuse(cloud, tool, args)
-    values = substitutions(args)
-    bindings = load_secret_bindings(args.secret_bindings_file)
-    boot_refs = {getattr(args, option) for option in BOOTSTRAP_OPTIONS}
-    boot_refs.add(args.admin_password_secret or args.admin_password_hash_secret)
-    if args.redis_secret:
-        boot_refs.add(args.redis_secret)
-    for identifier in sources.values():
-        if identifier in {ref.split(':', 1)[0] for ref in boot_refs}:
-            raise ValueError('上游 Secret ID 与启动凭据重叠：' + identifier)
-    if not sources:
-        return submit(args, values, cloud.environment)
-
-    for name, identifier in sources.items():
-        reference = cloud.provision(identifier, payloads[name])
-        cloud.grant_read(reference, args.service_account)
-        bindings[name] = reference
-    with tempfile.NamedTemporaryFile(mode='w', encoding='utf-8', suffix='.json', prefix='release-bindings-',
-                                     dir=ROOT / 'deploy/gcp', delete=False) as staged:
-        json.dump(bindings, staged)
-        generated = Path(staged.name)
-    try:
-        args.secret_bindings_file = generated.relative_to(ROOT).as_posix()
-        return submit(args, substitutions(args), cloud.environment)
-    finally:
-        generated.unlink()
+    return provision_and_submit(args, sources, payloads)
 
 
 if __name__ == '__main__':
