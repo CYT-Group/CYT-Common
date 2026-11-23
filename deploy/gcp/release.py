@@ -76,9 +76,14 @@ def promote(service, revision, digest_image, token, created_at, build_id):
     not_older(service, created_at, build_id)
     if service.get('reconciling'):
         raise ReleaseFailure('服务仍有其他配置更新，停止切流')
-    if any(service.get(key, '').rsplit('/', 1)[-1] != revision for key in ('latestCreatedRevision', 'latestReadyRevision')):
-        raise ReleaseFailure('目标 revision 已不是当前最新就绪版本，停止切流')
+    # 服务把流量钉在具体 revision 上时，latestReadyRevision 不会随无流量 revision 前进，
+    # 因此以“最新创建的 revision + 该 revision 已就绪”作为等价保证。
+    if service.get('latestCreatedRevision', '').rsplit('/', 1)[-1] != revision:
+        raise ReleaseFailure('目标 revision 已不是当前最新创建版本，停止切流')
     snapshot = api('GET', service['name'] + '/revisions/' + revision, token)
+    ready = next((item for item in snapshot.get('conditions', []) if item.get('type') == 'Ready'), {})
+    if ready.get('state') != 'CONDITION_SUCCEEDED':
+        raise ReleaseFailure('目标 revision 尚未就绪，停止切流')
     containers = snapshot.get('containers', [])
     if not containers or containers[0].get('image') != digest_image:
         raise ReleaseFailure('目标 revision 的镜像 digest 与本次构建不一致')

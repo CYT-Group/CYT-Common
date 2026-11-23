@@ -257,6 +257,16 @@ class CloudBuildContractTests(unittest.TestCase):
             self.assertFalse({'allowFailure', 'allowExitCodes', 'waitFor'} & step.keys())
         self.assertNotIn('availableSecrets', self.config)
 
+    def test_deploy_uses_bundled_interpreter_absent_from_image_path(self):
+        # cloud-cli 镜像不再提供系统 python3，PATH 中的 python3 会直接找不到可执行文件。
+        entrypoint = self.steps['deploy-api']['entrypoint']
+        self.assertNotEqual('python3', entrypoint)
+        self.assertTrue(entrypoint.endswith('/bin/python3'), entrypoint)
+        self.assertIn('google-cloud-sdk', entrypoint)
+        # 自带解释器不读系统默认证书路径，缺少该变量时 Cloud Run API 调用会 TLS 校验失败。
+        self.assertIn('SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt',
+                      self.steps['deploy-api']['env'])
+
     def test_build_scoped_versions_keep_api_sql_and_jobs_together(self):
         self.assertIn('${_JOB_PREFIX}-$BUILD_ID', self.steps['configure-migration-job']['args'])
         self.assertIn('${_JOB_PREFIX}-$BUILD_ID', self.steps['migrate']['args'])

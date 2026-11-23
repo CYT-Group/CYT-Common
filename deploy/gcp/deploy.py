@@ -29,6 +29,8 @@ RESERVED_ALIASES = {
     'SPRING_DATASOURCE_HIKARI_CONNECTION_INIT_SQL',
 }
 STALE_ALIASES = RESERVED_ALIASES - {'PORT', 'REDIS_URL', 'COMMON_RELEASE_BUILD_ID'}
+# 生产禁止开启回环访问，应用内默认即为 false；旧版本曾以明文写入运行环境，发布时清除。
+RETIRED_LITERALS = {'CUSTOM_API_ALLOW_LOOPBACK'}
 BOOTSTRAP_OPTIONS = ('db_url_secret', 'db_user_secret', 'db_password_secret',
                      'admin_jwt_secret', 'credential_master_key_secret')
 BOOTSTRAP_NAMES = {
@@ -145,8 +147,10 @@ def substitutions(args):
         raise ValueError('无效的 GCP region')
     if not re.fullmatch(r'cyt_common(?:_[a-z][a-z0-9_]{0,41})?', args.db_schema):
         raise ValueError('schema 必须使用 Common 专属名称 cyt_common 或 cyt_common_<环境>')
-    if not re.fullmatch(r'[a-z][a-z0-9-]{0,23}[a-z0-9]|[a-z]', args.vpc_connector):
-        raise ValueError('请提供同区域 VPC 连接器的短名称')
+    if not (re.fullmatch(r'[a-z][a-z0-9-]{0,23}[a-z0-9]|[a-z]', args.vpc_connector)
+            or re.fullmatch(r'projects/[a-z0-9-]+/locations/[a-z0-9-]+/connectors/[a-z][a-z0-9-]{0,23}[a-z0-9]',
+                            args.vpc_connector)):
+        raise ValueError('请提供同区域 VPC 连接器的短名称或完整资源名')
     for account in (args.service_account, args.migration_service_account or args.service_account,
                     args.build_service_account or args.service_account):
         if not account or not ACCOUNT.fullmatch(account):
@@ -176,7 +180,7 @@ def substitutions(args):
         'SPRING_PROFILES_ACTIVE': 'prod', 'SPRING_FLYWAY_ENABLED': 'false', 'HOST': '0.0.0.0',
         'ENV': 'production', 'MOCK_ALL': 'false', 'GATEWAY_DEV_MODE': 'false',
         'COMMON_DATABASE_SCHEMA': args.db_schema,
-        'JAVA_SEED_ENABLED': 'false', 'ADMIN_DEV_LOGIN': 'false', 'CUSTOM_API_ALLOW_LOOPBACK': 'false',
+        'JAVA_SEED_ENABLED': 'false', 'ADMIN_DEV_LOGIN': 'false',
         'DISCORD_GATEWAY_ENABLED': 'true' if args.discord_listener else 'false',
     }
     secrets = {
@@ -187,7 +191,7 @@ def substitutions(args):
     if args.redis_secret:
         secrets['REDIS_URL'] = args.redis_secret
     extra_env, extra_secrets = assignments(args.env, 'env'), assignments(args.secret, 'secret')
-    managed = set(environment) | BOOTSTRAP_NAMES | RESERVED_ALIASES
+    managed = set(environment) | BOOTSTRAP_NAMES | RESERVED_ALIASES | RETIRED_LITERALS
     bindings = load_secret_bindings(args.secret_bindings_file)
     if (managed & (extra_env.keys() | extra_secrets.keys() | bindings.keys())
             or extra_env.keys() & extra_secrets.keys()
@@ -198,10 +202,13 @@ def substitutions(args):
     migration_secrets = {'FLYWAY_URL': args.db_url_secret, 'FLYWAY_USER': args.db_user_secret,
                          'FLYWAY_PASSWORD': args.db_password_secret}
     promotion_key = getattr(args, 'promotion_key', '')
+    # v2 API 更新服务时按完整资源名校验连接器，短名会让 release.py 的切流请求被拒。
+    connector = args.vpc_connector.rsplit('/', 1)[-1]
+    connector_resource = f'projects/{args.project}/locations/{args.region}/connectors/{connector}'
     values = {
         '_SERVICE': args.service, '_REGION': args.region, '_REGISTRY': registry,
         '_DB_SCHEMA': args.db_schema,
-        '_JOB_PREFIX': job_prefix, '_VPC_CONNECTOR': args.vpc_connector, '_VPC_EGRESS': args.vpc_egress,
+        '_JOB_PREFIX': job_prefix, '_VPC_CONNECTOR': connector_resource, '_VPC_EGRESS': args.vpc_egress,
         '_RUNTIME_SA': args.service_account,
         '_MIGRATION_SA': args.migration_service_account or args.service_account,
         '_MIGRATION_SECRETS': dictionary_flag(migration_secrets),
@@ -213,7 +220,7 @@ def substitutions(args):
         '_AUTH_FLAG': '--allow-unauthenticated' if args.public else '--no-allow-unauthenticated',
         '_MIN_INSTANCES': '1' if args.discord_listener else '0', '_MAX_INSTANCES': str(args.max_instances),
         '_CPU_FLAG': '--no-cpu-throttling' if args.discord_listener else '--cpu-throttling',
-        '_REMOVE_ENV_VARS': ','.join(sorted(STALE_ALIASES | set(secrets) | other_admin)),
+        '_REMOVE_ENV_VARS': ','.join(sorted(STALE_ALIASES | set(secrets) | other_admin | RETIRED_LITERALS)),
         '_REMOVE_SECRET_VARS': ','.join(sorted(STALE_ALIASES | other_admin)),
     }
     if any(len(value.encode('utf-8')) > 4000 for value in values.values()):

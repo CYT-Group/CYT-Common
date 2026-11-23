@@ -74,7 +74,11 @@ steps:
         fi
   - id: deploy-api
     name: gcr.io/google.com/cloudsdktool/google-cloud-cli:stable
-    entrypoint: python3
+    # cloud-cli 镜像自 Debian 13 起不再提供系统 python3；使用 SDK 自带的解释器。
+    # 该解释器不读取系统默认证书路径，须显式指定 CA 包，否则 Cloud Run API 的 TLS 校验失败。
+    entrypoint: /usr/lib/google-cloud-sdk/platform/bundledpythonunix/bin/python3
+    env:
+      - SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
     args:
       - deploy/gcp/release.py
       - '--project=$PROJECT_ID'
