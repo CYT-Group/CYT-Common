@@ -36,16 +36,28 @@ public class GoogleTokenService {
       String prefix = platform.equals("gmail") ? "GMAIL_" : "GOOGLE_";
       refresh = credentials.required(prefix + scope + "_REFRESH_TOKEN", system);
     } else {
-      refresh = credentials.requiresDedicated("gdrive", system)
-          ? ""
-          : credentials.resolve("GOOGLE_REFRESH_TOKEN", system);
+      refresh =
+          credentials.requiresDedicated("gdrive", system)
+              ? ""
+              : credentials.resolve("GOOGLE_REFRESH_TOKEN", system);
       if (refresh.isBlank() && !credentials.requiresDedicated("gmail", system))
         refresh = credentials.resolve("GMAIL_REFRESH_TOKEN", system);
       if (refresh.isBlank()) throw GatewayException.config("缺少此平台可用的 Google 刷新令牌");
     }
-    String refreshToken = refresh;
+    return userToken(system, id, secret, refresh);
+  }
+
+  public String user(String system, Map<String, Object> bundle) {
+    return userToken(
+        system,
+        JsonUtils.str(bundle, "client_id"),
+        JsonUtils.str(bundle, "client_secret"),
+        JsonUtils.str(bundle, "refresh_token"));
+  }
+
+  private String userToken(String system, String id, String secret, String refreshToken) {
     return cache.get(
-        "google-user:" + system + ":" + id + ":" + secret + ":" + refresh,
+        "google-user:" + system + ":" + id + ":" + secret + ":" + refreshToken,
         false,
         () ->
             JsonUtils.map(
@@ -66,7 +78,8 @@ public class GoogleTokenService {
   public String service(String system) {
     String raw;
     if (credentials.requiresDedicated("gcs", system)) {
-      raw = credentials.required("GCS_" + CredentialService.accountKey(system) + "_SA_JSON", system);
+      raw =
+          credentials.required("GCS_" + CredentialService.accountKey(system) + "_SA_JSON", system);
     } else {
       raw = credentials.resolve("GOOGLE_SA_JSON", system);
       if (raw.isBlank()) raw = credentials.resolve("GCS_SA_JSON", system);

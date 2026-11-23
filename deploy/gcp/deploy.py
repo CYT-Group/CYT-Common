@@ -181,6 +181,8 @@ def substitutions(args):
         'ENV': 'production', 'MOCK_ALL': 'false', 'GATEWAY_DEV_MODE': 'false',
         'COMMON_DATABASE_SCHEMA': args.db_schema,
         'JAVA_SEED_ENABLED': 'false', 'ADMIN_DEV_LOGIN': 'false',
+        # Gmail 原始邮件含较大附件；配合 2 GiB 容器为解析和并发响应预留堆空间。
+        'JAVA_TOOL_OPTIONS': '-XX:MaxRAMPercentage=60.0',
         'DISCORD_GATEWAY_ENABLED': 'true' if args.discord_listener else 'false',
     }
     secrets = {

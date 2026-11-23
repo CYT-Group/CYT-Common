@@ -1,5 +1,7 @@
 package group.cyt.common.core.http;
 
+import com.fasterxml.jackson.core.StreamReadConstraints;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import group.cyt.common.core.exception.GatewayException;
 import group.cyt.common.core.util.JsonUtils;
 import java.io.*;
@@ -13,6 +15,17 @@ import org.springframework.stereotype.Component;
 public class UpstreamHttp {
   private static final MediaType JSON = MediaType.get("application/json; charset=utf-8");
   private static final int MAX_BYTES = 16 * 1024 * 1024;
+  // 原始 MIME 含附件的两层 Base64；普通 JSON 上限不足以容纳真实 Gmail 邮件。
+  private static final int GMAIL_RAW_MAX_BYTES = 96 * 1024 * 1024;
+  private static final ObjectMapper GMAIL_RAW_JSON = JsonUtils.MAPPER.copy();
+
+  static {
+    // 只放宽受信 Gmail 原文响应；业务请求和其他上游仍保留原解析限制。
+    GMAIL_RAW_JSON
+        .getFactory()
+        .setStreamReadConstraints(
+            StreamReadConstraints.builder().maxStringLength(GMAIL_RAW_MAX_BYTES).build());
+  }
 
   public record ResponseData(int status, Map<String, String> headers, byte[] body) {}
 
@@ -31,18 +44,24 @@ public class UpstreamHttp {
 
   public Object json(
       String method, String url, Map<String, String> headers, Object body, double timeout) {
-    return JsonUtils.parse(
-        new String(
-            raw(
-                method,
-                url,
-                headers,
-                body == null
-                    ? null
-                    : JsonUtils.write(body).getBytes(java.nio.charset.StandardCharsets.UTF_8),
-                timeout,
-                null),
-            java.nio.charset.StandardCharsets.UTF_8));
+    byte[] bytes =
+        raw(
+            method,
+            url,
+            headers,
+            body == null
+                ? null
+                : JsonUtils.write(body).getBytes(java.nio.charset.StandardCharsets.UTF_8),
+            timeout,
+            null);
+    if (gmailRaw(method, HttpUrl.get(url))) {
+      try {
+        return GMAIL_RAW_JSON.readValue(bytes, Object.class);
+      } catch (IOException error) {
+        throw new GatewayException(502, "upstream_error", "Gmail 原始邮件响应 JSON 无效", false);
+      }
+    }
+    return JsonUtils.parse(new String(bytes, java.nio.charset.StandardCharsets.UTF_8));
   }
 
   public Map<String, Object> object(
@@ -230,8 +249,10 @@ public class UpstreamHttp {
       int status = response.code();
       if (status < 200 || status >= 300) {
         if (request.url().host().equals("gmail.googleapis.com")) {
-          byte[] errorBody = response.body() == null ? new byte[0]
-              : response.body().byteStream().readNBytes(65537);
+          byte[] errorBody =
+              response.body() == null
+                  ? new byte[0]
+                  : response.body().byteStream().readNBytes(65537);
           throw GmailFailure.classify(status, errorBody, response.header("Retry-After"));
         }
         var ex =
@@ -248,9 +269,13 @@ public class UpstreamHttp {
       for (String key : response.headers().names()) responseHeaders.put(key, response.header(key));
       if (response.body() == null) return new ResponseData(status, responseHeaders, new byte[0]);
       try (InputStream input = response.body().byteStream()) {
-        byte[] bytes = input.readNBytes(MAX_BYTES + 1);
-        if (bytes.length > MAX_BYTES)
-          throw new GatewayException(502, "upstream_error", "上游响应超过大小限制", false);
+        int limit = responseLimit(request);
+        byte[] bytes = input.readNBytes(limit + 1);
+        if (bytes.length > limit) {
+          var error = new GatewayException(502, "upstream_error", "上游响应超过大小限制", false);
+          error.code = "UPSTREAM_RESPONSE_TOO_LARGE";
+          throw error;
+        }
         return new ResponseData(status, responseHeaders, bytes);
       }
     } catch (GatewayException e) {
@@ -260,6 +285,19 @@ public class UpstreamHttp {
     } catch (IOException e) {
       throw new GatewayException(502, "upstream_error", "上游连接失败", true);
     }
+  }
+
+  private static int responseLimit(Request request) {
+    return gmailRaw(request.method(), request.url()) ? GMAIL_RAW_MAX_BYTES : MAX_BYTES;
+  }
+
+  private static boolean gmailRaw(String method, HttpUrl url) {
+    return method.equals("GET")
+        && url.isHttps()
+        && url.host().equals("gmail.googleapis.com")
+        && url.port() == 443
+        && url.encodedPath().matches("/gmail/v1/users/me/messages/[^/]+")
+        && "raw".equals(url.queryParameter("format"));
   }
 
   public static String query(String url, Map<String, ?> params) {

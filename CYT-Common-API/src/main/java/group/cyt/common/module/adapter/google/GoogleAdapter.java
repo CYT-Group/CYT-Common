@@ -11,6 +11,7 @@ import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import okhttp3.HttpUrl;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -19,16 +20,28 @@ public class GoogleAdapter implements PlatformAdapter {
   private final UpstreamHttp http;
   private final CredentialService credentials;
   private final GatewaySettings settings;
+  private final GmailOAuthCredentials mailboxCredentials;
 
   public GoogleAdapter(
       GoogleTokenService tokens,
       UpstreamHttp http,
       CredentialService credentials,
       GatewaySettings settings) {
+    this(tokens, http, credentials, settings, null);
+  }
+
+  @Autowired
+  public GoogleAdapter(
+      GoogleTokenService tokens,
+      UpstreamHttp http,
+      CredentialService credentials,
+      GatewaySettings settings,
+      GmailOAuthCredentials mailboxCredentials) {
     this.tokens = tokens;
     this.http = http;
     this.credentials = credentials;
     this.settings = settings;
+    this.mailboxCredentials = mailboxCredentials;
   }
 
   public boolean supports(String platform) {
@@ -45,8 +58,16 @@ public class GoogleAdapter implements PlatformAdapter {
 
   private Object gmail(OperationDefinition op, Map<String, Object> p, String system) {
     String base = "https://gmail.googleapis.com/gmail/v1/users/me";
-    Map<String, String> headers = Map.of("Authorization", "Bearer " + tokens.user(system, "gmail"));
     String account = JsonUtils.str(p, "account");
+    var bundle =
+        mailboxCredentials == null
+            ? Map.<String, Object>of()
+            : mailboxCredentials.resolve(system, account);
+    Map<String, String> headers =
+        Map.of(
+            "Authorization",
+            "Bearer "
+                + (bundle.isEmpty() ? tokens.user(system, "gmail") : tokens.user(system, bundle)));
     boolean write =
         op.key().equals("gmail.messages.send") || op.key().endsWith("restore_from_spam");
     var profile = http.object("GET", base + "/profile", headers, null);

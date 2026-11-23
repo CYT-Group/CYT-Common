@@ -38,6 +38,7 @@ final class CredentialStorage {
     add(databaseConfig, "CRED_SCOPE_{SYSTEM}");
     add(databaseConfig, "CRED_SPLIT_{SYSTEM}");
     add(databaseConfig, "CRED_ACCOUNTS_{SYSTEM}");
+    add(databaseConfig, "GMAIL_OAUTH_{SYSTEM}_BINDING");
   }
 
   boolean sensitive(String name) {
@@ -51,9 +52,11 @@ final class CredentialStorage {
 
   private static void add(List<Pattern> names, String template) {
     if (!template.isBlank())
-      names.add(Pattern.compile(Pattern.quote(template)
-          .replace("{SYSTEM}", "\\E[A-Z0-9_]+\\Q")
-          .replace("{ACCOUNT}", "\\E[A-Z0-9_]+\\Q")));
+      names.add(
+          Pattern.compile(
+              Pattern.quote(template)
+                  .replace("{SYSTEM}", "\\E[A-Z0-9_]+\\Q")
+                  .replace("{ACCOUNT}", "\\E[A-Z0-9_]+\\Q")));
   }
 
   private static JsonNode loadExtra() {
