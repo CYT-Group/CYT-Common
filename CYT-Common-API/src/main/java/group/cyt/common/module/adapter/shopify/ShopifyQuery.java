@@ -100,7 +100,8 @@ query OrderLines($id: ID!, $after: String!) {
 query Products($first: Int!, $query: String, $after: String, $sortKey: ProductSortKeys, $reverse: Boolean!) {
   products(first: $first, query: $query, after: $after, sortKey: $sortKey, reverse: $reverse) {
     edges { node { id title handle status totalInventory updatedAt
-      variants(first: 10) { count edges { node { id sku } } } } }
+      variantsCount { count }
+      variants(first: 10) { edges { node { id sku } } } } }
     pageInfo { hasNextPage endCursor }
   }
 }

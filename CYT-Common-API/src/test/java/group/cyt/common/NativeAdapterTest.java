@@ -938,10 +938,10 @@ class NativeAdapterTest {
                                     "gid://shopify/Product/1",
                                     "title",
                                     "KP80",
+                                    "variantsCount",
+                                    JsonUtils.obj("count", 12),
                                     "variants",
                                     JsonUtils.obj(
-                                        "count",
-                                        12,
                                         "edges",
                                         List.of(
                                             JsonUtils.obj(
@@ -955,8 +955,12 @@ class NativeAdapterTest {
     var body = org.mockito.ArgumentCaptor.forClass(Map.class);
     verify(http).object(eq("POST"), anyString(), anyMap(), body.capture());
     assertEquals(50, JsonUtils.map(JsonUtils.map(body.getValue()).get("variables")).get("first"));
-    var node =
-        JsonUtils.map(JsonUtils.map(JsonUtils.list(result.get("items")).get(0)).get("variants"));
+    String query = JsonUtils.str(JsonUtils.map(body.getValue()), "query");
+    assertTrue(query.contains("variantsCount { count }"));
+    assertFalse(query.contains("variants(first: 10) { count"));
+    var product = JsonUtils.map(JsonUtils.list(result.get("items")).get(0));
+    assertFalse(product.containsKey("variantsCount"));
+    var node = JsonUtils.map(product.get("variants"));
     assertEquals(12, node.get("count"));
     var firstVariant =
         JsonUtils.map(JsonUtils.map(JsonUtils.list(node.get("edges")).get(0)).get("node"));

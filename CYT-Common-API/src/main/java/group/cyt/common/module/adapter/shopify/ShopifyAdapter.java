@@ -331,6 +331,7 @@ public class ShopifyAdapter implements PlatformAdapter {
     for (Object edge : JsonUtils.list(connection.get("edges"))) {
       var node = JsonUtils.map(JsonUtils.map(edge).get("node"));
       if (resource.equals("orders")) items.add(completeOrderLines(c, node, lineBudget));
+      else if (resource.equals("products")) items.add(productListNode(node));
       else if (!resource.equals("refunds")) items.add(node);
       else
         for (Object value : JsonUtils.list(node.get("refunds"))) {
@@ -362,6 +363,15 @@ public class ShopifyAdapter implements PlatformAdapter {
     }
     return JsonUtils.obj(
         "items", items, "page_info", connection.get("pageInfo"), "store", c.store(), "mock", false);
+  }
+
+  private static Map<String, Object> productListNode(Map<String, Object> node) {
+    var product = new LinkedHashMap<>(node);
+    var count = JsonUtils.map(product.remove("variantsCount")).get("count");
+    var variants = new LinkedHashMap<>(JsonUtils.map(product.get("variants")));
+    variants.put("count", count);
+    product.put("variants", variants);
+    return product;
   }
 
   private Object create(Client c, Map<String, Object> p) {
