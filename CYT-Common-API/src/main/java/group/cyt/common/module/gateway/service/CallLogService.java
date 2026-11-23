@@ -115,7 +115,7 @@ public class CallLogService {
               "error_type",
               error == null ? null : error.type,
               "error_message",
-              error == null ? null : error.type,
+              error == null ? null : safeError(error),
               "latency_ms",
               (int) Math.min(Integer.MAX_VALUE, latency),
               "request_summary",
@@ -132,6 +132,19 @@ public class CallLogService {
     } catch (Exception e) {
       log.warn("Call log persistence failed trace={} type={}", trace, e.getClass().getSimpleName());
     }
+  }
+
+  private String safeError(GatewayException error) {
+    String code = error.code;
+    if (code != null && code.matches("UPSTREAM_HTTP_[1-5][0-9]{2}")) {
+      Set<String> allowed = Set.of("rateLimitExceeded", "userRateLimitExceeded", "dailyLimitExceeded",
+          "quotaExceeded", "insufficientPermissions", "forbidden", "domainPolicy", "accessNotConfigured",
+          "authError", "invalidCredentials", "backendError", "notFound", "badRequest");
+      var reasons = JsonUtils.list(JsonUtils.map(error.detail).get("reasons")).stream()
+          .filter(String.class::isInstance).map(String.class::cast).filter(allowed::contains).distinct().toList();
+      return error.type + " (" + code + ")" + (reasons.isEmpty() ? "" : " " + String.join(",", reasons));
+    }
+    return error.type;
   }
 
   private void persist(String trace, Map<String, Object> fields) {

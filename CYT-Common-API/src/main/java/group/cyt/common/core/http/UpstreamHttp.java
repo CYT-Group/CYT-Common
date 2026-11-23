@@ -229,6 +229,11 @@ public class UpstreamHttp {
     try (Response response = http.newCall(request).execute()) {
       int status = response.code();
       if (status < 200 || status >= 300) {
+        if (request.url().host().equals("gmail.googleapis.com")) {
+          byte[] errorBody = response.body() == null ? new byte[0]
+              : response.body().byteStream().readNBytes(65537);
+          throw GmailFailure.classify(status, errorBody, response.header("Retry-After"));
+        }
         var ex =
             new GatewayException(
                 status == 429 ? 429 : 502,
