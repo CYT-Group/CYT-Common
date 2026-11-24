@@ -678,7 +678,7 @@ class NasUploadTest {
 
   @Test
   void publicOpenapiAndConsumerExportDescribePutBinaryAndExactAuthorization() throws Exception {
-    var contracts = new DocumentationContracts(f.store);
+    var contracts = new DocumentationContracts(f.store, f.registry);
     var documents = new RegistryController(f.registry, f.store, contracts);
     var consumer =
         new ConsumerCapabilitiesController(
@@ -713,7 +713,8 @@ class NasUploadTest {
     assertTrue(JsonUtils.map(exported.get(PATH)).containsKey("put"));
     assertFalse(JsonUtils.map(exported.get(PATH)).containsKey("post"));
     assertNotNull(
-        new DocumentationContracts(f.store).response(f.registry.get("nas.objects.upload")));
+        new DocumentationContracts(f.store, f.registry)
+            .response(f.registry.get("nas.objects.upload")));
     var entries = new HashMap<String, String>();
     try (var zip =
         new java.util.zip.ZipInputStream(

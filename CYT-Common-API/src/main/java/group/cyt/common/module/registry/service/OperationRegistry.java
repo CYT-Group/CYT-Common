@@ -14,6 +14,11 @@ import org.springframework.stereotype.Service;
 /** The versioned snapshot contains API metadata only. Java executes all runtime behavior. */
 @Service
 public class OperationRegistry {
+  private static final Comparator<OperationDefinition> OPERATION_ORDER =
+      Comparator.comparing(OperationDefinition::platform)
+          .thenComparing(OperationDefinition::sortOrder)
+          .thenComparing(OperationDefinition::key);
+
   private final Map<String, OperationDefinition> builtins = new LinkedHashMap<>();
   private final Map<String, String> aliases = new HashMap<>();
   private final Map<String, JsonSchema> validators = new ConcurrentHashMap<>();
@@ -141,11 +146,12 @@ public class OperationRegistry {
                   op.path(),
                   op.schema());
             })
-        .sorted(
-            Comparator.comparing(OperationDefinition::platform)
-                .thenComparing(OperationDefinition::sortOrder)
-                .thenComparing(OperationDefinition::key))
+        .sorted(OPERATION_ORDER)
         .toList();
+  }
+
+  public List<OperationDefinition> builtinOperations() {
+    return builtins.values().stream().sorted(OPERATION_ORDER).toList();
   }
 
   public OperationDefinition get(String key) {

@@ -12,11 +12,12 @@ import org.springframework.stereotype.Service;
 @Service
 public class DocumentationContracts {
   private final GatewayStore store;
+  private final OperationRegistry registry;
   private final JsonNode contracts;
-  private final Set<String> builtins = new HashSet<>();
 
-  public DocumentationContracts(GatewayStore store) throws Exception {
+  public DocumentationContracts(GatewayStore store, OperationRegistry registry) throws Exception {
     this.store = store;
+    this.registry = registry;
     try (var input = getClass().getResourceAsStream("/response-contracts.json")) {
       contracts = JsonUtils.MAPPER.readTree(input);
     }
@@ -25,17 +26,10 @@ public class DocumentationContracts {
           .setAll(
               (com.fasterxml.jackson.databind.node.ObjectNode) JsonUtils.MAPPER.readTree(input));
     }
-    for (String resource :
-        List.of("/contract.json", "/business-contract.json", "/discord-contract.json")) {
-      try (var input = getClass().getResourceAsStream(resource)) {
-        for (var op : JsonUtils.MAPPER.readTree(input).path("operations"))
-          builtins.add(op.path("key").asText());
-      }
-    }
   }
 
   private Map<String, Object> custom(OperationDefinition op) {
-    if (builtins.contains(op.key())) return null;
+    if (registry.builtin(op.key())) return null;
     return store.one(
         "SELECT a.response_schema_json,m.service_kind FROM gateway_custom_api a LEFT JOIN gateway_module m ON a.module_key=m.key WHERE a.key=?",
         op.key());

@@ -81,6 +81,10 @@ Discord 已增加 11 个原生接口、加密凭据登记、持久化实时监�
 
 操作目录由版本化契约生成，保留原参数名、公开路径和旧操作名称别名，覆盖 DocuSign、企业微信、Shopify、Gmail、Google Drive、GCS、NAS MinIO、QuickCEP、领星、Winit、Discord 等平台。
 
+群晖 MinIO 的全部网关操作、File Station 原生接口与批量建目录示例见 [群晖 NAS 接口文档](docs/synology-nas-api.md)。
+
+业务系统首次接入请阅读 [CYT Common API 对外接入文档](docs/common-api-integration.md)。登录页和管理台“接入文档”提供同网关的在线文档及下载入口。公开目录和接入包随网关内置接口更新，管理员可从管理台导出调用方的专属接入包。
+
 管理界面包括调用总览、调用记录、审计日志、接入平台、操作目录、调用方系统、授权管理、环境与凭据、企微/DocuSign 回调、自定义模块及接口、调试台与接入文档。审批作为企业微信平台的业务接口集成在同一目录，提供按模板填写的调试辅助；封装指南从操作目录和接入文档进入。
 
 企微审批的模板、字段别名、预检、提单、防重、查询、事件和假期能力见 [审批接入](docs/wecom-approvals.md)。全部原有操作的封装审阅和已落地的聚合能力见 [能力设计](docs/capability-design.md)，调用示例见 [Python / TypeScript SDK](sdk/README.md)。

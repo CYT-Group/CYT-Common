@@ -16,7 +16,7 @@ public class FrontendController {
     this.settings = settings;
   }
 
-  @GetMapping({"/", "/api-reference"})
+  @GetMapping("/")
   public String index() {
     return "forward:/index.html";
   }

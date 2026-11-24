@@ -6,9 +6,6 @@ import group.cyt.common.core.util.JsonUtils;
 import group.cyt.common.module.grant.service.AuthorizationService;
 import group.cyt.common.module.registry.service.DocumentationContracts;
 import group.cyt.common.module.registry.service.OperationRegistry;
-import java.io.*;
-import java.nio.charset.StandardCharsets;
-import java.util.zip.*;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 
@@ -86,33 +83,6 @@ public class ConsumerCapabilitiesController {
             + "TypeScript SDK：导入 sdk/typescript/index.ts 的 Gateway 类，在业务后端调用。\n\n"
             + "HTTP 成功返回 { ok, data, meta }，SDK 直接返回 data。联调时从 HTTP 响应检查 meta.mock，并处理 data 的 partial/errors 和续传位置；"
             + "HTTP 错误保留 trace_id。密钥和上游凭据不要放进浏览器构建变量。\n";
-    try {
-      var bytes = new ByteArrayOutputStream();
-      try (var zip = new ZipOutputStream(bytes, StandardCharsets.UTF_8)) {
-        entry(
-            zip, "START_HERE.html", IntegrationGuide.render(spec).getBytes(StandardCharsets.UTF_8));
-        entry(zip, "README.md", readme.getBytes(StandardCharsets.UTF_8));
-        entry(zip, "openapi.json", JsonUtils.write(spec).getBytes(StandardCharsets.UTF_8));
-        for (String resource :
-            new String[] {"sdk/python/cyt_gateway.py", "sdk/typescript/index.ts"}) {
-          try (var input = getClass().getResourceAsStream("/" + resource)) {
-            if (input == null) throw GatewayException.config("SDK 资源未打包，请重新构建网关");
-            entry(zip, resource, input.readAllBytes());
-          }
-        }
-      }
-      return ResponseEntity.ok()
-          .contentType(MediaType.parseMediaType("application/zip"))
-          .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"cyt-integration.zip\"")
-          .body(bytes.toByteArray());
-    } catch (IOException e) {
-      throw GatewayException.config("接入包生成失败");
-    }
-  }
-
-  private static void entry(ZipOutputStream zip, String name, byte[] value) throws IOException {
-    zip.putNextEntry(new ZipEntry(name));
-    zip.write(value);
-    zip.closeEntry();
+    return IntegrationPackage.download(IntegrationPackage.build(spec, readme), "cyt-integration.zip");
   }
 }

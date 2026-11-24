@@ -228,15 +228,22 @@ function debug() {
         @click="router.push(direction === 'internal' ? '/exposed' : '/platforms')"
         >{{ direction === 'internal' ? '对外能力' : '服务接入' }}</el-button
       >
+      <el-button :icon="Document" tag="a" href="/api-reference" target="_blank" rel="noopener"
+        >在线文档</el-button
+      >
       <el-button :icon="Download" :disabled="!exportReady" :loading="busy" @click="exportDocs">{{
         system ? '导出专属 OpenAPI' : '导出 OpenAPI'
       }}</el-button>
       <el-button
+        v-if="system"
         type="primary"
         :icon="Download"
-        :disabled="!system || !exportReady"
+        :disabled="!exportReady"
         :loading="busy"
         @click="exportKit"
+        >下载专属接入包</el-button
+      >
+      <el-button v-else type="primary" :icon="Download" tag="a" href="/api-reference/download"
         >下载接入包</el-button
       >
     </PageHeader>
