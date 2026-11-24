@@ -41,6 +41,18 @@ public class TestWritePolicy {
     return true;
   }
 
+  public boolean authorizeCsOrderCancel(String system, String store, String apiKeyId) {
+    if (!settings.production()) return false;
+    if (settings.csv("GATEWAY_CS_SHOPIFY_ORDER_CANCEL_STORES", "").stream()
+        .noneMatch(store::equalsIgnoreCase))
+      throw GatewayException.forbidden("该店铺未开通正式 Shopify 取消订单");
+    if (!system.equals("cs")
+        || apiKeyId.isBlank()
+        || !apiKeyId.equals(settings.get("GATEWAY_CS_SHOPIFY_ORDER_CANCEL_KEY_ID")))
+      throw GatewayException.forbidden("正式 Shopify 取消订单需要 CS 指定调用密钥");
+    return true;
+  }
+
   public void requireTarget(String platform, String target) {
     // The legacy Lingxing integration is explicitly read-only, including test accounts.
     // Keep the same boundary when switching between independently deployed gateways.

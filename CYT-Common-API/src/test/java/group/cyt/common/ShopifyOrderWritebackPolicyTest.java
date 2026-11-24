@@ -37,6 +37,25 @@ class ShopifyOrderWritebackPolicyTest {
     assertFalse(policy.authorizeCsOrderUpdate("cs", STORE, "12"));
   }
 
+  @Test
+  void requiresProductionAndAnExactStoreAndKeyForCancellation() {
+    var env = new MockEnvironment()
+        .withProperty("ENV", "production")
+        .withProperty("GATEWAY_CS_SHOPIFY_ORDER_CANCEL_STORES", STORE)
+        .withProperty("GATEWAY_CS_SHOPIFY_ORDER_CANCEL_KEY_ID", "12");
+    var policy = new TestWritePolicy(new GatewaySettings(env));
+    assertTrue(policy.authorizeCsOrderCancel("cs", STORE.toUpperCase(java.util.Locale.ROOT), "12"));
+    assertFalse(policy.authorizeCsOrderUpdate("cs", STORE, "12"));
+    assertThrows(GatewayException.class, () -> policy.authorizeCsOrderCancel("cs", "other.myshopify.com", "12"));
+    assertThrows(GatewayException.class, () -> policy.authorizeCsOrderCancel("cs", STORE, ""));
+    assertThrows(GatewayException.class, () -> policy.authorizeCsOrderCancel("cs", STORE, "13"));
+    assertThrows(GatewayException.class, () -> policy.authorizeCsOrderCancel("other", STORE, "12"));
+    env.setProperty("GATEWAY_CS_SHOPIFY_ORDER_CANCEL_STORES", "");
+    assertThrows(GatewayException.class, () -> policy.authorizeCsOrderCancel("cs", STORE, "12"));
+    env.setProperty("ENV", "test");
+    assertFalse(policy.authorizeCsOrderCancel("cs", STORE, "12"));
+  }
+
   @ParameterizedTest
   @ValueSource(booleans = {false, true})
   void requiresTheWriteScopeBeforeSendingAnOrderMutation(boolean writeScope) {

@@ -43,8 +43,9 @@ public class ShopifyAdapter implements PlatformAdapter {
   }
 
   public Object invokeCsOrderWriteback(OperationDefinition op, Map<String, Object> p, String system) {
-    if (!op.key().equals("shopify.orders.update") || !system.equals("cs"))
-      throw GatewayException.forbidden("正式店铺回写仅支持 CS 订单更新");
+    if (!system.equals("cs")
+        || !(op.key().equals("shopify.orders.update") || op.key().equals("shopify.orders.cancel")))
+      throw GatewayException.forbidden("正式店铺回写仅支持 CS 更新或取消订单");
     return invoke(op, p, system, true);
   }
 

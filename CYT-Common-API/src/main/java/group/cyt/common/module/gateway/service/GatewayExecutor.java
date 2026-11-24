@@ -102,11 +102,15 @@ public class GatewayExecutor {
         if (p.path("platform").asText().equals(platform) && !p.path("platform_quota").isNull())
           quota.consume("platform:" + platform, p.path("platform_quota").asText());
       var validated = registry.validate(op, params);
-      boolean csOrderWriteback =
-          key.equals("shopify.orders.update")
-              && writePolicy.authorizeCsOrderUpdate(
+      boolean csOrderWriteback = switch (key) {
+        case "shopify.orders.update" -> writePolicy.authorizeCsOrderUpdate(
                   system, JsonUtils.str(validated, "store").trim(),
                   AuthenticationService.authenticatedApiKeyId());
+        case "shopify.orders.cancel" -> writePolicy.authorizeCsOrderCancel(
+                  system, JsonUtils.str(validated, "store").trim(),
+                  AuthenticationService.authenticatedApiKeyId());
+        default -> false;
+      };
       if (op.rawBinary() && source == null)
         throw GatewayException.invalid("此操作只支持 PUT 原始文件流，不能通过 JSON、批量或管理 JSON 调试调用");
       if (source != null) source.prepare();
