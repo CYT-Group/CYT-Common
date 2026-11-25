@@ -4,6 +4,7 @@ import static group.cyt.common.module.registry.catalog.BuiltinOperation.operatio
 import static group.cyt.common.module.registry.catalog.ContractNodes.*;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import group.cyt.common.module.registry.catalog.*;
 import java.util.List;
@@ -67,6 +68,7 @@ public final class TikTokCatalog implements PlatformCatalog {
             schema(false, 1, 10, "conversation_id", false),
             paged(object("type", "object", "description", "TikTok Shop 原始消息，按消息索引倒序")),
             120));
+    catalog.operation(sendMessage());
     catalog.operation(
         read(
             "tiktok.orders.list",
@@ -158,6 +160,43 @@ public final class TikTokCatalog implements PlatformCatalog {
                     "create_time",
                     "update_time")),
             60));
+  }
+
+  private static BuiltinOperation sendMessage() {
+    var params = schema(false, 0, 0, "conversation_id", false);
+    var properties = (ObjectNode) params.get("properties");
+    properties.set("content", object("type", "string", "minLength", 1, "maxLength", 2000));
+    properties.set("confirm", object("type", "boolean", "const", true));
+    ((ArrayNode) params.get("required")).add("content").add("confirm");
+    return operation("tiktok.messages.send")
+        .summary("向已有 TikTok Shop 客服会话发送文字回复")
+        .description("通过原店铺向已有买家会话发送经坐席确认的文字。")
+        .category("客服")
+        .tags("write", "idempotency_required")
+        .sensitive(true)
+        .idempotent(true)
+        .quota("60/min")
+        .timeout(18)
+        .officialDocs(DOCS + "send-message")
+        .params(params)
+        .response(
+            object(
+                "type", "object",
+                "properties", object("message_id", object("type", "string")),
+                "required", array("message_id")))
+        .review(
+            new CapabilityReview(
+                null,
+                "使用店铺凭据向已有客服会话发送经坐席确认的文字。",
+                "给调用系统授予精确操作权限，并为每条回复提供唯一的 Idempotency-Key。",
+                null,
+                "retain",
+                List.of(),
+                CapabilityReview.Depth.ENHANCED,
+                "校验坐席确认、店铺权限和上游消息编号，并对签名请求使用网关幂等控制。",
+                "发送受卖家授权和会话规则限制，结果未确认时应先核对原会话。",
+                List.of(new CapabilityReview.Evidence(ADAPTER, 295, "sendMessage"))))
+        .build();
   }
 
   private static PlatformCredentials.Variable secret(String suffix, String label, boolean masked) {

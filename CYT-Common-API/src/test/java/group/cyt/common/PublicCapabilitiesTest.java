@@ -57,6 +57,7 @@ class PublicCapabilitiesTest {
     for (String key : List.of(
         "tiktok.conversations.list",
         "tiktok.messages.list",
+        "tiktok.messages.send",
         "tiktok.orders.list",
         "tiktok.orders.get",
         "tiktok.products.list",

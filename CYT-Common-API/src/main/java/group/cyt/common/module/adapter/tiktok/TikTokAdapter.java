@@ -19,6 +19,7 @@ import org.springframework.stereotype.Component;
 public final class TikTokAdapter implements PlatformAdapter {
   private static final String HOST = "https://open-api.tiktokglobalshop.com";
   private static final String CONVERSATIONS = "/customer_service/202309/conversations";
+  private static final String SEND_CONVERSATIONS = "/customer_service/202606/conversations";
   private static final String ORDERS = "/order/202309/orders";
   private static final String PRODUCTS = "/product/202309/products";
   private static final Map<String, Object> UPDATE_SORT =
@@ -41,7 +42,9 @@ public final class TikTokAdapter implements PlatformAdapter {
     String account = str(params, "account");
     String key = operation.key();
     boolean customerService =
-        key.equals("tiktok.conversations.list") || key.equals("tiktok.messages.list");
+        key.equals("tiktok.conversations.list")
+            || key.equals("tiktok.messages.list")
+            || key.equals("tiktok.messages.send");
     if (!customerService) checkCommerceAccount(account);
     String orderId = str(params, "order_id");
     String productId = str(params, "product_id");
@@ -74,6 +77,7 @@ public final class TikTokAdapter implements PlatformAdapter {
                   "need_plaintext",
                   "true"),
               Function.identity());
+      case "tiktok.messages.send" -> sendMessage(account, system, params);
       case "tiktok.orders.list" ->
           page(
               account,
@@ -288,12 +292,49 @@ public final class TikTokAdapter implements PlatformAdapter {
     return result;
   }
 
+  private Map<String, Object> sendMessage(
+      String account, String system, Map<String, Object> params) {
+    String conversationId = str(params, "conversation_id");
+    String content = str(params, "content");
+    if (!Boolean.TRUE.equals(params.get("confirm"))
+        || !conversationId.matches("[0-9]{1,32}")
+        || content.isBlank()
+        || content.codePointCount(0, content.length()) > 2000)
+      throw GatewayException.invalid("TikTok Shop 文字回复需要有效会话、明确确认及 1 至 2000 字正文");
+    credentials.requireAccount("tiktok", account, system);
+    var data =
+        exchange(
+            account,
+            system,
+            SEND_CONVERSATIONS + "/" + conversationId + "/messages",
+            Map.of(),
+            obj(
+                "type", "TEXT",
+                "content", write(obj("content", content)),
+                "sender_role", "CUSTOMER_SERVICE"),
+            true);
+    if (!(data.get("message_id") instanceof String messageId)
+        || !messageId.matches("[0-9]{1,32}"))
+      throw badResponse("TikTok Shop 未返回可确认的消息编号");
+    return obj("message_id", messageId);
+  }
+
   private Map<String, Object> read(
       String account,
       String system,
       String path,
       Map<String, Object> options,
       Map<String, Object> body) {
+    return exchange(account, system, path, options, body, false);
+  }
+
+  private Map<String, Object> exchange(
+      String account,
+      String system,
+      String path,
+      Map<String, Object> options,
+      Map<String, Object> body,
+      boolean sending) {
     String prefix = "TIKTOK_" + CredentialService.accountKey(account) + "_";
     String secret = credentials.required(prefix + "APP_SECRET", system);
     String token = credentials.required(prefix + "ACCESS_TOKEN", system);
@@ -338,9 +379,31 @@ public final class TikTokAdapter implements PlatformAdapter {
     }
     if (result == null) throw badResponse("TikTok Shop 未返回标准响应");
     if (!(result.get("code") instanceof Integer code)) throw badResponse("TikTok Shop 未返回标准响应");
-    if (code != 0) throw badResponse("TikTok Shop 拒绝读取，请核对店铺授权、令牌和接口权限").code("TIKTOK_" + code);
+    if (code != 0) {
+      if (sending) throw sendRejected(code);
+      throw badResponse("TikTok Shop 拒绝读取，请核对店铺授权、令牌和接口权限")
+          .code("TIKTOK_" + code);
+    }
     if (response.status() < 200 || response.status() >= 300) throw badResponse("TikTok Shop 请求失败");
     return record(result.get("data"));
+  }
+
+  private static GatewayException sendRejected(int code) {
+    String reason =
+        switch (code) {
+          case 105001, 105002, 105005 -> "TikTok Shop 卖家授权无效或缺少客服权限";
+          case 45101002 -> "TikTok Shop 拒绝了回复参数";
+          case 45101003, 45102007 -> "TikTok Shop 会话不存在或当前店铺无权访问";
+          case 45101004 -> "TikTok Shop 发送配额已用完";
+          case 45101006 -> "TikTok Shop 拒绝了正文，请检查内容";
+          case 45109001 -> "TikTok Shop 会话规则不允许发送此回复";
+          default -> null;
+        };
+    var error =
+        reason == null
+            ? badResponse("TikTok Shop 发送结果未确认")
+            : new GatewayException(422, "upstream_rejected", reason, false);
+    return error.code("TIKTOK_" + code);
   }
 
   private static List<Object> rows(Object value) {

@@ -182,7 +182,9 @@ class TikTokAdapterTest {
                             obj("amount", "20")))),
                 obj("raw", List.of(returns), "next_page_token", "")));
     var registered =
-        registry.builtinOperations().stream().filter(op -> op.platform().equals("tiktok")).toList();
+        registry.builtinOperations().stream()
+            .filter(op -> op.platform().equals("tiktok") && op.readOnly())
+            .toList();
     assertEquals(lookups.size(), registered.size());
     for (var lookup : lookups) {
       var op = registry.get("tiktok." + lookup.resource().replace('/', '.'));
@@ -259,7 +261,67 @@ class TikTokAdapterTest {
   }
 
   @Test
-  void anExactGrantIsRequiredForEveryCsTikTokRead() throws Exception {
+  void sendsConfirmedTextToTheSignedShopConversation() throws Exception {
+    configureShop();
+    var registry = new OperationRegistry(store);
+    var operation = registry.get("tiktok.messages.send");
+    assertEquals("/integrations/tiktok/messages/send", operation.path());
+    assertFalse(operation.readOnly());
+    assertTrue(operation.sensitive());
+    assertTrue(operation.idempotent());
+    assertTrue(operation.tags().contains("idempotency_required"));
+
+    String path = "/customer_service/202606/conversations/123/messages";
+    String text = "您好，已核对订单。";
+    when(http.quietExchange(eq("POST"), anyString(), anyMap(), any(), anyDouble()))
+        .thenAnswer(
+            call -> {
+              var url = HttpUrl.get(call.getArgument(1, String.class));
+              assertEquals(HOST, url.host());
+              assertEquals(path, url.encodedPath());
+              Map<String, String> headers = call.getArgument(2);
+              assertEquals("fixture-token", headers.get("x-tts-access-token"));
+              String body = new String(call.getArgument(3, byte[].class), UTF_8);
+              assertEquals(
+                  obj(
+                      "type", "TEXT",
+                      "content", write(obj("content", text)),
+                      "sender_role", "CUSTOMER_SERVICE"),
+                  read(body));
+              var query = new TreeMap<String, String>();
+              url.queryParameterNames()
+                  .forEach(field -> query.put(field, url.queryParameter(field)));
+              assertEquals("fixture-cipher", query.get("shop_cipher"));
+              String signature = query.remove("sign");
+              var signed = new StringBuilder(SECRET).append(path);
+              query.forEach((field, value) -> signed.append(field).append(value));
+              assertEquals(hmac(SECRET, signed.append(body).append(SECRET).toString()), signature);
+              return response(200, obj("code", 0, "data", obj("message_id", "456")));
+            });
+    var params = obj("account", SHOP, "conversation_id", "123", "content", text, "confirm", true);
+    var adapter = new TikTokAdapter(credentials, http);
+    assertEquals(
+        obj("message_id", "456"),
+        adapter.invoke(operation, registry.validate(operation, params), "cs"));
+    verify(credentials).requireAccount("tiktok", SHOP, "cs");
+  }
+
+  @Test
+  void rejectsUnconfirmedTextBeforeAnyUpstreamCall() throws Exception {
+    var registry = new OperationRegistry(store);
+    var operation = registry.get("tiktok.messages.send");
+    var params =
+        obj("account", SHOP, "conversation_id", "123", "content", "reply", "confirm", false);
+    assertEquals(
+        422, assertThrows(GatewayException.class, () -> registry.validate(operation, params)).status);
+    var adapter = new TikTokAdapter(credentials, http);
+    assertEquals(
+        422, assertThrows(GatewayException.class, () -> adapter.invoke(operation, params, "cs")).status);
+    verifyNoInteractions(http);
+  }
+
+  @Test
+  void anExactGrantIsRequiredForEveryTikTokOperation() throws Exception {
     var registry = new OperationRegistry(store);
     var auth = new AuthorizationService(store, registry);
     var wildcard = obj("operation_pattern", "tiktok.*", "effect", "allow");
