@@ -13,6 +13,7 @@ ARG BASE_REGISTRY=
 FROM ${BASE_REGISTRY}node:22-alpine AS frontend
 ARG NPM_REGISTRY=https://registry.npmmirror.com
 ENV NPM_CONFIG_REGISTRY=${NPM_REGISTRY}
+ENV pnpm_config_registry=${NPM_REGISTRY}
 ENV CI=true
 WORKDIR /build
 # scripts/sync-backend.mjs 用 ../CYT-Common-API 定位后端，两个目录必须保持同级

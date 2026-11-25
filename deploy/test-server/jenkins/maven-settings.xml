@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<settings xmlns="http://maven.apache.org/SETTINGS/1.2.0">
+  <mirrors>
+    <mirror>
+      <id>cyt-test-maven-central</id>
+      <name>Maven Central mirror for CYT Common Jenkins test builds</name>
+      <url>https://maven.aliyun.com/repository/central/</url>
+      <mirrorOf>central</mirrorOf>
+    </mirror>
+    <mirror>
+      <id>maven-default-http-blocker</id>
+      <name>Block external HTTP repositories</name>
+      <url>http://0.0.0.0/</url>
+      <mirrorOf>external:http:*</mirrorOf>
+      <blocked>true</blocked>
+    </mirror>
+  </mirrors>
+</settings>

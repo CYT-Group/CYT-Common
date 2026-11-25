@@ -58,6 +58,22 @@ class JenkinsConfigurationTests(unittest.TestCase):
         self.assertIn('GIT_REVISION', root.findtext('.//org.jenkinsci.plugins.buildnamesetter.BuildNameSetter/template'))
         self.assertNotIn('TARGET', ET.tostring(root, encoding='unicode'))
 
+    def test_exports_the_dedicated_base_registry_before_running_the_bootstrap(self):
+        lines = self.configured().findtext('builders/hudson.tasks.Shell/command').splitlines()
+        self.assertEqual([
+            'export BASE_REGISTRY="${BASE_REGISTRY-192.168.1.182:5000/cyt-common-ci-r1/}"',
+            'bash /opt/cyt-common/deploy/jenkins-build.sh',
+        ], lines[2:])
+
+    def test_maven_settings_mirror_central_and_keep_the_external_http_block(self):
+        namespace = {'m': 'http://maven.apache.org/SETTINGS/1.2.0'}
+        settings = ET.parse(PATH.parent / 'jenkins/maven-settings.xml')
+        mirrors = {node.findtext('m:mirrorOf', namespaces=namespace): node
+                   for node in settings.findall('m:mirrors/m:mirror', namespace)}
+        self.assertEqual('https://maven.aliyun.com/repository/central/',
+                         mirrors['central'].findtext('m:url', namespaces=namespace))
+        self.assertEqual('true', mirrors['external:http:*'].findtext('m:blocked', namespaces=namespace))
+
     def test_configuration_is_repeatable(self):
         first = MODULE.job_config(SOURCE)
         self.assertEqual(first, MODULE.job_config(first))

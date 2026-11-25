@@ -19,6 +19,7 @@ SITE_URL = 'http://192.168.1.182:8088/'
 JOB_NAME = 'cyt-common-deploy'
 JOB_DISPLAY_NAME = '【测试环境】CYT-Common'
 CREDENTIAL_ID = 'cyt-common-github'
+CI_BASE_REGISTRY = '192.168.1.182:5000/cyt-common-ci-r1/'
 PLUGINS = ('git', 'git-parameter', 'build-name-setter')
 
 
@@ -144,7 +145,11 @@ def job_config(original, job=JOB_NAME):
     root.find('concurrentBuild').text = 'false'
     builders.clear()
     shell = child(builders, 'hudson.tasks.Shell')
-    child(shell, 'command', '#!/usr/bin/env bash\nset -Eeuo pipefail\nbash /opt/cyt-common/deploy/jenkins-build.sh\n')
+    child(shell, 'command', (
+        '#!/usr/bin/env bash\n'
+        'set -Eeuo pipefail\n'
+        'export BASE_REGISTRY="${BASE_REGISTRY-' + CI_BASE_REGISTRY + '}"\n'
+        'bash /opt/cyt-common/deploy/jenkins-build.sh\n'))
     publishers = root.find('publishers')
     if publishers is None:
         publishers = child(root, 'publishers')

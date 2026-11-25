@@ -28,9 +28,12 @@ class ReleaseFlowTests(unittest.TestCase):
         self.source = self.root / 'source checkout'
         self.deploy = self.source / 'deploy/test-server'
         self.deploy.mkdir(parents=True)
-        for name in ['ci-build.sh', 'redeploy.sh', 'build-on-server.sh',
+        for name in ['ci-build.sh', 'redeploy.sh', 'build-on-server.sh', 'publish-jenkins-base-images.sh',
                      'db-init.sh', 'db-upgrade.sh', 'migrate-database.py', 'docker-compose.yml', 'Dockerfile']:
             shutil.copyfile(REPOSITORY / 'deploy/test-server' / name, self.deploy / name)
+        (self.deploy / 'jenkins').mkdir()
+        for name in ['ci-base-images.Dockerfile', 'maven-settings.xml']:
+            shutil.copyfile(REPOSITORY / 'deploy/test-server/jenkins' / name, self.deploy / 'jenkins' / name)
         # Network checks are intercepted by the fake Python executable below.
         (self.deploy / 'verify-frontend.py').write_text('# public verifier fixture\n', encoding='utf-8')
         self.sha = '0123456789abcdef0123456789abcdef01234567'
@@ -59,7 +62,7 @@ class ReleaseFlowTests(unittest.TestCase):
         self.database_id = 'c' * 64
         self.env = dict(os.environ)
         for key in ['VERIFY_ONLY', 'SKIP_DEPLOY', 'NO_PUSH', 'IMAGE_TAG', 'COMMON_JAVA_IMAGE',
-                    'REGISTRY', 'BASE_REGISTRY', 'NPM_REGISTRY', 'APP_PORT', 'HEALTH_URL',
+                    'REGISTRY', 'BASE_REGISTRY', 'NPM_REGISTRY', 'CI_BASE_UPSTREAM', 'APP_PORT', 'HEALTH_URL',
                     'SOURCE_SHA', 'BUILD_NUMBER', 'COMMON_FLYWAY_IMAGE', 'COMMON_DATABASE_CONTAINER',
                     'INITIAL_ADMIN_PASSWORD', 'PUBLIC_BASE_URL', 'CORS_ALLOW_ORIGINS']:
             self.env.pop(key, None)
@@ -109,7 +112,7 @@ case "${1:-}" in
     event='image.build'
     previous=''
     for value in "$@"; do
-      if [[ "$previous" == '-t' ]]; then image="$value"; fi
+      if [[ "$previous" == '-t' || "$previous" == '--tag' ]]; then image="$value"; fi
       previous="$value"
     done
     ;;
@@ -172,7 +175,7 @@ esac
 
     def run_release(self, entry='ci-build.sh', action=None, **environment):
         env = dict(self.env, **environment)
-        args = [] if entry == 'ci-build.sh' else [self.source.as_posix()]
+        args = [] if entry in ('ci-build.sh', 'publish-jenkins-base-images.sh') else [self.source.as_posix()]
         if action is not None:
             args.append(action)
         # Resolve the fake directory inside Bash so this also works with Git Bash on Windows.
@@ -198,10 +201,29 @@ esac
         self.assertEqual(self.old_compose, (self.compose / 'docker-compose.yml').read_bytes())
 
     def test_skip_deploy_true_builds_and_pushes_without_touching_database(self):
-        self.success(self.run_release(SKIP_DEPLOY='true'))
+        base_registry = '192.168.1.182:5000/cyt-common-ci-r1/'
+        npm_registry = 'https://registry.example.invalid/npm/'
+        self.success(self.run_release(SKIP_DEPLOY='true', BASE_REGISTRY=base_registry, NPM_REGISTRY=npm_registry))
         self.assertEqual(['migration.lint', 'docker.info', 'image.build', 'image.push'], self.names())
+        docker_build = next(event[2] for event in self.events() if event[0] == 'image.build')
+        self.assertIn('--build-arg BASE_REGISTRY=' + base_registry, docker_build)
+        self.assertIn('--build-arg NPM_REGISTRY=' + npm_registry, docker_build)
         self.assertEqual(self.original_environment, self.environment_file.read_text(encoding='utf-8'))
         self.assertEqual(self.old_compose, (self.compose / 'docker-compose.yml').read_bytes())
+
+    def test_publishes_all_three_dedicated_base_images(self):
+        self.success(self.run_release('publish-jenkins-base-images.sh'))
+        stages = [('frontend', 'node:22-alpine'), ('backend', 'maven:3.9-eclipse-temurin-21'),
+                  ('runtime', 'eclipse-temurin:21-jre-noble')]
+        references = ['192.168.1.182:5000/cyt-common-ci-r1/' + tag for _, tag in stages]
+        builds, pushes = self.events()[:3], self.events()[3:]
+        self.assertEqual(['image.build'] * 3 + ['image.push'] * 3, self.names())
+        self.assertEqual(references, [event[1] for event in builds])
+        self.assertEqual(references, [event[1] for event in pushes])
+        for (stage, _), (_, _, args) in zip(stages, builds):
+            self.assertIn(f'--target {stage}', args)
+            self.assertIn('jenkins/ci-base-images.Dockerfile', args)
+            self.assertIn('--build-arg CI_BASE_UPSTREAM=docker.io/library/', args)
 
     def test_failed_migration_cannot_pull_or_replace_application(self):
         result = self.run_release(RELEASE_TEST_MIGRATION_EXIT='17')

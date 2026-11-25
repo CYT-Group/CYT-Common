@@ -54,7 +54,9 @@ echo deploy >> stages
         python3.chmod(0o755)
 
     def git(self, *args):
-        return subprocess.check_output([GIT, *args], cwd=self.root, text=True, encoding='utf-8', stderr=subprocess.DEVNULL)
+        # Windows can drop empty Git config values from the native environment after mock tests.
+        return subprocess.check_output([GIT, *args], cwd=self.root, env=os.environ.copy(),
+                                       text=True, encoding='utf-8', stderr=subprocess.DEVNULL)
 
     def run_build(self, **extra):
         env = os.environ.copy()

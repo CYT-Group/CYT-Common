@@ -49,6 +49,7 @@ SKIP_DEPLOY=true 只构建推送，不迁库、不更新容器。</description>
     <hudson.tasks.Shell>
       <command>#!/usr/bin/env bash
 set -Eeuo pipefail
+export BASE_REGISTRY="${BASE_REGISTRY-192.168.1.182:5000/cyt-common-ci-r1/}"
 bash /opt/cyt-common/deploy/jenkins-build.sh
 </command>
     </hudson.tasks.Shell>
