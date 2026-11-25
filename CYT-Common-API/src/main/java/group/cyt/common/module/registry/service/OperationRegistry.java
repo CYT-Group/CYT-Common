@@ -6,6 +6,7 @@ import com.networknt.schema.*;
 import group.cyt.common.core.exception.GatewayException;
 import group.cyt.common.core.persistence.GatewayStore;
 import group.cyt.common.core.util.JsonUtils;
+import group.cyt.common.module.registry.catalog.platform.TikTokCatalog;
 import group.cyt.common.module.registry.model.OperationDefinition;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -69,6 +70,9 @@ public class OperationRegistry {
       for (String section : List.of("operations", "platforms", "credentials"))
         ((ArrayNode) contract.path(section)).addAll((ArrayNode) discord.path(section));
     }
+    var tiktok = TikTokCatalog.catalog().contract();
+    for (String section : List.of("operations", "platforms", "credentials"))
+      ((ArrayNode) contract.path(section)).addAll((ArrayNode) tiktok.path(section));
     for (JsonNode n : contract.path("operations")) {
       var op = JsonUtils.MAPPER.treeToValue(n, OperationDefinition.class);
       if (builtins.putIfAbsent(op.key(), op) != null)

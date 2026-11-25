@@ -41,7 +41,7 @@ public class AdapterDispatcher {
   public boolean mock(OperationDefinition op) {
     // Upload never inherits the local default MOCK_ALL=true or a resource-level switch.
     if (op.rawBinary()) return settings.flag("NAS_MOCK", settings.flag("MOCK_ALL", false));
-    if (op.platform().equals("discord")) return false;
+    if (op.platform().equals("discord") || op.platform().equals("tiktok")) return false;
     if (!registry.builtin(op.key())) return false;
     for (String flag : mockFlags(op)) if (settings.isSet(flag)) return settings.flag(flag, false);
     return settings.mock();

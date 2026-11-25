@@ -67,6 +67,9 @@ public final class ParameterRules {
   }
 
   public static void validate(String key, Map<String, Object> p) {
+    if (key.startsWith("tiktok.") && p.get("updated_from") instanceof Number from
+        && p.get("updated_until") instanceof Number until && from.longValue() >= until.longValue())
+      throw GatewayException.invalid("updated_until 必须晚于 updated_from");
     if (key.equals("gdrive.files.upload") || key.equals("gcs.objects.upload"))
       if ((p.get("content_text") == null) == (p.get("content_base64") == null))
         throw GatewayException.invalid("content_text 与 content_base64 必须且只能提供一个");

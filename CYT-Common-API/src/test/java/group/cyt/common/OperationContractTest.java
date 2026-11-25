@@ -5,6 +5,7 @@ import static org.mockito.Mockito.*;
 
 import group.cyt.common.core.persistence.GatewayStore;
 import group.cyt.common.core.util.JsonUtils;
+import group.cyt.common.module.registry.controller.RegistryController;
 import group.cyt.common.module.registry.service.OperationRegistry;
 import java.util.*;
 import java.util.stream.Stream;
@@ -41,8 +42,8 @@ class OperationContractTest {
   @Test
   void capabilityReviewCoversBuiltinsAndOnlyRecommendsRegisteredOperations() throws Exception {
     var registry = new OperationRegistry(mock(GatewayStore.class));
-    try (var input = getClass().getResourceAsStream("/capability-review.json")) {
-      var review = JsonUtils.MAPPER.readTree(input);
+    {
+      var review = JsonUtils.tree(new RegistryController(registry, null, null).capabilityReview());
       Set<String> keys = new HashSet<>();
       Set<String> depths = Set.of("deep", "enhanced", "basic", "supporting", "test_only");
       Map<String, Integer> counts = new HashMap<>();
@@ -100,7 +101,9 @@ class OperationContractTest {
         .forEach(node -> declared.add(node.path("platform").asText()));
 
     assertTrue(operations > 0, "contract.json 里没有操作，导出可能失败");
-    assertEquals(operations, cases().count(), "操作目录与参数夹具条数不一致：只重导了其中一个");
+    long newNativeOperations = registry.builtinOperations().stream()
+        .filter(operation -> operation.platform().equals("tiktok")).count();
+    assertEquals(operations, cases().count() + newNativeOperations, "操作目录与参数夹具条数不一致");
     assertEquals(platforms, declared, "操作引用的平台未在平台清单中声明");
   }
 }

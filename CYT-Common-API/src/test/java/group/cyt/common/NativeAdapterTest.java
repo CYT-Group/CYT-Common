@@ -20,6 +20,7 @@ import group.cyt.common.module.adapter.nas.NasAdapter;
 import group.cyt.common.module.adapter.quickcep.QuickcepAdapter;
 import group.cyt.common.module.adapter.shopify.ShopifyAdapter;
 import group.cyt.common.module.adapter.source.CustomerSourcesAdapter;
+import group.cyt.common.module.adapter.tiktok.TikTokAdapter;
 import group.cyt.common.module.adapter.support.*;
 import group.cyt.common.module.adapter.wecom.WecomAdapter;
 import group.cyt.common.module.adapter.wecom.approval.*;
@@ -1277,7 +1278,8 @@ class NativeAdapterTest {
             new DiscordClient(credentials, http, new GatewaySettings(new MockEnvironment())),
             mock(DiscordEvents.class),
             mock(DiscordGatewayListener.class)),
-        new CustomerSourcesAdapter(credentials, http));
+        new CustomerSourcesAdapter(credentials, http),
+        new TikTokAdapter(credentials, http));
   }
 
   /**

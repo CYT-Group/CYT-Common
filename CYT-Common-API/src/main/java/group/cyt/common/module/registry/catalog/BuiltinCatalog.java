@@ -130,6 +130,7 @@ public final class BuiltinCatalog {
                 new PaypalCatalog(),
                 new StripeCatalog(),
                 new RdCatalog(),
-                new DiscordCatalog()));
+                new DiscordCatalog(),
+                new TikTokCatalog()));
   }
 }

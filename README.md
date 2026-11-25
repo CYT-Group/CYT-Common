@@ -79,6 +79,8 @@ java -jar target/common-api-1.0.0-SNAPSHOT.jar
 
 Discord 已增加 11 个原生接口、加密凭据登记、持久化实时监听及重启恢复；接入配置、缓存策略与切换边界见 [Discord 接入](docs/discord.md)。中台现用 Python 路由保持运行，Java 版需完成凭据与授权配置后再切换。
 
+TikTok Shop 提供客服会话、消息、订单、商品、物流和退货退款的 8 项独立读取操作。[TikTok Shop 接入](docs/tiktok-shop.md)
+
 操作目录由版本化契约生成，保留原参数名、公开路径和旧操作名称别名，覆盖 DocuSign、企业微信、Shopify、Gmail、Google Drive、GCS、NAS MinIO、QuickCEP、领星、Winit、Discord 等平台。
 
 群晖 MinIO 的全部网关操作、File Station 原生接口与批量建目录示例见 [群晖 NAS 接口文档](docs/synology-nas-api.md)。

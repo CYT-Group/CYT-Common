@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import group.cyt.common.core.exception.GatewayException;
 import group.cyt.common.core.persistence.GatewayStore;
 import group.cyt.common.core.util.JsonUtils;
+import group.cyt.common.module.registry.catalog.platform.TikTokCatalog;
 import group.cyt.common.module.registry.model.OperationDefinition;
 import java.util.*;
 import org.springframework.stereotype.Service;
@@ -26,6 +27,9 @@ public class DocumentationContracts {
           .setAll(
               (com.fasterxml.jackson.databind.node.ObjectNode) JsonUtils.MAPPER.readTree(input));
     }
+    var tiktok = TikTokCatalog.catalog().responses();
+    tiktok.remove("$collection");
+    ((com.fasterxml.jackson.databind.node.ObjectNode) contracts).setAll(tiktok);
   }
 
   private Map<String, Object> custom(OperationDefinition op) {

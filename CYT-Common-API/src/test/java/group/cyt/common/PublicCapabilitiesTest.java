@@ -55,6 +55,14 @@ class PublicCapabilitiesTest {
 
   private static void removeJavaOnlyOperations(Map<String, JsonNode> actual) {
     for (String key : List.of(
+        "tiktok.conversations.list",
+        "tiktok.messages.list",
+        "tiktok.orders.list",
+        "tiktok.orders.get",
+        "tiktok.products.list",
+        "tiktok.products.get",
+        "tiktok.tracking.get",
+        "tiktok.returns.list",
         "shopify.orders.cancel",
         "stripe.disputes.closures",
         "stripe.disputes.closure_history",

@@ -1,9 +1,11 @@
 package group.cyt.common.module.registry.controller;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import group.cyt.common.core.exception.GatewayException;
 import group.cyt.common.core.persistence.GatewayStore;
 import group.cyt.common.core.util.JsonUtils;
 import group.cyt.common.module.auth.service.AuthenticationService;
+import group.cyt.common.module.registry.catalog.platform.TikTokCatalog;
 import group.cyt.common.module.registry.model.OperationDefinition;
 import group.cyt.common.module.registry.service.DocumentationContracts;
 import group.cyt.common.module.registry.service.OperationRegistry;
@@ -42,10 +44,18 @@ public class RegistryController {
   @GetMapping("/capability-review")
   public Object capabilityReview() {
     try (var input = getClass().getResourceAsStream("/capability-review.json")) {
-      return JsonUtils.parse(
-          new String(
-              Objects.requireNonNull(input).readAllBytes(),
-              java.nio.charset.StandardCharsets.UTF_8));
+      var review = (ObjectNode) JsonUtils.MAPPER.readTree(Objects.requireNonNull(input));
+      var extra = TikTokCatalog.catalog().capabilityReview();
+      var items = review.withArray("items");
+      items.addAll(extra.withArray("items"));
+      var summary = review.withObject("/depth_summary");
+      var counts = summary.withObject("/counts");
+      extra.path("depth_summary").path("counts").fields()
+          .forEachRemaining(entry -> counts.put(entry.getKey(),
+              counts.path(entry.getKey()).asInt() + entry.getValue().asInt()));
+      summary.put("total", items.size());
+      summary.put("all_deep", !items.isEmpty() && counts.path("deep").asInt() == items.size());
+      return review;
     } catch (java.io.IOException e) {
       throw new IllegalStateException("Cannot load capability review", e);
     }
