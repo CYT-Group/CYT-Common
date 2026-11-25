@@ -32,9 +32,9 @@
     }
   ],
   "depth_summary": {
-    "total": 178,
+    "total": 179,
     "counts": {
-      "enhanced": 90,
+      "enhanced": 91,
       "deep": 31,
       "test_only": 1,
       "basic": 51,
@@ -4235,6 +4235,27 @@
       "key": "nas.objects.upload",
       "platform": "nas",
       "summary": "统一文件代理上传"
+    },
+    {
+      "source": "src/main/java/group/cyt/common/module/adapter/nas/NasAdapter.java",
+      "current": "按相对路径去重并补齐父目录，目录已存在时跳过，逐项返回创建结果。",
+      "proposal": "在选定的 MinIO 桶和前缀下提交整套目录模板，根据逐项结果处理失败。",
+      "caveat": "依赖上游支持条件写入；失败分支保留已经创建的目录。",
+      "assessment": "ready",
+      "depth": "enhanced",
+      "evidence": [
+        {
+          "path": "src/main/java/group/cyt/common/module/adapter/nas/NasAdapter.java",
+          "line": 295,
+          "anchor": "private static Map<String, Object> createFolderBatch("
+        }
+      ],
+      "recommended_operations": [],
+      "depth_reason": "预校验和补齐层级，结合前缀查询及条件写入避免覆盖。",
+      "remaining_gap": "批量创建按目录写入，可能部分成功。",
+      "key": "nas.folders.create_batch",
+      "platform": "nas",
+      "summary": "批量创建多级目录"
     }
   ]
 }

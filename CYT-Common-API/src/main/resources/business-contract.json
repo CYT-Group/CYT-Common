@@ -4369,6 +4369,57 @@
       "transport": "raw_binary",
       "http_method": "PUT",
       "cost": "none"
+    },
+    {
+      "key": "nas.folders.create_batch",
+      "platform": "nas",
+      "summary": "批量创建多级目录",
+      "description": "在 MinIO 桶内按相对路径批量创建目录，自动补齐 base_prefix 下的父目录。单批最多 100 个目录（含自动补齐项）。已存在的目录返回 exists，其余目录继续处理。逐项返回结果，需精确授权。",
+      "quota": "20/min",
+      "sensitive": true,
+      "idempotent": false,
+      "since": "2026-11",
+      "deprecated": false,
+      "tags": ["write"],
+      "category": "目录",
+      "path": "/integrations/nas/folders/create-batch",
+      "schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["paths"],
+        "properties": {
+          "bucket": {
+            "type": "string",
+            "maxLength": 63,
+            "description": "可选桶名，默认 NAS_MINIO_BUCKET"
+          },
+          "base_prefix": {
+            "type": "string",
+            "default": "",
+            "maxLength": 500,
+            "description": "目标父前缀，相对于桶根，默认在桶根创建；支持可选末尾斜杠"
+          },
+          "paths": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 100,
+            "items": {"type": "string", "minLength": 1, "maxLength": 500},
+            "description": "相对于 base_prefix 的目录路径，用 / 表示层级；支持中文、空格和可选末尾斜杠。补齐并去重后最多 100 个目录，完整目录键最长 500 UTF-8 字节"
+          }
+        },
+        "examples": [
+          {
+            "base_prefix": "products/SKU-001",
+            "paths": ["产品图片/拍摄白底图", "产品视频/竖视频/how to use 视频", "产品设计图/海报设计"]
+          }
+        ]
+      },
+      "timeout_s": 120.0,
+      "retry_max": 1,
+      "sort_order": 16,
+      "transport": "json",
+      "http_method": "POST",
+      "cost": "none"
     }
   ],
   "native_extensions": [

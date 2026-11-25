@@ -508,5 +508,38 @@
         "description": "仅模拟上传时为 true"
       }
     }
+  },
+  "nas.folders.create_batch": {
+    "type": "object",
+    "required": ["bucket", "items", "total", "created", "exists", "failed"],
+    "properties": {
+      "bucket": {"type": "string", "description": "实际目标桶"},
+      "total": {"type": "integer", "description": "去重后的目录数，含自动补齐的父目录"},
+      "created": {"type": "integer", "description": "新建目录数"},
+      "exists": {"type": "integer", "description": "已存在并跳过的目录数"},
+      "failed": {"type": "integer", "description": "失败或因父目录失败而未尝试的目录数"},
+      "items": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": ["key", "status"],
+          "properties": {
+            "key": {"type": "string", "description": "相对于桶根的完整目录键，末尾带 /"},
+            "status": {"type": "string", "enum": ["created", "exists", "failed"]},
+            "error": {
+              "type": "object",
+              "description": "仅 status=failed 时返回",
+              "required": ["code", "message", "retryable"],
+              "properties": {
+                "code": {"type": "string", "description": "失败代码"},
+                "message": {"type": "string", "description": "失败说明"},
+                "retryable": {"type": "boolean", "description": "是否适合重试"}
+              }
+            }
+          }
+        }
+      },
+      "_mock": {"type": "boolean", "description": "仅模拟时为 true"}
+    }
   }
 }

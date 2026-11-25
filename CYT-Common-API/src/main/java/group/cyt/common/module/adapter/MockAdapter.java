@@ -2,6 +2,7 @@ package group.cyt.common.module.adapter;
 
 import group.cyt.common.core.exception.GatewayException;
 import group.cyt.common.core.util.JsonUtils;
+import group.cyt.common.module.adapter.nas.NasAdapter;
 import group.cyt.common.module.registry.model.OperationDefinition;
 import java.time.Instant;
 import java.util.*;
@@ -278,6 +279,7 @@ public class MockAdapter {
                   "contentType",
                   "application/octet-stream");
     if (op.platform().equals("nas")) {
+      if (key.equals("nas.folders.create_batch")) return NasAdapter.mockCreateFolders(p);
       if (action.equals("presign_get"))
         return JsonUtils.obj(
             "items",

@@ -789,5 +789,15 @@
       "filename": "file.bin",
       "folder": ""
     }
+  },
+  {
+    "operation": "nas.folders.create_batch",
+    "params": {
+      "paths": ["产品图片/拍摄白底图", "产品视频/竖视频/how to use 视频"]
+    },
+    "normalized": {
+      "paths": ["产品图片/拍摄白底图", "产品视频/竖视频/how to use 视频"],
+      "base_prefix": ""
+    }
   }
 ]

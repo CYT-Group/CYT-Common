@@ -13,6 +13,8 @@ import java.nio.charset.StandardCharsets;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
+import java.util.function.BiPredicate;
 import javax.xml.parsers.DocumentBuilderFactory;
 import org.springframework.stereotype.Component;
 import org.w3c.dom.*;
@@ -21,6 +23,8 @@ import org.w3c.dom.*;
 @Component
 public class NasAdapter implements PlatformAdapter {
   private record Config(URI endpoint, String access, String secret, String region, String bucket) {}
+
+  private static final int MAX_BATCH_FOLDERS = 100;
 
   private final CredentialService credentials;
   private final UpstreamHttp http;
@@ -93,6 +97,8 @@ public class NasAdapter implements PlatformAdapter {
             p.get("expires"));
       }
       case "objects.list" -> list(cfg, p);
+      case "folders.create_batch" ->
+          createFolderBatch(p, bucket, (name, deadline) -> createFolder(cfg, name, deadline));
       case "objects.stat" -> {
         String name = validKey(JsonUtils.str(p, "key"));
         var response = send(cfg, "HEAD", bucket, name, Map.of(), Map.of(), null);
@@ -277,6 +283,145 @@ public class NasAdapter implements PlatformAdapter {
     return result;
   }
 
+  public static Object mockCreateFolders(Map<String, Object> p) {
+    String bucket = JsonUtils.str(p, "bucket");
+    if (bucket.isBlank()) bucket = "cyt-training";
+    validBucket(bucket);
+    var result = createFolderBatch(p, bucket, (key, deadline) -> true);
+    result.put("_mock", true);
+    return result;
+  }
+
+  private static Map<String, Object> createFolderBatch(
+      Map<String, Object> p, String bucket, BiPredicate<String, Long> createFolder) {
+    var parents = folderPlan(p);
+    var failed = new HashMap<String, Boolean>();
+    List<Object> items = new ArrayList<>();
+    int created = 0;
+    int exists = 0;
+    // Finish collecting per-folder outcomes before the gateway's 120-second timeout.
+    long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(110);
+    for (var folder : parents.entrySet()) {
+      String key = folder.getKey();
+      var item = JsonUtils.obj("key", key);
+      items.add(item);
+      try {
+        Boolean parentRetryable = failed.get(folder.getValue());
+        if (parentRetryable != null)
+          throw new GatewayException(502, "upstream_error", "父目录未确认创建", parentRetryable)
+              .code("PARENT_FOLDER_FAILED");
+        if (createFolder.test(key, deadline)) {
+          item.put("status", "created");
+          created++;
+        } else {
+          item.put("status", "exists");
+          exists++;
+        }
+      } catch (GatewayException e) {
+        boolean retryable = e.retryable || "UPSTREAM_HTTP_409".equals(e.code);
+        failed.put(key, retryable);
+        item.put("status", "failed");
+        item.put(
+            "error",
+            JsonUtils.obj(
+                "code",
+                e.code == null ? e.type : e.code,
+                "message",
+                e.getMessage(),
+                "retryable",
+                retryable));
+      }
+    }
+    return JsonUtils.obj(
+        "bucket",
+        bucket,
+        "items",
+        items,
+        "total",
+        items.size(),
+        "created",
+        created,
+        "exists",
+        exists,
+        "failed",
+        failed.size());
+  }
+
+  private static Map<String, String> folderPlan(Map<String, Object> p) {
+    var paths = JsonUtils.list(p.get("paths"));
+    if (paths.isEmpty() || paths.size() > MAX_BATCH_FOLDERS)
+      throw GatewayException.invalid("paths 必须包含 1–100 个目录路径");
+    String base = JsonUtils.str(p, "base_prefix");
+    if (!base.isEmpty()) base = folderPrefix(base);
+    var parents = new LinkedHashMap<String, String>();
+    for (Object value : paths) {
+      if (!(value instanceof String path)) throw GatewayException.invalid("paths 必须为字符串数组");
+      String prefix = folderPrefix(path);
+      validKey(base + prefix);
+      String parent = base;
+      for (int end = prefix.indexOf('/'); end >= 0; end = prefix.indexOf('/', end + 1)) {
+        String key = base + prefix.substring(0, end + 1);
+        parents.putIfAbsent(key, parent);
+        if (parents.size() > MAX_BATCH_FOLDERS)
+          throw GatewayException.invalid("补齐父目录后单批最多 100 个目录");
+        parent = key;
+      }
+    }
+    return parents;
+  }
+
+  private static String folderPrefix(String path) {
+    String name = path.endsWith("/") ? path.substring(0, path.length() - 1) : path;
+    if (name.indexOf('\\') >= 0
+        || name.codePoints().anyMatch(Character::isISOControl)
+        || !StandardCharsets.UTF_8.newEncoder().canEncode(name)
+        || Arrays.stream(name.split("/", -1))
+            .anyMatch(segment -> segment.isBlank() || segment.equals(".") || segment.equals("..")))
+      throw GatewayException.invalid("目录须使用相对路径，禁止空路径段、.、..、反斜杠或控制字符");
+    return name + "/";
+  }
+
+  private boolean createFolder(Config cfg, String key, long deadline) {
+    // A prefix containing a file is already visible as a folder even without a marker object.
+    var listing =
+        send(
+            cfg,
+            "GET",
+            cfg.bucket(),
+            "",
+            Map.of("list-type", "2", "max-keys", "1", "prefix", key, "encoding-type", "url"),
+            Map.of(),
+            null,
+            folderTimeout(deadline));
+    var document = xml(listing.body());
+    if (!"ListBucketResult".equals(document.getDocumentElement().getLocalName()))
+      throw new GatewayException(502, "upstream_error", "NAS 返回了无效的目录列表", false);
+    if (!elements(document, "Contents").isEmpty()) return false;
+    try {
+      send(
+          cfg,
+          "PUT",
+          cfg.bucket(),
+          key,
+          Map.of(),
+          Map.of("if-none-match", "*", "Content-Type", "application/octet-stream"),
+          new byte[0],
+          folderTimeout(deadline));
+      return true;
+    } catch (GatewayException e) {
+      if ("UPSTREAM_HTTP_412".equals(e.code)) return false;
+      throw e;
+    }
+  }
+
+  private static double folderTimeout(long deadline) {
+    double remaining = (deadline - System.nanoTime()) / 1_000_000_000.0;
+    if (Thread.currentThread().isInterrupted() || remaining < 1)
+      throw new GatewayException(504, "upstream_timeout", "批量建目录已到执行时限", true)
+          .code("FOLDER_BATCH_TIMEOUT");
+    return Math.min(5, remaining);
+  }
+
   private Object list(Config cfg, Map<String, Object> p) {
     Map<String, String> query = new LinkedHashMap<>();
     query.put("list-type", "2");
@@ -447,6 +592,18 @@ public class NasAdapter implements PlatformAdapter {
       Map<String, String> query,
       Map<String, String> supplied,
       byte[] body) {
+    return send(cfg, method, bucket, key, query, supplied, body, 120);
+  }
+
+  private UpstreamHttp.ResponseData send(
+      Config cfg,
+      String method,
+      String bucket,
+      String key,
+      Map<String, String> query,
+      Map<String, String> supplied,
+      byte[] body,
+      double timeout) {
     String path = path(cfg, bucket, key),
         payload =
             HexFormat.of()
@@ -455,7 +612,7 @@ public class NasAdapter implements PlatformAdapter {
     String url = cfg.endpoint().getScheme() + "://" + cfg.endpoint().getRawAuthority() + path;
     String q = canonicalQuery(query);
     if (!q.isBlank()) url += "?" + q;
-    return http.exchange(method, url, headers, body, 120, null);
+    return http.exchange(method, url, headers, body, timeout, null);
   }
 
   private Map<String, String> signedHeaders(

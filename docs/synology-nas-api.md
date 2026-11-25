@@ -1,12 +1,12 @@
 # 群晖 NAS 接口文档
 
-业务系统通过 Common API 访问群晖上的 MinIO。本文覆盖 Java 网关内置的 14 个 `nas.*` 操作，以及群晖 File Station 公开 API 的调用方式。**Common API 暂无专用的批量建目录路由。** MinIO 桶内可逐个写入目录标记，DSM 共享文件夹内则可用 File Station 一次创建多个目录。两种调用分别使用对象键和 DSM 路径。
+业务系统通过 Common API 访问群晖上的 MinIO。本文覆盖网关的 `nas.*` 操作，包括在 MinIO 桶内批量创建多级目录，以及群晖 File Station 公开 API 的调用方式。
 
 ## Common API 快速接入
 
 - `COMMON_API_BASE` 使用分配给业务系统的网关地址，本地 Java 服务默认为 `http://127.0.0.1:8189`。
 - 业务后端通过 `Authorization: Bearer <业务系统 API Key>` 鉴权。网关按操作授权并解析调用方的 MinIO 凭据。`nas.objects.upload` 要求精确的 allow 规则。
-- 除代理上传使用原始二进制 PUT，其余 13 项均使用 POST 和 `Content-Type: application/json`。请求体直接传业务参数，无参数时传 `{}`。
+- 除代理上传使用原始二进制 PUT，其余操作均使用 POST 和 `Content-Type: application/json`。请求体直接传业务参数，无参数时传 `{}`。
 - 对象接口的桶参数省略时使用调用方的 `NAS_MINIO_BUCKET`，再回落到 `cyt-training`。复制对象使用 `source_bucket` 和 `dest_bucket`，其余对象接口使用 `bucket`。`key` 相对于桶根，最长 500 UTF-8 字节，不允许以 `/` 开头、包含 `..` 路径段或控制字符。
 - 各接口列出的配额为目录默认值。实际调用还受调用方授权和平台配额限制。
 
@@ -185,18 +185,45 @@ curl --fail-with-body --request PUT \
 
 ### MinIO 桶内的目录
 
-有文件时，直接上传到 `projects/design/plan.pdf` 这样的键即可形成目录前缀。需要预先保留空目录时，可通过代理上传写一个键为 `projects/design/` 的 0 字节目录标记。业务后端遍历目录列表，每个目录发起一次 PUT 并记录各项结果。以下是其中一项请求。 [S3 目录标记说明](https://docs.aws.amazon.com/AmazonS3/latest/userguide/using-folders.html)
+`POST /integrations/nas/folders/create-batch` · `nas.folders.create_batch` · `20/min` · 精确授权
+
+- `bucket` 可选，默认使用调用方的配置。MinIO 凭据需具备目标目录的 `s3:ListBucket` 和 `s3:PutObject` 权限。
+- `base_prefix` 可选，指定相对桶根的目标前缀。省略时在桶根创建。网关只在该前缀下创建目录标记。
+- `paths` 必填，传 1–100 条相对路径，用 `/` 表示层级。支持中文、空格和可选末尾斜杠。网关先校验整个请求，再去重并补齐父目录。补齐后最多 100 个目录，完整目录键包含末尾斜杠最多 500 UTF-8 字节。空路径段、`.`、`..`、反斜杠和控制字符会导致请求返回 `422`。
+- `data.items[]` 按父目录优先返回，每项包含完整目录 `key` 和 `status`。`created` 表示已创建。`exists` 表示跳过并保留已有数据，包括已有文件的目录和已有目录标记。`failed` 附带 `error.code`、`error.message` 和 `error.retryable`。父目录失败时，其后代返回 `PARENT_FOLDER_FAILED`，独立分支继续处理。
+- `data.total`、`created`、`exists`、`failed` 按去重后的目录计数。应检查 `data.failed` 判断是否全部完成。重试时可重新提交原请求，已完成的目录会返回 `exists`。并发创建同名标记时使用 MinIO 条件写入保留已有内容。 [MinIO S3 条件请求支持](https://docs.min.io/aistor/developers/s3-api-compatibility/#conditional-headers)
+
+以下以一套产品素材目录为例，只提交末级路径即可建出 21 个目录。
 
 ```bash
-curl --fail-with-body --request PUT \
-  "$COMMON_API_BASE/integrations/nas/objects/upload?bucket=example-docs&filename=design&key=projects%2Fdesign%2F" \
+curl --fail-with-body --request POST \
+  "$COMMON_API_BASE/integrations/nas/folders/create-batch" \
   --header "Authorization: Bearer ${CYT_API_KEY}" \
-  --header 'Content-Type: application/octet-stream' \
-  --header 'Content-Length: 0' \
-  --data-binary ''
+  --header 'Content-Type: application/json' \
+  --data '{
+    "base_prefix": "products/SKU-001",
+    "paths": [
+      "产品图片/拍摄白底图",
+      "产品图片/拍摄社交图",
+      "产品图片/渲染白底图",
+      "产品图片/渲染社交图",
+      "产品视频/竖视频/ASMR纯享视频",
+      "产品视频/竖视频/开箱视频",
+      "产品视频/竖视频/how to use 视频",
+      "产品视频/横视频/ASMR纯享视频",
+      "产品视频/横视频/开箱视频",
+      "产品视频/横视频/how to use 视频",
+      "产品视频/横视频/品宣视频",
+      "产品设计图/亚马逊平台页面设计",
+      "产品设计图/其他平台页面设计",
+      "产品设计图/独立站页面设计",
+      "产品设计图/国内页面设计",
+      "产品设计图/海报设计"
+    ]
+  }'
 ```
 
-调用后可用 `stat` 核对标记键的 `size_bytes=0`，或用 `list` 查询父前缀下的 `prefixes`。只对专用目录标记键执行零字节写入，避免覆盖业务对象。
+调用后可用 `nas.objects.list` 的 `recursive=false` 查看父前缀下的 `prefixes`。
 
 ### DSM 共享文件夹内的目录
 

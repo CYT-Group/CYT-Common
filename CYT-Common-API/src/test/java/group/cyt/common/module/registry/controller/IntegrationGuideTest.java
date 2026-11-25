@@ -70,6 +70,7 @@ class IntegrationGuideTest {
     var spec = JsonUtils.MAPPER.readTree(openapi);
     assertEquals(registry.builtinOperations().size(), spec.path("paths").size());
     assertTrue(spec.path("paths").path("/integrations/nas/objects/upload").has("put"));
+    assertTrue(spec.path("paths").path("/integrations/nas/folders/create-batch").has("post"));
 
     byte[] archive =
         mvc.perform(get("/api-reference/download").header("Authorization", authorization))

@@ -33,6 +33,7 @@ curl --fail-with-body --request POST \
 - `X-Trace-Id` 可选，用来关联业务日志和网关记录。
 - 支持幂等的操作可传 `Idempotency-Key`。需要幂等键的操作应使用稳定的业务请求号，长度最多 128 字符。接口同时要求 `request_id` 时，两者传同一值。重试时沿用原键和原参数。
 - `PUT /integrations/nas/objects/upload` 使用原始文件字节。`filename`、`folder`、`key`、`bucket` 放在 query，提供准确的 `Content-Length` 及文件 `Content-Type`。该操作要求独立精确授权，单次上传超时后先核对目标对象。
+- `POST /integrations/nas/folders/create-batch` 在 MinIO 桶内按相对路径批量创建多级目录。需精确授权 `nas.folders.create_batch`，并按 `data.items` 查看已创建、已存在和失败的目录。 [批量建目录请求示例](synology-nas-api.md#minio-桶内的目录)
 
 成功时从 `data` 读取业务结果。SDK 的 `call` 直接返回 `data`。以下为统一响应结构示例，具体字段随操作变化。
 
