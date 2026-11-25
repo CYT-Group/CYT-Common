@@ -70,7 +70,9 @@ class PublicCapabilitiesTest {
         "paypal.disputes.closures",
         "paypal.disputes.closure_history",
         "nas.objects.upload",
-        "nas.folders.create_batch")) {
+        "nas.folders.create_batch",
+        "wecom.wedrive.file_list",
+        "wecom.wedrive.file_download")) {
       assertNotNull(actual.remove(key), key);
     }
   }

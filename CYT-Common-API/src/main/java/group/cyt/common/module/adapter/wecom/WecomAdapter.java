@@ -86,6 +86,7 @@ public class WecomAdapter implements PlatformAdapter {
           7080,
           "cached",
           !JsonUtils.bool(p.get("refresh")));
+    if (key.startsWith("wedrive.")) return wedrive(c, key.substring(8), p);
     if (key.startsWith("directory.")) return directory(c, key, p);
     if (key.equals("users.get"))
       return call(c, "GET", "/user/get", JsonUtils.obj("userid", p.get("userid")), null, false);
@@ -255,6 +256,32 @@ public class WecomAdapter implements PlatformAdapter {
           JsonUtils.obj("schedule_id", p.get("schedule_id"), "attendees", p.get("attendees")),
           false);
     throw GatewayException.config("未知企微操作: " + key);
+  }
+
+  /**
+   * 微盘接口全部以应用身份调用，不再以成员为操作主体。
+   * file_download 的 fileid 与 selected_ticket 必须且只能提供一个。
+   */
+  private Object wedrive(Context c, String action, Map<String, Object> p) {
+    if (action.equals("file_list")) {
+      var body =
+          JsonUtils.obj(
+              "spaceid", p.get("spaceid"),
+              "fatherid", p.get("fatherid"),
+              "sort_type", JsonUtils.integer(p.get("sort_type"), 1),
+              "start", JsonUtils.integer(p.get("start"), 0),
+              "limit", JsonUtils.integer(p.get("limit"), 100));
+      return call(c, "POST", "/wedrive/file_list", Map.of(), body, false);
+    }
+    if (action.equals("file_download"))
+      return call(
+          c,
+          "POST",
+          "/wedrive/file_download",
+          Map.of(),
+          nonNull(JsonUtils.obj("fileid", p.get("fileid"), "selected_ticket", p.get("selected_ticket"))),
+          false);
+    throw GatewayException.config("未知微盘操作: " + action);
   }
 
   private Context context(Map<String, Object> p, String system) {

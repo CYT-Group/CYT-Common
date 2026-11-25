@@ -1,6 +1,125 @@
 {
   "operations": [
     {
+      "key": "wecom.wedrive.file_list",
+      "platform": "wecom",
+      "summary": "列出微盘目录下的文件",
+      "description": "分页读取指定微盘空间的目录内容。fatherid 传空间 ID 表示根目录；返回 has_more 与 next_start 用于翻页。调用应用需在企微「协作 → 微盘 → API」的可调用应用列表中，并已加入目标空间，否则只能看到空列表。",
+      "quota": "120/min",
+      "sensitive": false,
+      "idempotent": false,
+      "timeout_s": 60,
+      "retry_max": 2,
+      "since": "2026-11",
+      "deprecated": false,
+      "tags": [
+        "read",
+        "business",
+        "wedrive"
+      ],
+      "category": "微盘",
+      "sort_order": -56,
+      "path": "/integrations/wecom/wedrive/file-list",
+      "schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "spaceid": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120,
+            "description": "微盘空间 ID"
+          },
+          "fatherid": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120,
+            "description": "当前目录的 fileid；根目录时传 spaceid"
+          },
+          "sort_type": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 6,
+            "default": 1,
+            "description": "1 名字升序；2 名字降序；3 大小升序；4 大小降序；5 修改时间升序；6 修改时间降序"
+          },
+          "start": {
+            "type": "integer",
+            "minimum": 0,
+            "default": 0,
+            "description": "首次传 0，之后传上次返回的 next_start"
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000,
+            "default": 100,
+            "description": "单次最多拉取的文件数"
+          }
+        },
+        "required": [
+          "spaceid",
+          "fatherid"
+        ],
+        "examples": [
+          {
+            "spaceid": "SPACEID",
+            "fatherid": "SPACEID",
+            "sort_type": 1,
+            "start": 0,
+            "limit": 100
+          }
+        ]
+      },
+      "official_docs": "https://developer.work.weixin.qq.com/document/path/93657"
+    },
+    {
+      "key": "wecom.wedrive.file_download",
+      "platform": "wecom",
+      "summary": "获取微盘文件下载地址",
+      "description": "只支持普通文件（file_type=2），文件夹与微文档不可下载。返回 download_url 与 cookie_name/cookie_value，需带该 cookie 请求地址，链接 2 小时内有效。fileid 与 selected_ticket 必须且只能提供一个。",
+      "quota": "120/min",
+      "sensitive": false,
+      "idempotent": false,
+      "timeout_s": 60,
+      "retry_max": 2,
+      "since": "2026-11",
+      "deprecated": false,
+      "tags": [
+        "read",
+        "business",
+        "wedrive"
+      ],
+      "category": "微盘",
+      "sort_order": -55,
+      "path": "/integrations/wecom/wedrive/file-download",
+      "schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "fileid": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120,
+            "description": "文件 fileid，与 selected_ticket 二选一"
+          },
+          "selected_ticket": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4096,
+            "description": "微盘/文件选择器 jsapi 返回的 selectedTicket，与 fileid 二选一"
+          }
+        },
+        "required": [],
+        "examples": [
+          {
+            "fileid": "FILEID"
+          }
+        ]
+      },
+      "official_docs": "https://developer.work.weixin.qq.com/document/path/97881"
+    },
+    {
       "key": "wecom.approval_templates.list",
       "platform": "wecom",
       "summary": "列出已注册的业务审批模板",

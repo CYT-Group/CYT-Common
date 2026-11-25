@@ -116,6 +116,9 @@ public final class ParameterRules {
           if (!shares.contains(admin.toString()))
             throw GatewayException.invalid("日历管理员必须在通知范围 shares 中");
     }
+    if (key.equals("wecom.wedrive.file_download"))
+      if ((p.get("fileid") == null) == (p.get("selected_ticket") == null))
+        throw GatewayException.invalid("fileid 与 selected_ticket 必须且只能提供一个");
     if (key.equals("wecom.directory.users")) {
       boolean users = p.get("userids") != null,
           departments =

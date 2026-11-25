@@ -1,5 +1,28 @@
 [
   {
+    "operation": "wecom.wedrive.file_list",
+    "params": {
+      "spaceid": "SPACEID",
+      "fatherid": "SPACEID"
+    },
+    "normalized": {
+      "spaceid": "SPACEID",
+      "fatherid": "SPACEID",
+      "sort_type": 1,
+      "start": 0,
+      "limit": 100
+    }
+  },
+  {
+    "operation": "wecom.wedrive.file_download",
+    "params": {
+      "fileid": "FILEID"
+    },
+    "normalized": {
+      "fileid": "FILEID"
+    }
+  },
+  {
     "operation": "wecom.approval_templates.list",
     "params": {},
     "normalized": {}
