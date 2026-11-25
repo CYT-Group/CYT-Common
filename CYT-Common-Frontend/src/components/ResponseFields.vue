@@ -4,7 +4,7 @@ import type { Operation, Schema } from '~/api/types';
 import { responseEnvelope } from '~/utils/integration-direction';
 import SchemaFields from './SchemaFields.vue';
 import JsonViewer from './JsonViewer.vue';
-const props = defineProps<{ operation?: Operation }>();
+const props = defineProps<{ operation?: Operation; readable?: boolean }>();
 const schema = computed(() => responseEnvelope(props.operation));
 const httpWrapper = computed(() =>
   Boolean(props.operation?.response_schema?.properties?.status_code),
@@ -55,12 +55,17 @@ const failure: Schema = {
       :schema="schema"
       field-label="响应字段"
       :show-required="false"
+      :readable="readable"
       empty-text="暂无响应字段"
     />
     <el-collapse class="response-more">
       <el-collapse-item title="失败响应字段" name="errors"
         ><p class="response-note">请求失败时返回以下错误信息，字段以实际错误为准。</p>
-        <SchemaFields :schema="failure" field-label="错误字段" :show-required="false"
+        <SchemaFields
+          :schema="failure"
+          field-label="错误字段"
+          :show-required="false"
+          :readable="readable"
       /></el-collapse-item>
       <el-collapse-item title="完整响应 Schema" name="schema"
         ><JsonViewer :value="schema"

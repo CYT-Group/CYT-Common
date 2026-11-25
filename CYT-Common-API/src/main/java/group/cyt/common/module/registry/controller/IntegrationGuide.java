@@ -8,14 +8,6 @@ final class IntegrationGuide {
   private IntegrationGuide() {}
 
   static String render(Object spec) throws IOException {
-    return render(spec, false);
-  }
-
-  static String renderOnline(Object spec) throws IOException {
-    return render(spec, true);
-  }
-
-  private static String render(Object spec, boolean online) throws IOException {
     try (var input =
         IntegrationGuide.class.getResourceAsStream("/templates/integration-guide.html")) {
       if (input == null) throw new IOException("Integration guide resource missing");
@@ -25,7 +17,6 @@ final class IntegrationGuide {
               .replace("<", "\\u003c")
               .replace(">", "\\u003e");
       return new String(input.readAllBytes(), StandardCharsets.UTF_8)
-          .replace("__CYT_ONLINE__", Boolean.toString(online))
           .replace("__CYT_OPENAPI__", json);
     }
   }

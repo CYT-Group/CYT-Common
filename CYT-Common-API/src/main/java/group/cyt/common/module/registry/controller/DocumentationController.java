@@ -1,9 +1,10 @@
 package group.cyt.common.module.registry.controller;
 
-import group.cyt.common.core.exception.GatewayException;
 import group.cyt.common.core.util.JsonUtils;
+import group.cyt.common.module.auth.service.AuthenticationService;
 import group.cyt.common.module.registry.service.OperationRegistry;
-import java.io.IOException;
+import jakarta.servlet.http.HttpServletRequest;
+import java.net.URI;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import org.springframework.http.HttpHeaders;
@@ -16,7 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api-reference")
-public class PublicDocumentationController {
+public class DocumentationController {
   private static final String README =
       """
       # CYT Common API 接入包
@@ -30,21 +31,25 @@ public class PublicDocumentationController {
       本包展示网关内置接口。调用方的实际授权范围和自定义接口见管理员导出的专属接入包。
       """;
 
-  private record Documents(Map<String, Object> openapi, String html, byte[] archive) {}
+  private record Documents(Map<String, Object> openapi, byte[] archive) {}
 
+  private final AuthenticationService authentication;
   private final SingletonSupplier<Documents> docs;
 
-  public PublicDocumentationController(OperationRegistry registry, RegistryController exporter) {
+  public DocumentationController(
+      AuthenticationService authentication, OperationRegistry registry, RegistryController exporter) {
+    this.authentication = authentication;
     docs = SingletonSupplier.of(() -> generate(registry, exporter));
   }
 
-  @GetMapping(value = {"", "/"}, produces = "text/html;charset=UTF-8")
-  public String guide() {
-    return docs.obtain().html();
+  @GetMapping({"", "/"})
+  public ResponseEntity<Void> guide() {
+    return ResponseEntity.status(302).location(URI.create("/#/docs")).build();
   }
 
   @GetMapping("/openapi.json")
-  public ResponseEntity<Map<String, Object>> openapi() {
+  public ResponseEntity<Map<String, Object>> openapi(HttpServletRequest request) {
+    authentication.admin(request);
     return ResponseEntity.ok()
         .contentType(MediaType.APPLICATION_JSON)
         .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"cyt-common-openapi.json\"")
@@ -52,7 +57,8 @@ public class PublicDocumentationController {
   }
 
   @GetMapping("/download")
-  public ResponseEntity<byte[]> download() {
+  public ResponseEntity<byte[]> download(HttpServletRequest request) {
+    authentication.admin(request);
     return IntegrationPackage.download(docs.obtain().archive(), "cyt-common-integration.zip");
   }
 
@@ -67,11 +73,6 @@ public class PublicDocumentationController {
     spec.put("info", info);
     spec.put("x-cyt-public-reference", true);
     spec.put("x-cyt-platform-labels", platforms);
-    try {
-      return new Documents(
-          spec, IntegrationGuide.renderOnline(spec), IntegrationPackage.build(spec, README));
-    } catch (IOException e) {
-      throw GatewayException.config("在线接入文档生成失败");
-    }
+    return new Documents(spec, IntegrationPackage.build(spec, README));
   }
 }

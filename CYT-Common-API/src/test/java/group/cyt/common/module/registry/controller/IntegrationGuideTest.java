@@ -5,8 +5,11 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import group.cyt.common.core.config.GatewaySettings;
+import group.cyt.common.core.exception.GlobalExceptionHandler;
 import group.cyt.common.core.persistence.GatewayStore;
 import group.cyt.common.core.util.JsonUtils;
+import group.cyt.common.module.auth.service.AuthenticationService;
 import group.cyt.common.module.registry.service.DocumentationContracts;
 import group.cyt.common.module.registry.service.OperationRegistry;
 import java.io.ByteArrayInputStream;
@@ -16,6 +19,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.zip.ZipInputStream;
 import org.junit.jupiter.api.Test;
+import org.springframework.mock.env.MockEnvironment;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 class IntegrationGuideTest {
@@ -32,39 +36,43 @@ class IntegrationGuideTest {
   }
 
   @Test
-  void servesMatchingPublicDocumentationAndZipWithoutReadingPrivateConfiguration() throws Exception {
+  void redirectsToTheWorkspaceAndRequiresAnAdminSessionForDownloads() throws Exception {
     var store = mock(GatewayStore.class);
     var registry = new OperationRegistry(store);
     var exporter =
         new RegistryController(registry, store, new DocumentationContracts(store, registry));
+    var authentication = new AuthenticationService(new GatewaySettings(new MockEnvironment()), store);
+    var authorization = "Bearer " + authentication.session("docs-test").get("token");
     var mvc =
-        MockMvcBuilders.standaloneSetup(new PublicDocumentationController(registry, exporter))
+        MockMvcBuilders.standaloneSetup(new DocumentationController(authentication, registry, exporter))
+            .setControllerAdvice(new GlobalExceptionHandler())
             .build();
 
-    String guide =
-        mvc.perform(get("/api-reference"))
-            .andExpect(status().isOk())
-            .andExpect(content().contentType("text/html;charset=UTF-8"))
-            .andReturn()
-            .getResponse()
-            .getContentAsString(StandardCharsets.UTF_8);
-    assertTrue(guide.contains("href=\"/api-reference/download\""));
-    assertTrue(guide.contains("data-enabled=\"true\""));
+    for (String path : new String[] {"/api-reference", "/api-reference/"}) {
+      mvc.perform(get(path))
+          .andExpect(status().isFound())
+          .andExpect(redirectedUrl("/#/docs"))
+          .andExpect(content().string(""));
+    }
+    for (String path : new String[] {"/api-reference/openapi.json", "/api-reference/download"}) {
+      mvc.perform(get(path)).andExpect(status().isUnauthorized());
+      mvc.perform(get(path).header("Authorization", "Bearer cyt_invalid_business_api_key"))
+          .andExpect(status().isUnauthorized());
+    }
 
     var openapi =
-        mvc.perform(get("/api-reference/openapi.json"))
+        mvc.perform(get("/api-reference/openapi.json").header("Authorization", authorization))
             .andExpect(status().isOk())
             .andExpect(content().contentType("application/json"))
             .andReturn()
             .getResponse()
             .getContentAsString(StandardCharsets.UTF_8);
     var spec = JsonUtils.MAPPER.readTree(openapi);
-    assertEquals(spec, JsonUtils.MAPPER.readTree(embeddedSpec(guide)));
     assertEquals(registry.builtinOperations().size(), spec.path("paths").size());
     assertTrue(spec.path("paths").path("/integrations/nas/objects/upload").has("put"));
 
     byte[] archive =
-        mvc.perform(get("/api-reference/download"))
+        mvc.perform(get("/api-reference/download").header("Authorization", authorization))
             .andExpect(status().isOk())
             .andExpect(content().contentType("application/zip"))
             .andExpect(
@@ -82,7 +90,8 @@ class IntegrationGuideTest {
         Set.of("README.md", "START_HERE.html", "openapi.json", "sdk/python/cyt_gateway.py", "sdk/typescript/index.ts"),
         files.keySet());
     assertEquals(spec, JsonUtils.MAPPER.readTree(files.get("openapi.json")));
-    assertTrue(files.get("START_HERE.html").contains("data-enabled=\"false\""));
+    assertEquals(spec, JsonUtils.MAPPER.readTree(embeddedSpec(files.get("START_HERE.html"))));
+    assertTrue(files.get("START_HERE.html").contains("href=\"openapi.json\""));
     verifyNoInteractions(store);
   }
 

@@ -101,7 +101,7 @@ const data = await gateway.call("docusign.templates.list", { page_size: 1 });
 
 ## 全量接口目录
 
-网关在 `/api-reference` 展示随应用发布的内置操作，`/api-reference/download` 下载同一版离线接入包，`/api-reference/openapi.json` 下载同一目录的 OpenAPI。实际数量以网关页面为准。
+登录网关管理台后，在“接入文档”的“接口参考”中查看接口，或从页面下载内置接口接入包。旧地址 `/api-reference` 会跳转到管理台的接入文档。直接请求 `/api-reference/download` 或 `/api-reference/openapi.json` 需要有效的管理台会话凭证。
 
 - 协作与签署：企业微信、Discord、DocuSign。
 - 电商、支付与评价：Shopify、Stripe、PayPal、Judge.me、Trustpilot。
@@ -110,7 +110,7 @@ const data = await gateway.call("docusign.templates.list", { page_size: 1 });
 
 `START_HERE.html` 支持按平台、模块、操作名称和请求路径检索，提供 HTTP、Python、TypeScript 示例和完整 Schema。`openapi.json` 保留生产目录的操作标识与契约，可用于导入客户端和生成代码。未登记的业务响应字段以对应上游契约和联调结果为准。
 
-管理员可从网关“接入文档”选择调用方并导出专属接入包。公开目录用于查阅内置接口，专属接入包按授权提供调用方可用的内置和自定义接口。
+管理员可从网关“接入文档”选择调用方并导出专属接入包。专属接入包按授权提供调用方可用的内置和自定义接口。
 
 ## 专用业务路由
 

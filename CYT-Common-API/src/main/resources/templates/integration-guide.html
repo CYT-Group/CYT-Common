@@ -11,7 +11,7 @@
 </style>
 </head>
 <body>
-<header><span class="eyebrow">CYT COMMON · DEVELOPER GUIDE</span><h1 id="guide-title">接入指南</h1><p id="guide-scope"></p><div id="online-links" class="downloads hidden" data-enabled="__CYT_ONLINE__"><a href="/api-reference/download">下载接入包</a><a href="/api-reference/openapi.json">下载 OpenAPI</a><a href="/">网关工作台</a></div><div id="offline-links" class="downloads"><a href="openapi.json" download>OpenAPI</a><a href="sdk/python/cyt_gateway.py" download>Python SDK</a><a href="sdk/typescript/index.ts" download>TypeScript SDK</a></div></header>
+<header><span class="eyebrow">CYT COMMON · DEVELOPER GUIDE</span><h1 id="guide-title">接入指南</h1><p id="guide-scope"></p><div class="downloads"><a href="openapi.json" download>OpenAPI</a><a href="sdk/python/cyt_gateway.py" download>Python SDK</a><a href="sdk/typescript/index.ts" download>TypeScript SDK</a></div></header>
 <main>
 <section class="panel"><h2>从这里开始接入</h2><div class="steps"><article><b>1 · 领取调用身份</b><p>向管理员领取本系统独立 API Key，以及接入方可访问的网关地址。密钥放在业务后端环境变量 CYT_API_KEY。</p></article><article><b>2 · 选择接口并复制示例</b><p>按平台或模块找到所需能力，填写实际业务参数，先验证一个已获授权的只读接口。</p></article><article><b>3 · 核对返回结果</b><p>HTTP 检查 ok、meta.mock 和 data 中的 partial / errors。SDK 成功时直接返回 data；错误保留 trace_id。</p></article></div><p class="hint">接入包可离线阅读，无需管理后台账号。授权与配额在调用时实时检查；如需新增能力，请联系管理员。本包不包含 API Key 或上游凭据。</p></section>
 <div class="catalog"><aside class="panel sidebar"><h2>接口参考</h2><div class="filters"><label>搜索接口<input id="search" type="search" placeholder="名称、操作标识或请求路径"></label><label>调用方向<select id="direction" aria-label="调用方向"><option value="">全部授权接口</option><option value="third_party">第三方接入</option><option value="internal">自有系统对外能力</option></select></label><label>平台<select id="platform" aria-label="平台"></select></label><label>业务模块<select id="module" aria-label="业务模块"></select></label><span id="result-count" class="hint"></span></div><nav id="api-list" class="api-list" aria-label="接口列表"></nav></aside>
@@ -33,11 +33,7 @@ const category = (operation) => operation['x-cyt-category'] || operation.tags?.[
 const platform = (operation) => operation.tags?.[0] || '';
 const platforms = [...new Set(operations.map(platform).filter(Boolean))];
 const publicReference = spec['x-cyt-public-reference'] === true;
-const online = byId('online-links').dataset.enabled === 'true';
-byId('online-links').classList.toggle('hidden', !online);
-byId('offline-links').classList.toggle('hidden', online);
 byId('public-details').classList.toggle('hidden', !publicReference);
-if (online) byId('address').value = window.location.origin;
 byId('guide-title').textContent = spec.info?.title || 'CYT Common 接入指南';
 byId('guide-scope').textContent = publicReference
   ? platforms.length + ' 个平台 · ' + operations.length + ' 项内置接口 · 调用权限以实际授权为准'

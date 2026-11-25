@@ -4,7 +4,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { api } from '~/api';
 import { useSessionStore } from '~/stores/session';
 import { useAction } from '~/composables/useRequest';
-import { Connection, Lock, DataAnalysis, Document, Download } from '@element-plus/icons-vue';
+import { Connection, Lock, DataAnalysis } from '@element-plus/icons-vue';
 const route = useRoute();
 const router = useRouter();
 const session = useSessionStore();
@@ -82,10 +82,6 @@ async function login(dev = false) {
               >登录工作台</el-button
             ></el-form
           >
-          <div class="login-docs" role="group" aria-label="接入资料">
-            <el-button :icon="Document" tag="a" href="/api-reference">在线文档</el-button>
-            <el-button :icon="Download" tag="a" href="/api-reference/download">下载接入包</el-button>
-          </div>
           <template v-if="devLogin"
             ><el-divider>本地开发</el-divider
             ><el-button class="login-submit" :loading="busy" @click="login(true)"
@@ -101,15 +97,3 @@ async function login(dev = false) {
     <footer>CYT Common · 畅韵科技</footer>
   </div>
 </template>
-
-<style scoped>
-.login-docs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 14px;
-}
-.login-docs > .el-button {
-  margin-left: 0;
-}
-</style>

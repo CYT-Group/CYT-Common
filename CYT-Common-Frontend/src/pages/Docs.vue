@@ -1,29 +1,48 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
-import { Download, Search, Right, Document, Key, Lock } from '@element-plus/icons-vue';
-import { api } from '~/api';
-import { useRequest, useAction } from '~/composables/useRequest';
-import { operationExample } from '~/utils/schema';
-import { callExample, gatewayAddress, type ExampleLanguage } from '~/utils/documentation';
+import { computed, nextTick, onMounted, ref, useId, watch } from 'vue';
+import { useRoute, useRouter, type LocationQueryRaw } from 'vue-router';
 import {
+  ArrowRight,
+  Connection,
+  CopyDocument,
+  Document,
+  Download,
+  Key,
+  Link,
+  Lock,
+  Search,
+  Tickets,
+} from '@element-plus/icons-vue';
+import { ElMessage } from 'element-plus';
+import { api } from '~/api';
+import type { Operation } from '~/api/types';
+import DocumentationExample from '~/components/DocumentationExample.vue';
+import JsonViewer from '~/components/JsonViewer.vue';
+import PageState from '~/components/PageState.vue';
+import ResponseFields from '~/components/ResponseFields.vue';
+import SchemaFields from '~/components/SchemaFields.vue';
+import { useAction, useRequest } from '~/composables/useRequest';
+import type { ExampleLanguage } from '~/utils/documentation';
+import { operationDirection, type Direction } from '~/utils/integration-direction';
+import {
+  filterOperationModule,
   operationModule,
   operationModules,
-  filterOperationModule,
 } from '~/utils/operation-modules';
-import PageHeader from '~/components/PageHeader.vue';
-import PageState from '~/components/PageState.vue';
-import SchemaFields from '~/components/SchemaFields.vue';
-import JsonViewer from '~/components/JsonViewer.vue';
-import ResponseFields from '~/components/ResponseFields.vue';
-import { operationDirection, type Direction } from '~/utils/integration-direction';
 
 const props = defineProps<{ fixedSystem?: string; embedded?: boolean }>();
-const route = useRoute(),
-  router = useRouter();
-const callerKey = ref(String(route.query.system || ''));
-const direction = ref<Direction>(route.query.direction === 'internal' ? 'internal' : 'third_party');
-const system = computed(() => props.fixedSystem || callerKey.value);
+const route = useRoute();
+const router = useRouter();
+const queryText = (key: string) => {
+  const value = route.query[key];
+  return typeof value === 'string' ? value : '';
+};
+const system = computed(() => props.fixedSystem || queryText('system'));
+const operationKey = computed(() => queryText('operation'));
+const view = computed(() =>
+  operationKey.value || queryText('view') === 'reference' ? 'reference' : 'quickstart',
+);
+
 const { data, loading, error, load } = useRequest(async () => {
   const [docs, callers, platforms, modules] = await Promise.all([
     api.docs(),
@@ -32,7 +51,7 @@ const { data, loading, error, load } = useRequest(async () => {
     api.modules(),
   ]);
   return {
-    ...docs,
+    operations: docs.operations,
     systems: callers.systems,
     platforms: platforms.platforms,
     modules: modules.items,
@@ -42,727 +61,730 @@ const access = useRequest(async () => {
   const key = system.value;
   return { ...(await api.effective(key)), system: key };
 });
-const caller = computed(() => data.value?.systems.find((s) => s.key === system.value));
-const allowed = computed(
+const direction = computed<Direction>(() => {
+  const value = queryText('direction');
+  if (value === 'internal' || value === 'third_party') return value;
+  const operation = data.value?.operations.find((item) => item.key === operationKey.value);
+  return operation ? operationDirection(operation, data.value?.modules) : 'third_party';
+});
+const caller = computed(() => data.value?.systems.find((item) => item.key === system.value));
+const accessData = computed(() =>
+  access.data.value?.system === system.value ? access.data.value : undefined,
+);
+const pending = computed(
   () =>
-    new Map(
-      (access.data.value?.system === system.value ? access.data.value.operations : [])
-        .filter((o) => o.allowed)
-        .map((o) => [o.operation, o]),
-    ),
+    loading.value ||
+    (!data.value && !error.value) ||
+    (!!system.value && (access.loading.value || (!accessData.value && !access.error.value))),
 );
-const operations = computed(() =>
-  (data.value?.operations || [])
-    .filter((o) => operationDirection(o, data.value?.modules) === direction.value)
-    .filter((o) => !system.value || allowed.value.has(o.key))
-    .map((o) => ({
-      ...o,
-      quota: system.value ? allowed.value.get(o.key)?.quota || o.quota : o.quota,
-    })),
-);
-const docsReady = computed(
-  () =>
-    !loading.value &&
-    !error.value &&
-    !!data.value &&
-    (!system.value ||
-      (!access.loading.value && !access.error.value && access.data.value?.system === system.value)),
-);
+const failed = computed(() => error.value || (!!system.value && access.error.value));
+const ready = computed(() => !pending.value && !failed.value);
 const supportsContracts = computed(
   () =>
     !!data.value?.operations.length &&
-    data.value.operations.every((o) => o.integration_kind && o.response_schema),
+    data.value.operations.every((item) => item.integration_kind && item.response_schema),
 );
 const exportReady = computed(
-  () => docsReady.value && supportsContracts.value && (!system.value || caller.value?.enabled),
+  () => ready.value && supportsContracts.value && (!system.value || caller.value?.enabled),
 );
 const platformNames = computed(() =>
-  Object.fromEntries((data.value?.platforms || []).map((p) => [p.platform, p.display_name])),
-);
-const { busy, run } = useAction();
-const view = ref(route.query.operation ? 'reference' : 'quickstart');
-const language = ref<ExampleLanguage>('http');
-const address = ref(window.location.origin);
-const normalizedAddress = computed(() => gatewayAddress(address.value));
-const q = ref('');
-const platform = ref(String(route.query.platform || ''));
-const category = ref(String(route.query.category || ''));
-const platformOperations = computed(() =>
-  operations.value.filter((o) => !platform.value || o.platform === platform.value),
-);
-const modules = computed(() => operationModules(platformOperations.value));
-const filtered = computed(() =>
-  filterOperationModule(platformOperations.value, category.value).filter((o) =>
-    `${o.key} ${o.summary} ${o.category}`.toLowerCase().includes(q.value.trim().toLowerCase()),
+  Object.fromEntries(
+    (data.value?.platforms || []).map((item) => [item.platform, item.display_name]),
   ),
 );
-const selectedKey = ref(String(route.query.operation || ''));
-const selected = computed(() => operations.value.find((o) => o.key === selectedKey.value));
-const sample = computed(() =>
-  selected.value
-    ? callExample(selected.value, operationExample(selected.value), language.value, address.value)
-    : '',
-);
-const responseExample = {
-  ok: true,
-  data: { 业务数据: '以接口实际返回为准' },
-  meta: { trace_id: '请求追踪标识', mock: false },
-};
-const problems = [
-  ['401', '检查是否使用本系统 API Key，以及密钥是否已吊销。'],
-  ['403', '检查调用方是否启用、接口是否获授权，以及是否存在拒绝规则。'],
-  ['422', '按参数说明检查必填字段、数据类型和业务编号。'],
-  ['409', '核对原业务请求的结果及幂等键，勿更换编号盲目重提。'],
-  ['429', '达到调用配额，按返回提示延后重试。'],
-  ['502 / 503', '将 error.trace_id 交给管理员，核对上游连接、凭据和调用日志。'],
-];
-watch([filtered, docsReady], () => {
-  if (docsReady.value && !filtered.value.some((o) => o.key === selectedKey.value))
-    selectedKey.value =
-      filtered.value.find((o) => o.tags?.includes('read'))?.key || filtered.value[0]?.key || '';
+const operations = computed(() => {
+  const scoped = (data.value?.operations || []).filter(
+    (item) => operationDirection(item, data.value?.modules) === direction.value,
+  );
+  if (!system.value) return scoped;
+  const allowed = new Map(
+    (accessData.value?.operations || [])
+      .filter((item) => item.allowed)
+      .map((item) => [item.operation, item]),
+  );
+  return scoped.flatMap((item) => {
+    const decision = allowed.get(item.key);
+    return decision ? [{ ...item, quota: decision.quota || item.quota }] : [];
+  });
 });
-watch([operations, docsReady], () => {
-  if (!docsReady.value) return;
-  if (platform.value && !operations.value.some((o) => o.platform === platform.value))
-    platform.value = '';
-  if (
-    category.value &&
-    !platformOperations.value.some((o) => operationModule(o) === category.value)
-  )
+const platforms = computed(() => [...new Set(operations.value.map((item) => item.platform))]);
+const search = ref('');
+const platform = ref(queryText('platform'));
+const category = ref(queryText('category'));
+const platformOperations = computed(() =>
+  operations.value.filter((item) => !platform.value || item.platform === platform.value),
+);
+const modules = computed(() => operationModules(platformOperations.value));
+const filtered = computed(() => {
+  const words = search.value.toLocaleLowerCase().trim().split(/\s+/).filter(Boolean);
+  return filterOperationModule(platformOperations.value, category.value).filter((item) => {
+    const text = [
+      item.summary,
+      item.key,
+      item.path,
+      item.http_method || 'POST',
+      operationModule(item),
+      item.platform,
+      platformNames.value[item.platform],
+    ]
+      .join(' ')
+      .toLocaleLowerCase();
+    return words.every((word) => text.includes(word));
+  });
+});
+const groups = computed(() => {
+  const result = new Map<string, Operation[]>();
+  for (const item of filtered.value) {
+    const name = platform.value
+      ? operationModule(item)
+      : platformNames.value[item.platform] || item.platform;
+    if (!result.has(name)) result.set(name, []);
+    result.get(name)!.push(item);
+  }
+  return [...result];
+});
+const preferred = (items: Operation[]) =>
+  items.find((item) => item.tags.includes('read')) || items[0];
+const selected = computed(
+  () => filtered.value.find((item) => item.key === operationKey.value) || preferred(filtered.value),
+);
+const unavailable = computed(
+  () =>
+    ready.value &&
+    !!operationKey.value &&
+    !operations.value.some((item) => item.key === operationKey.value),
+);
+const quickKey = ref('');
+const quickOperation = computed(
+  () => operations.value.find((item) => item.key === quickKey.value) || preferred(operations.value),
+);
+const language = ref<ExampleLanguage>('http');
+const address = ref(window.location.origin);
+const contractTab = ref('request');
+const heading = ref<HTMLElement>();
+const catalogList = ref<HTMLElement>();
+const catalogId = useId();
+const catalogExpanded = ref(!operationKey.value);
+const { busy, run } = useAction();
+
+watch(system, () => {
+  if (system.value && data.value) void access.load();
+});
+watch(
+  () => [queryText('platform'), queryText('category')],
+  ([nextPlatform, nextCategory]) => {
+    platform.value = nextPlatform || '';
+    category.value = nextCategory || '';
+  },
+);
+watch([operations, ready], () => {
+  if (!ready.value) return;
+  if (platform.value && !platforms.value.includes(platform.value)) platform.value = '';
+  if (category.value && !modules.value.some((item) => item.name === category.value))
     category.value = '';
 });
-watch(platform, () => {
-  if (category.value && !modules.value.some((m) => m.name === category.value)) category.value = '';
-});
-watch(system, () => {
-  q.value = '';
-  platform.value = '';
-  category.value = '';
-  if (data.value && system.value) void access.load();
-});
-watch(callerKey, () => {
-  if (!props.embedded && route.path === '/docs')
-    void router.replace({ query: { ...route.query, system: callerKey.value || undefined } });
-});
-watch(direction, () => {
-  q.value = '';
-  platform.value = '';
-  category.value = '';
-  if (route.path === '/docs')
-    void router.replace({ query: { ...route.query, direction: direction.value } });
-});
 watch(
-  () => route.query.direction,
-  (value) => {
-    if (route.path === '/docs') direction.value = value === 'internal' ? 'internal' : 'third_party';
+  () => selected.value?.key,
+  () => {
+    contractTab.value = 'request';
   },
 );
 watch(
-  () => route.query.system,
-  (key) => {
-    if (!props.fixedSystem && route.path === '/docs') callerKey.value = String(key || '');
-  },
-);
-watch(
-  () => route.query.operation,
-  (key) => {
-    if (key) {
-      selectedKey.value = String(key);
-      view.value = 'reference';
+  [selected, catalogList, catalogExpanded],
+  () => {
+    const list = catalogList.value;
+    const active = list?.querySelector<HTMLElement>('[aria-current="page"]');
+    if (!list || !active) return;
+    const bounds = list.getBoundingClientRect();
+    const item = active.getBoundingClientRect();
+    if (item.top < bounds.top || item.bottom > bounds.bottom) {
+      list.scrollTop += item.top - bounds.top - 10;
     }
   },
+  { flush: 'post' },
 );
+watch([search, platform, category], () => {
+  catalogExpanded.value = true;
+});
+
 async function reload() {
   await load();
-  if (!route.query.direction && route.query.operation)
-    direction.value =
-      data.value?.operations.find((o) => o.key === route.query.operation)?.integration_kind ||
-      'third_party';
-  if (system.value) await access.load();
+  if (system.value && !error.value) await access.load();
 }
 onMounted(reload);
+
+function location(query: LocationQueryRaw) {
+  return { path: route.path, query: { ...route.query, ...query } };
+}
+function clearFilters() {
+  search.value = '';
+  platform.value = '';
+  category.value = '';
+  if (queryText('platform') || queryText('category'))
+    void router.replace(location({ platform: undefined, category: undefined }));
+}
+function changeScope(query: LocationQueryRaw) {
+  search.value = '';
+  platform.value = '';
+  category.value = '';
+  quickKey.value = '';
+  void router.push(
+    location({
+      direction: direction.value,
+      view: view.value === 'reference' ? 'reference' : undefined,
+      operation: undefined,
+      platform: undefined,
+      category: undefined,
+      ...query,
+    }),
+  );
+}
+function viewLocation(target: 'reference' | 'quickstart') {
+  const operation = target === 'reference' ? quickOperation.value : undefined;
+  return location({
+    view: target === 'reference' && !operation ? 'reference' : undefined,
+    operation: operation?.key,
+    direction: direction.value,
+    platform: undefined,
+    category: undefined,
+  });
+}
+function operationLocation(operation: Operation) {
+  return location({
+    direction: direction.value,
+    view: undefined,
+    operation: operation.key,
+    platform: platform.value || undefined,
+    category: category.value || undefined,
+  });
+}
+async function revealOperation(
+  event: MouseEvent,
+  navigate: (event: MouseEvent) => Promise<unknown>,
+) {
+  if (
+    event.defaultPrevented ||
+    event.button !== 0 ||
+    event.metaKey ||
+    event.ctrlKey ||
+    event.shiftKey ||
+    event.altKey
+  )
+    return;
+  // Keep an explicitly opened interface visible even when the catalog is docked beside long fields.
+  await navigate(event);
+  catalogExpanded.value = false;
+  await nextTick();
+  const top = heading.value?.getBoundingClientRect().top;
+  if (top !== undefined && (top < 80 || top > window.innerHeight * 0.62)) {
+    heading.value?.scrollIntoView({ block: 'start' });
+  }
+  if (!catalogList.value?.getClientRects().length) {
+    heading.value?.focus({ preventScroll: true });
+  }
+}
+function changePlatform(value: unknown) {
+  platform.value = typeof value === 'string' ? value : '';
+  category.value = '';
+}
 function manage(tab: string) {
   void router.push(
     system.value
       ? {
-          path: `/systems/${encodeURIComponent(system.value)}`,
+          path: '/systems/' + encodeURIComponent(system.value),
           query: { tab, direction: direction.value },
         }
       : '/systems',
   );
 }
 function exportDocs() {
-  if (exportReady.value)
-    return run(() =>
-      system.value
-        ? api.exportConsumerOpenApi(system.value, direction.value)
-        : api.exportOpenApi(direction.value),
-    );
+  if (!exportReady.value) return;
+  return run(() =>
+    system.value
+      ? api.exportConsumerOpenApi(system.value, direction.value)
+      : api.exportOpenApi(direction.value),
+  );
 }
 function exportKit() {
-  if (exportReady.value && system.value)
-    return run(() => api.exportConsumerPackage(system.value, direction.value));
+  if (system.value ? !exportReady.value : !ready.value) return;
+  return run(() =>
+    system.value
+      ? api.exportConsumerPackage(system.value, direction.value)
+      : api.exportBuiltinPackage(),
+  );
 }
-function debug() {
-  if (selected.value)
-    void router.push({
-      path: '/playground',
-      query: {
-        operation: selected.value.key,
-        direction: direction.value,
-        ...(system.value ? { system: system.value } : {}),
-      },
-    });
+function debug(operation: Operation) {
+  void router.push({
+    path: '/playground',
+    query: {
+      operation: operation.key,
+      direction: direction.value,
+      ...(system.value ? { system: system.value } : {}),
+    },
+  });
 }
+async function copy(text: string, success: string) {
+  try {
+    await navigator.clipboard.writeText(text);
+    ElMessage.success(success);
+  } catch {
+    ElMessage.warning('浏览器未开放剪贴板，链接可从浏览器地址栏复制，路径可选中后复制。');
+  }
+}
+function copyLink(operation: Operation) {
+  const target = new URL(router.resolve(operationLocation(operation)).href, window.location.href);
+  void copy(target.href, '已复制接口链接');
+}
+
+const responseExample = {
+  ok: true,
+  data: { 业务数据: '以接口实际返回为准' },
+  meta: { trace_id: '请求追踪标识', mock: false },
+};
+const problems = [
+  ['401 / 403', '检查 API Key、调用方状态、接口授权和拒绝规则。'],
+  ['422', '检查必填参数、数据类型与业务编号。'],
+  ['409', '核对原请求结果与幂等键，重试沿用同一个业务请求号。'],
+  ['429', '达到调用配额，按返回提示延后重试。'],
+  ['502 / 503', '将 error.trace_id 交给管理员，核对上游连接、凭据和调用日志。'],
+];
+const commonRoutes = [
+  ['GET /health', '检查网关与数据库连通状态。'],
+  [
+    'POST /integrations/batch',
+    '提交 1–100 项 calls。每项提供 operation 和 params，并检查 data.results[]。',
+  ],
+  [
+    'POST /integrations/shopify/stores/list',
+    '传入最多 250 个店铺域名，需要 shopify.orders.list 授权。',
+  ],
+  [
+    'POST /integrations/docusign/webhooks/events',
+    'DocuSign 签名事件回调，也支持 /webhooks/{system}/events。',
+  ],
+  ['GET / POST /integrations/wecom/webhooks/{system}/events', '企业微信回调地址验证与事件推送。'],
+  [
+    'POST /integrations/{provider}/webhooks/{account}/dispute-closed',
+    'Stripe 和 PayPal 争议关闭事件回调。',
+  ],
+];
 </script>
 
 <template>
   <div class="documentation-page">
-    <PageHeader
-      v-if="!embedded"
-      title="接入文档"
-      description="查询接口参数、复制调用示例、下载接入资料"
-    >
-      <el-button
-        :icon="Document"
-        @click="router.push(direction === 'internal' ? '/exposed' : '/platforms')"
-        >{{ direction === 'internal' ? '对外能力' : '服务接入' }}</el-button
-      >
-      <el-button :icon="Document" tag="a" href="/api-reference" target="_blank" rel="noopener"
-        >在线文档</el-button
-      >
-      <el-button :icon="Download" :disabled="!exportReady" :loading="busy" @click="exportDocs">{{
-        system ? '导出专属 OpenAPI' : '导出 OpenAPI'
-      }}</el-button>
-      <el-button
-        v-if="system"
-        type="primary"
-        :icon="Download"
-        :disabled="!exportReady"
-        :loading="busy"
-        @click="exportKit"
-        >下载专属接入包</el-button
-      >
-      <el-button v-else type="primary" :icon="Download" tag="a" href="/api-reference/download"
-        >下载接入包</el-button
-      >
-    </PageHeader>
-    <el-alert
-      v-if="data && !supportsContracts"
-      title="当前运行的后端尚未加载方向与响应契约，请更新并重启服务后再按方向导出接入资料。"
-      type="info"
-      :closable="false"
-    />
-    <section class="panel docs-direction">
-      <el-radio-group v-model="direction" aria-label="文档调用方向"
-        ><el-radio-button value="third_party">第三方接入文档</el-radio-button
-        ><el-radio-button value="internal">对外能力调用文档</el-radio-button></el-radio-group
-      >
-      <el-button
-        link
-        type="primary"
-        @click="router.push(direction === 'internal' ? '/exposed' : '/platforms')"
-        >{{ direction === 'internal' ? '管理接口' : '管理服务' }}</el-button
-      >
-    </section>
-    <section class="panel docs-context">
-      <div class="docs-context-main">
-        <div>
-          <strong>{{ embedded ? '当前调用方的接入资料' : '调用方接入资料' }}</strong>
-          <p>选择调用方，查看已授权接口并下载专属接入包。</p>
-        </div>
-        <el-select
-          v-if="!fixedSystem"
-          v-model="callerKey"
-          filterable
-          clearable
-          placeholder="全部接口 · 选择调用方"
-          aria-label="文档调用方"
-        >
-          <el-option
-            v-for="s in data?.systems || []"
-            :key="s.key"
-            :value="s.key"
-            :label="`${s.display_name} · ${s.key}${s.enabled ? '' : ' · 已停用'}`"
-          />
-        </el-select>
-        <el-tag v-else effect="plain">{{ caller?.display_name || system }}</el-tag>
-        <span class="docs-scope">{{
-          system ? `${operations.length} 项已授权接口` : `${operations.length} 项接口参考`
-        }}</span>
+    <header class="docs-masthead">
+      <div>
+        <h1 v-if="!embedded">接入文档</h1>
+        <h2 v-else>调用文档</h2>
+        <p>从第一个请求开始，查阅接口契约并交付接入资料。</p>
       </div>
-      <div class="docs-context-actions">
-        <span>{{
-          system
-            ? '解压接入包后打开 START_HERE.html 查看指南；API Key 单独交付。'
-            : '接入包包含离线指南、OpenAPI 和 Python / TypeScript SDK。'
-        }}</span>
+      <div class="docs-actions">
+        <el-button :icon="Download" :loading="busy" :disabled="!exportReady" @click="exportDocs">
+          {{ system ? '专属 OpenAPI' : '导出 OpenAPI' }}
+        </el-button>
         <el-button
-          v-if="embedded"
           type="primary"
           :icon="Download"
-          :disabled="!exportReady"
           :loading="busy"
+          :disabled="system ? !exportReady : !ready"
           @click="exportKit"
-          >下载接入包</el-button
         >
-        <el-button v-if="embedded" :disabled="!exportReady" :loading="busy" @click="exportDocs"
-          >仅导出 OpenAPI</el-button
-        >
-        <el-button link type="primary" :icon="Key" @click="manage('keys')">{{
-          system ? '管理调用密钥' : '注册调用方 / 领取密钥'
-        }}</el-button>
-        <el-button v-if="system" link type="primary" :icon="Lock" @click="manage('access')"
-          >配置能力授权</el-button
-        >
+          {{ system ? '下载专属接入包' : '下载内置接口接入包' }}
+        </el-button>
       </div>
-      <el-alert
-        v-if="caller && !caller.enabled"
-        title="此调用方已停用，启用后才能调用接口或导出接入包。"
-        type="warning"
-        :closable="false"
-      />
-    </section>
-    <el-tabs v-model="view" class="documentation-tabs">
-      <el-tab-pane label="快速接入" name="quickstart">
-        <section class="panel quickstart-intro">
-          <span class="docs-eyebrow">QUICK START</span>
-          <h2>让第一个请求跑通</h2>
-          <p>领取调用方身份和授权，配置网关地址，再复制下面的示例到业务后端执行。</p>
-          <div class="docs-step-grid">
-            <article>
-              <b>1</b>
-              <div>
-                <h3>拿到身份与权限</h3>
-                <p>
-                  {{
-                    caller
-                      ? `${caller.display_name}：${caller.apikey_count} 把有效密钥，${operations.length} 项授权接口。`
-                      : '请管理员注册调用方、生成独立 API Key，并授权所需接口。'
-                  }}
-                </p>
-              </div>
-            </article>
-            <article>
-              <b>2</b>
-              <div>
-                <h3>准备网关地址和 SDK</h3>
-                <p>
-                  使用接入方可访问的网关地址；从接入包取出 SDK，密钥保存在后端环境变量 CYT_API_KEY。
-                </p>
-              </div>
-            </article>
-            <article>
-              <b>3</b>
-              <div>
-                <h3>验证一个真实请求</h3>
-                <p>
-                  先选只读接口，填写实际业务参数。检查 ok、meta.mock 和 data 中的 partial / errors。
-                </p>
-              </div>
-            </article>
-          </div>
-        </section>
-        <section class="panel quickstart-request">
-          <div class="panel-head">
-            <div>
-              <h2>复制你的第一个调用示例</h2>
-              <p>示例不会自动执行；请替换业务参数后在接入方后端运行。</p>
-            </div>
-            <el-button link type="primary" @click="view = 'reference'"
-              >查看完整参数 <el-icon><Right /></el-icon
-            ></el-button>
-          </div>
-          <div class="panel-body">
-            <div class="docs-request-options">
-              <label
-                ><span>网关基础地址</span
-                ><el-input
-                  v-model="address"
-                  placeholder="https://gateway.example.com"
-                  aria-label="网关基础地址"
-              /></label>
-              <label
-                ><span>选择接口</span
-                ><el-select
-                  v-model="selectedKey"
-                  filterable
-                  placeholder="搜索接口名称或标识"
-                  aria-label="首个调用接口"
-                  ><el-option
-                    v-for="o in filtered"
-                    :key="o.key"
-                    :value="o.key"
-                    :label="`${o.summary} · ${o.key}`" /></el-select
-              ></label>
-            </div>
-            <p class="form-hint">
-              当前地址来自本次访问；交付给其他系统时，填写其实际可达的网关地址。HTTP 示例适用于
-              Bash；Python SDK 可直接放入项目，TypeScript SDK 从接入包导入。
-            </p>
-            <el-alert
-              v-if="!normalizedAddress"
-              title="填写完整 HTTP / HTTPS 地址，不要在地址中包含密钥、账号密码、查询参数或页面锚点。"
-              type="error"
-              :closable="false"
-            />
-            <el-alert
-              v-if="selected?.sensitive || selected?.tags.includes('write')"
-              title="当前选择的是写操作，请先核对业务参数；需要幂等键的操作必须使用稳定业务请求号。"
-              type="warning"
-              :closable="false"
-            />
-            <PageState
-              :loading="loading || access.loading.value"
-              :error="error || (!!system && access.error.value)"
-              @retry="reload"
+    </header>
+
+    <section class="docs-workspace" aria-label="接入文档">
+      <nav class="docs-nav" aria-label="文档导航">
+        <RouterLink
+          :to="viewLocation('quickstart')"
+          :aria-current="view === 'quickstart' ? 'page' : undefined"
+        >
+          <el-icon aria-hidden="true"><Document /></el-icon>快速接入
+        </RouterLink>
+        <RouterLink
+          :to="view === 'reference' ? location({}) : viewLocation('reference')"
+          :aria-current="view === 'reference' ? 'page' : undefined"
+        >
+          <el-icon aria-hidden="true"><Tickets /></el-icon>接口参考
+        </RouterLink>
+      </nav>
+
+      <div class="docs-scope">
+        <div class="docs-scope-fields">
+          <label class="docs-scope-field">
+            <span>调用方向</span>
+            <el-select
+              :model-value="direction"
+              aria-label="文档调用方向"
+              @change="changeScope({ direction: $event })"
             >
-              <template v-if="selected"
-                ><el-tabs v-model="language"
-                  ><el-tab-pane label="HTTP / cURL" name="http" /><el-tab-pane
-                    label="Python"
-                    name="python" /><el-tab-pane label="TypeScript" name="typescript" /></el-tabs
-                ><JsonViewer v-if="sample" :value="sample" />
-                <div class="docs-example-actions">
-                  <el-button @click="view = 'reference'">查看参数与接口说明</el-button
-                  ><el-button @click="debug">在后台调试此接口</el-button>
-                </div></template
+              <el-option label="第三方服务" value="third_party" />
+              <el-option label="自有系统对外能力" value="internal" />
+            </el-select>
+          </label>
+          <label v-if="!fixedSystem" class="docs-scope-field">
+            <span>调用方</span>
+            <el-select
+              :model-value="system"
+              :empty-values="[null, undefined]"
+              filterable
+              aria-label="文档调用方"
+              @change="changeScope({ system: $event || undefined })"
+            >
+              <el-option label="全部接口" value="" />
+              <el-option
+                v-for="item in data?.systems || []"
+                :key="item.key"
+                :value="item.key"
+                :label="item.display_name + ' · ' + item.key + (item.enabled ? '' : ' · 已停用')"
+              />
+            </el-select>
+          </label>
+          <span v-else class="docs-fixed-scope">{{ caller?.display_name || system }}</span>
+        </div>
+        <div class="docs-scope-aside">
+          <span v-if="ready">{{ operations.length }} 项{{ system ? '已授权' : '' }}接口</span>
+          <el-button v-if="system" link type="primary" :icon="Lock" @click="manage('access')">
+            配置授权
+          </el-button>
+        </div>
+      </div>
+
+      <div v-if="(caller && !caller.enabled) || (data && !supportsContracts)" class="docs-notices">
+        <el-alert
+          v-if="caller && !caller.enabled"
+          title="此调用方已停用，启用后才能调用接口或导出专属资料。"
+          type="warning"
+          :closable="false"
+          show-icon
+        />
+        <el-alert
+          v-if="data && !supportsContracts"
+          title="当前后端尚未加载方向与响应契约，请更新服务后再按方向导出。"
+          type="info"
+          :closable="false"
+          show-icon
+        />
+      </div>
+
+      <PageState :loading="pending" :error="failed" @retry="reload">
+        <div v-if="view === 'quickstart'" class="docs-quickstart">
+          <section class="quickstart-layout" aria-label="发起第一个请求">
+            <div class="quickstart-intro">
+              <h2>发起第一个请求</h2>
+              <p>选一个已获授权的只读接口，在业务后端验证连通和返回结果。</p>
+              <ol class="docs-steps">
+                <li>
+                  <div>
+                    <h3>准备调用密钥与授权</h3>
+                    <p v-if="caller">
+                      {{ caller.display_name }}有 {{ caller.apikey_count }} 把有效密钥。
+                    </p>
+                    <p v-else>为业务系统申请独立 API Key，并授权所需接口。</p>
+                    <el-button link type="primary" :icon="Key" @click="manage('keys')">
+                      {{ system ? '管理调用密钥' : '前往调用方管理' }}
+                    </el-button>
+                  </div>
+                </li>
+                <li>
+                  <div>
+                    <h3>设置网关地址并复制示例</h3>
+                    <p>
+                      将密钥保存在后端环境变量 <code>CYT_API_KEY</code>，替换示例中的业务参数。SDK
+                      可从接入包获取。
+                    </p>
+                  </div>
+                </li>
+                <li>
+                  <div>
+                    <h3>核对响应</h3>
+                    <p>
+                      检查 <code>ok</code> 和 <code>meta.mock</code>，逐项处理
+                      <code>data.partial</code> 或 <code>errors</code>。
+                    </p>
+                  </div>
+                </li>
+              </ol>
+            </div>
+            <div v-if="quickOperation" class="quickstart-example">
+              <label>
+                <span>选一个接口</span>
+                <el-select
+                  :model-value="quickOperation.key"
+                  filterable
+                  aria-label="首个调用接口"
+                  @change="quickKey = $event"
+                >
+                  <el-option
+                    v-for="item in operations"
+                    :key="item.key"
+                    :value="item.key"
+                    :label="item.summary + ' · ' + item.key"
+                  />
+                </el-select>
+              </label>
+              <p
+                v-if="quickOperation.sensitive || quickOperation.tags.includes('write')"
+                class="docs-callout"
               >
-              <el-empty
-                v-else
-                :description="
-                  direction === 'internal'
-                    ? '当前没有获授权的自有接口，请先登记对外能力并分配给调用方。'
-                    : '当前没有可展示的第三方接口，请先为调用方配置授权。'
-                "
-                ><el-button type="primary" @click="manage('access')"
-                  >选择调用方并配置授权</el-button
-                ></el-empty
+                写操作运行前请核对业务参数。接口要求幂等键时，使用稳定的业务请求号。
+              </p>
+              <DocumentationExample
+                v-model:address="address"
+                v-model:language="language"
+                :operation="quickOperation"
+              />
+              <div class="quickstart-links">
+                <RouterLink :to="operationLocation(quickOperation)"
+                  >查看参数与响应 <el-icon aria-hidden="true"><ArrowRight /></el-icon
+                ></RouterLink>
+                <el-button link type="primary" @click="debug(quickOperation)">打开调试</el-button>
+              </div>
+            </div>
+            <div v-else class="docs-empty">
+              <el-icon aria-hidden="true"><Connection /></el-icon>
+              <h3>当前范围暂无接口</h3>
+              <p>
+                {{
+                  system
+                    ? '给调用方分配接口后即可查看示例。'
+                    : '切换调用方向，或前往服务管理查看可用接口。'
+                }}
+              </p>
+              <el-button v-if="system" @click="manage('access')">配置能力授权</el-button>
+              <RouterLink v-else :to="direction === 'internal' ? '/exposed' : '/platforms'"
+                >查看服务与能力</RouterLink
               >
-            </PageState>
-          </div>
-        </section>
-        <div class="docs-result-grid">
-          <section class="panel">
-            <div class="panel-head"><h2>如何确认调用成功</h2></div>
-            <div class="panel-body">
-              <p class="form-hint">
-                HTTP 响应结构示意，业务数据以各接口实际返回为准。SDK 成功时直接返回
-                data；异常包含状态、trace_id 和 retryable。
+            </div>
+          </section>
+          <div class="docs-quickstart-secondary">
+            <section class="docs-section">
+              <h2>如何确认调用成功</h2>
+              <p>
+                SDK 成功时直接返回 <code>data</code>。分页接口用 <code>page.has_more</code> 和
+                <code>next_cursor</code> 判断是否还有结果。
               </p>
               <JsonViewer :value="responseExample" />
-              <p class="form-hint">
-                meta.mock=true 表示模拟结果；data.partial=true 或 errors
-                非空时，继续核对部分失败。分页接口按 page.has_more / next_cursor 判断是否完成。
-              </p>
-            </div>
-          </section>
-          <section class="panel">
-            <div class="panel-head"><h2>遇到错误先检查这里</h2></div>
-            <div class="panel-body docs-problems">
-              <div v-for="[code, description] in problems" :key="code">
-                <code>{{ code }}</code
-                ><span>{{ description }}</span>
-              </div>
-              <p class="form-hint">写请求超时先查询原结果，重试沿用原幂等键，避免重复提交。</p>
-            </div>
-          </section>
-        </div>
-      </el-tab-pane>
-      <el-tab-pane label="接口参考" name="reference">
-        <PageState
-          :loading="loading || access.loading.value"
-          :error="error || (!!system && access.error.value)"
-          @retry="reload"
-        >
-          <div class="docs-grid">
-            <aside class="panel docs-sidebar">
-              <div class="docs-sidebar-filters">
-                <el-input
-                  v-model="q"
-                  :prefix-icon="Search"
-                  placeholder="搜索名称、标识或模块"
-                  aria-label="搜索文档接口"
-                  clearable
-                /><el-select
-                  v-model="platform"
-                  filterable
-                  clearable
-                  placeholder="全部平台"
-                  aria-label="文档平台"
-                  ><el-option
-                    v-for="p in [...new Set(operations.map((o) => o.platform))]"
-                    :key="p"
-                    :value="p"
-                    :label="platformNames[p] || p" /></el-select
-                ><el-select
-                  v-model="category"
-                  filterable
-                  clearable
-                  placeholder="全部业务模块"
-                  aria-label="文档业务模块"
-                  ><el-option
-                    v-for="m in modules"
-                    :key="m.name"
-                    :value="m.name"
-                    :label="`${m.name} · ${m.total}`" /></el-select
-                ><span class="subtext">{{ filtered.length }} 项接口</span>
-              </div>
-              <button
-                v-for="o in filtered"
-                :key="o.key"
-                type="button"
-                :class="{ selected: o.key === selectedKey }"
-                :aria-pressed="o.key === selectedKey"
-                @click="selectedKey = o.key"
-              >
-                <strong>{{ o.summary }}</strong
-                ><span class="mono">{{ o.key }}</span>
-              </button>
-              <p v-if="!filtered.length" class="docs-no-results">
-                没有匹配的接口，请调整筛选或配置授权。
-              </p>
-            </aside>
-            <section v-if="selected" class="panel">
-              <header class="panel-head">
-                <div>
-                  <h2>{{ selected.summary }}</h2>
-                  <p class="mono">{{ selected.http_method || 'POST' }} {{ selected.path }}</p>
-                </div>
-                <el-button link type="primary" :icon="Right" @click="debug">前往调试</el-button>
-              </header>
-              <div class="panel-body">
-                <p class="form-hint">{{ selected.description }}</p>
-                <div class="inline-actions">
-                  <el-tag effect="plain">{{ operationModule(selected) }}</el-tag
-                  ><el-tag effect="plain">配额 {{ selected.quota }}</el-tag
-                  ><el-tag v-if="selected.sensitive" type="warning" effect="plain"
-                    >敏感操作 · 精确授权</el-tag
-                  ><el-tag
-                    v-if="selected.tags.includes('idempotency_required')"
-                    type="warning"
-                    effect="plain"
-                    >必填稳定幂等键</el-tag
-                  ><el-tag v-else-if="selected.idempotent" type="info" effect="plain"
-                    >支持幂等键</el-tag
-                  >
-                </div>
-                <h3 class="docs-heading">
-                  {{ selected.transport === 'raw_binary' ? 'Query 参数' : '请求参数' }}
-                </h3>
-                <p v-if="selected.transport === 'raw_binary'" class="form-hint">
-                  请求体是原始文件流，Content-Type 为文件 MIME，必须提供准确 Content-Length；不支持
-                  multipart 或 chunked。请在业务后端调用。
-                </p>
-                <SchemaFields :schema="selected.schema" />
-                <h3 class="docs-heading">响应字段含义</h3>
-                <ResponseFields :operation="selected" />
-                <h3 class="docs-heading">调用示例</h3>
-                <p class="form-hint">示例使用“快速接入”页签中的网关基础地址。</p>
-                <el-radio-group v-model="language"
-                  ><el-radio-button value="http">HTTP</el-radio-button
-                  ><el-radio-button value="python">Python</el-radio-button
-                  ><el-radio-button value="typescript">TypeScript</el-radio-button></el-radio-group
-                ><JsonViewer v-if="sample" :value="sample" /><el-alert
-                  v-else
-                  title="请在快速接入中填写有效的网关基础地址"
-                  type="info"
-                  :closable="false"
-                /><el-collapse
-                  ><el-collapse-item title="完整参数 Schema" name="schema"
-                    ><JsonViewer :value="selected.schema" /></el-collapse-item
-                ></el-collapse>
-              </div>
             </section>
-            <el-empty v-else description="当前范围暂无接口" />
+            <section class="docs-section">
+              <h2>常见错误</h2>
+              <dl class="docs-pairs">
+                <div v-for="[code, detail] in problems" :key="code">
+                  <dt>
+                    <code>{{ code }}</code>
+                  </dt>
+                  <dd>{{ detail }}</dd>
+                </div>
+              </dl>
+            </section>
           </div>
-        </PageState>
-      </el-tab-pane>
-    </el-tabs>
+          <details v-if="!system" class="docs-common">
+            <summary>网关通用路由与回调</summary>
+            <dl class="docs-pairs">
+              <div v-for="[path, detail] in commonRoutes" :key="path">
+                <dt>
+                  <code>{{ path }}</code>
+                </dt>
+                <dd>{{ detail }}</dd>
+              </div>
+            </dl>
+          </details>
+        </div>
+
+        <div v-else class="docs-reference">
+          <aside class="docs-catalog" aria-label="接口目录">
+            <div class="docs-catalog-controls">
+              <div class="docs-catalog-title">
+                <h2>接口目录</h2>
+                <span role="status">{{ filtered.length }} 项</span>
+                <button
+                  v-if="groups.length"
+                  class="docs-catalog-toggle"
+                  type="button"
+                  :aria-controls="catalogId"
+                  :aria-expanded="catalogExpanded"
+                  @click="catalogExpanded = !catalogExpanded"
+                >
+                  {{ catalogExpanded ? '收起列表' : '展开列表' }}
+                </button>
+              </div>
+              <el-input
+                v-model="search"
+                :prefix-icon="Search"
+                type="search"
+                clearable
+                placeholder="搜索名称、路径或标识"
+                aria-label="搜索文档接口"
+              />
+              <div class="docs-catalog-filters">
+                <el-select
+                  :model-value="platform"
+                  :empty-values="[null, undefined]"
+                  aria-label="文档平台"
+                  filterable
+                  @change="changePlatform"
+                >
+                  <el-option label="全部平台" value="" />
+                  <el-option
+                    v-for="item in platforms"
+                    :key="item"
+                    :value="item"
+                    :label="platformNames[item] || item"
+                  />
+                </el-select>
+                <el-select
+                  v-model="category"
+                  :empty-values="[null, undefined]"
+                  aria-label="文档业务模块"
+                  filterable
+                >
+                  <el-option label="全部模块" value="" />
+                  <el-option
+                    v-for="item in modules"
+                    :key="item.name"
+                    :value="item.name"
+                    :label="item.name + ' · ' + item.total"
+                  />
+                </el-select>
+              </div>
+            </div>
+            <nav
+              v-if="groups.length"
+              :id="catalogId"
+              ref="catalogList"
+              class="docs-catalog-list"
+              :class="{ 'is-collapsed': !catalogExpanded }"
+              aria-label="接口列表"
+            >
+              <section v-for="[name, items] in groups" :key="name" class="docs-catalog-group">
+                <h3>{{ name }}</h3>
+                <RouterLink
+                  v-for="item in items"
+                  :key="item.key"
+                  :to="operationLocation(item)"
+                  custom
+                  v-slot="{ href, navigate }"
+                >
+                  <a
+                    :href="href"
+                    :aria-current="selected?.key === item.key ? 'page' : undefined"
+                    @click="revealOperation($event, navigate)"
+                  >
+                    <span>{{ item.summary }}</span
+                    ><code>{{ item.key }}</code>
+                  </a>
+                </RouterLink>
+              </section>
+            </nav>
+          </aside>
+
+          <div class="docs-reference-body">
+            <el-alert
+              v-if="unavailable"
+              class="docs-unavailable"
+              title="链接中的接口在当前调用方向或授权范围内不可用。"
+              type="info"
+              :closable="false"
+              show-icon
+            />
+            <article v-if="selected" class="docs-operation">
+              <header class="docs-operation-header">
+                <div class="docs-operation-context">
+                  {{ platformNames[selected.platform] || selected.platform
+                  }}<el-icon aria-hidden="true"><ArrowRight /></el-icon
+                  >{{ operationModule(selected) }}
+                </div>
+                <h2 ref="heading" tabindex="-1">{{ selected.summary }}</h2>
+                <div class="docs-endpoint">
+                  <span class="docs-method" :class="{ 'is-put': selected.http_method === 'PUT' }">{{
+                    selected.http_method || 'POST'
+                  }}</span>
+                  <code>{{ selected.path }}</code>
+                  <button
+                    type="button"
+                    aria-label="复制请求路径"
+                    title="复制请求路径"
+                    @click="copy(selected.path, '已复制请求路径')"
+                  >
+                    <el-icon aria-hidden="true"><CopyDocument /></el-icon>
+                  </button>
+                </div>
+                <p v-if="selected.description" class="docs-operation-description">
+                  {{ selected.description }}
+                </p>
+                <div class="docs-operation-tools">
+                  <div class="docs-operation-meta">
+                    <span v-if="selected.quota"
+                      >配额 <code>{{ selected.quota }}</code></span
+                    >
+                    <span v-if="selected.tags.includes('idempotency_required')">必填幂等键</span>
+                    <span v-else-if="selected.idempotent">支持幂等键</span>
+                    <span v-if="selected.sensitive">敏感操作</span>
+                    <span v-if="selected.deprecated">已弃用</span>
+                  </div>
+                  <div class="docs-actions">
+                    <el-button link type="primary" :icon="Link" @click="copyLink(selected)"
+                      >复制链接</el-button
+                    >
+                    <el-button link type="primary" :icon="Connection" @click="debug(selected)"
+                      >打开调试</el-button
+                    >
+                  </div>
+                </div>
+              </header>
+              <div class="docs-operation-body">
+                <div class="docs-contract">
+                  <el-tabs v-model="contractTab" aria-label="接口契约">
+                    <el-tab-pane
+                      :label="selected.transport === 'raw_binary' ? 'Query 参数' : '请求参数'"
+                      name="request"
+                    >
+                      <p v-if="selected.transport === 'raw_binary'" class="docs-callout">
+                        请求体使用原始文件流。将 <code>Content-Type</code> 设为文件
+                        MIME，并填写准确的 <code>Content-Length</code>，避免使用 multipart 或
+                        chunked。
+                      </p>
+                      <SchemaFields :schema="selected.schema" readable />
+                      <details class="docs-raw-schema">
+                        <summary>完整请求 Schema</summary>
+                        <JsonViewer :value="selected.schema" />
+                      </details>
+                    </el-tab-pane>
+                    <el-tab-pane label="响应字段" name="response" lazy>
+                      <ResponseFields :key="selected.key" :operation="selected" readable />
+                    </el-tab-pane>
+                  </el-tabs>
+                </div>
+                <div class="docs-operation-example">
+                  <DocumentationExample
+                    v-model:address="address"
+                    v-model:language="language"
+                    :operation="selected"
+                  />
+                </div>
+              </div>
+            </article>
+            <div v-else class="docs-empty">
+              <el-icon aria-hidden="true"><Search /></el-icon>
+              <h2>{{ operations.length ? '没有匹配的接口' : '当前范围暂无接口' }}</h2>
+              <p>
+                {{
+                  operations.length
+                    ? '试试更短的关键词，或清除平台与模块筛选。'
+                    : system
+                      ? '给调用方分配此方向的接口后即可查阅。'
+                      : '切换调用方向，查看其他接口。'
+                }}
+              </p>
+              <el-button v-if="operations.length" @click="clearFilters">清除筛选</el-button>
+              <el-button v-else-if="system" @click="manage('access')">配置能力授权</el-button>
+            </div>
+          </div>
+        </div>
+      </PageState>
+    </section>
   </div>
 </template>
 
-<style scoped>
-.docs-context {
-  padding: 20px;
-}
-.docs-direction {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 12px;
-  padding: 16px 20px;
-}
-.docs-context-main {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-.docs-context-main > div:first-child {
-  flex: 1;
-  min-width: 240px;
-}
-.docs-context-main strong {
-  font-size: 14px;
-}
-.docs-context-main p {
-  margin: 7px 0 0;
-  color: var(--app-text-secondary);
-  font-size: 12px;
-  line-height: 1.7;
-}
-.docs-context-main > .el-select {
-  width: 300px;
-  max-width: 100%;
-}
-.docs-scope {
-  font-size: 12px;
-  color: var(--app-text-secondary);
-}
-.docs-context-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px 14px;
-  align-items: center;
-  margin-top: 18px;
-  padding-top: 15px;
-  border-top: 1px solid var(--app-border);
-}
-.docs-context-actions > span {
-  width: 100%;
-  font-size: 12px;
-  color: var(--app-text-secondary);
-  line-height: 1.8;
-}
-.docs-context-actions > .el-button {
-  margin: 0;
-}
-.quickstart-intro {
-  padding: 24px;
-}
-.docs-eyebrow {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  color: var(--el-color-primary);
-}
-.quickstart-intro h2 {
-  font-size: 24px;
-  margin: 12px 0;
-}
-.quickstart-intro > p {
-  color: var(--app-text-secondary);
-  font-size: 13px;
-  line-height: 1.8;
-}
-.docs-step-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 20px;
-  margin-top: 24px;
-}
-.docs-step-grid article {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-}
-.docs-step-grid b {
-  display: grid;
-  place-items: center;
-  width: 28px;
-  height: 28px;
-  flex-shrink: 0;
-  border-radius: 8px;
-  color: var(--el-color-primary);
-  background: var(--app-primary-soft);
-}
-.docs-step-grid h3 {
-  font-size: 14px;
-  margin: 3px 0 10px;
-}
-.docs-step-grid p {
-  margin: 0;
-  font-size: 12px;
-  color: var(--app-text-secondary);
-  line-height: 1.9;
-}
-.docs-request-options {
-  display: grid;
-  grid-template-columns: 1fr 1.4fr;
-  gap: 16px;
-}
-.docs-request-options label {
-  display: grid;
-  gap: 9px;
-  font-size: 12px;
-  min-width: 0;
-}
-.docs-example-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 16px;
-}
-.docs-example-actions .el-button {
-  margin: 0;
-}
-.docs-result-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 20px;
-}
-.docs-problems > div {
-  display: flex;
-  align-items: baseline;
-  gap: 16px;
-  margin-bottom: 16px;
-  font-size: 12px;
-  line-height: 1.8;
-}
-.docs-problems code {
-  color: var(--el-color-primary);
-  min-width: 62px;
-  flex-shrink: 0;
-}
-.docs-problems span {
-  color: var(--app-text-secondary);
-}
-.docs-sidebar-filters {
-  display: grid;
-  gap: 10px;
-  padding: 16px;
-}
-.docs-no-results {
-  padding: 0 16px 16px;
-  font-size: 12px;
-  color: var(--app-text-secondary);
-  line-height: 1.8;
-}
-.documentation-tabs {
-  margin-top: 20px;
-}
-@media (max-width: 1000px) {
-  .docs-step-grid,
-  .docs-result-grid {
-    grid-template-columns: 1fr;
-  }
-}
-@media (max-width: 600px) {
-  .docs-context,
-  .quickstart-intro {
-    padding: 16px;
-  }
-  .docs-request-options {
-    grid-template-columns: 1fr;
-  }
-  .docs-context-main > div:first-child {
-    min-width: 0;
-    flex-basis: 100%;
-  }
-  .docs-context-main > .el-select {
-    width: 100%;
-  }
-}
-</style>
+<style scoped src="./documentation.css"></style>

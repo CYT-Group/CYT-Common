@@ -528,15 +528,55 @@ class GatewayIntegrationTest {
 
   @Test
   @Order(1)
-  void flywayCreatesBusinessAndApprovalTablesAndIndexes() {
+  void flywayCreatesRequiredGatewayTablesAndIndexes() {
+    var missingTables =
+        new TreeSet<>(
+            List.of(
+                "gateway_admin_audit",
+                "gateway_call_log",
+                "gateway_callback",
+                "gateway_custom_api",
+                "gateway_discord_event",
+                "gateway_discord_session",
+                "gateway_environment",
+                "gateway_grant",
+                "gateway_grant_audit",
+                "gateway_idempotency",
+                "gateway_module",
+                "gateway_op_category",
+                "gateway_op_order",
+                "gateway_payment_dispute_closure",
+                "gateway_secret",
+                "gateway_system",
+                "gateway_system_apikey",
+                "gateway_wecom_event",
+                "gateway_wecom_form",
+                "gateway_wecom_submission"));
+    for (var row :
+        store.rows(
+            """
+            SELECT table_name
+            FROM information_schema.tables
+            WHERE table_schema = current_schema() AND table_type = 'BASE TABLE'
+            """)) {
+      missingTables.remove(JsonUtils.str(row, "table_name"));
+    }
+    assertTrue(missingTables.isEmpty(), () -> "Missing gateway tables: " + missingTables);
+
+    String countIndex =
+        """
+        SELECT COUNT(*) FROM pg_indexes
+        WHERE schemaname = current_schema() AND tablename = ? AND indexname = ?
+        """;
     assertEquals(
-        19,
+        1,
+        store.count(countIndex, "gateway_call_log", "ix_calls_system_time"),
+        "Missing call log index");
+    assertEquals(
+        1,
         store.count(
-            "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema=current_schema() AND table_name LIKE 'gateway_%'"));
-    assertTrue(
-        store.count(
-                "SELECT COUNT(*) FROM pg_indexes WHERE schemaname=current_schema() AND indexname='ix_calls_system_time'")
-            > 0);
+            countIndex, "gateway_payment_dispute_closure", "ix_gateway_payment_dispute_closure_feed"),
+        "Missing payment dispute closure feed index");
   }
 
   @Test

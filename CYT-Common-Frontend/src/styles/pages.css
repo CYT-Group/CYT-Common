@@ -273,67 +273,10 @@
   margin: 25px 0 12px;
 }
 
-/* Docs */
-.docs-grid {
-  display: grid;
-  grid-template-columns: 270px minmax(0, 1fr);
-  gap: 22px;
-  align-items: start;
-}
-.docs-sidebar {
-  max-height: calc(100vh - 200px);
-  overflow: auto;
-  position: sticky;
-  top: 88px;
-}
-.docs-sidebar button {
-  display: block;
-  border: 0;
-  border-top: 1px solid #f2f3f7;
-  background: #fff;
-  text-align: left;
-  width: 100%;
-  padding: 15px 18px;
-  color: #7f879c;
-}
-.docs-sidebar button:hover {
-  background: var(--app-surface-soft);
-}
-.docs-sidebar button.selected {
-  background: var(--app-primary-soft);
-  color: var(--el-color-primary);
-}
-.docs-sidebar strong {
-  font-size: 12px;
-  line-height: 1.8;
-  font-weight: 500;
-  display: block;
-}
-.docs-sidebar span {
-  font-size: 11px;
-  color: var(--app-text-muted);
-  display: block;
-  margin-top: 5px;
-  overflow-wrap: anywhere;
-}
 .docs-heading {
   font-size: 13px;
   font-weight: 600;
   margin: 24px 0 15px;
-}
-@media (max-width: 1050px) {
-  .docs-grid {
-    grid-template-columns: 220px minmax(0, 1fr);
-  }
-}
-@media (max-width: 760px) {
-  .docs-grid {
-    grid-template-columns: 1fr;
-  }
-  .docs-sidebar {
-    position: static;
-    max-height: 230px;
-  }
 }
 
 /* Overview */

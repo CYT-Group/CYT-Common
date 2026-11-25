@@ -25,7 +25,12 @@ instance.interceptors.response.use(
       ElMessage.error({ message: String(message), grouping: true });
       if (error.response?.status === 401) {
         localStorage.removeItem(TOKEN_KEY);
-        if (!window.location.hash.startsWith('#/login')) window.location.hash = '#/login';
+        const current = window.location.hash.slice(1);
+        if (!current.startsWith('/login')) {
+          window.location.replace(
+            `#/login?redirect=${encodeURIComponent(current || '/workspace')}`,
+          );
+        }
       }
     }
     return Promise.reject(error);

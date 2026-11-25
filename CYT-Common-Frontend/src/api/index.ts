@@ -127,6 +127,7 @@ export const api = {
   testCallback: (id: number) => post(`${base}/callbacks/${id}/test`),
   testModule: (id: number) => post(`${base}/modules/${id}/test-auth`),
   docs: () => get<{ operations: Operation[] }>(`${base}/docs`),
+  exportBuiltinPackage: () => download('/api-reference/download', 'cyt-common-integration.zip'),
   capabilityReview: () => get<CapabilityReview>(`${base}/capability-review`),
   exportOpenApi: (direction = 'all') =>
     download(`${base}/openapi.json`, 'cyt-common-openapi.json', { direction }),
