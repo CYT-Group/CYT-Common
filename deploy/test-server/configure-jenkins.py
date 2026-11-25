@@ -163,6 +163,7 @@ def job_config(original, job=JOB_NAME):
     child(labels, 'descriptionTemplate', '分支: ${ENV,var="BRANCH"} | 提交: ${GIT_REVISION,length=12} | 仅验证: ${ENV,var="VERIFY_ONLY"} | 仅构建: ${ENV,var="SKIP_DEPLOY"}')
     child(labels, 'runAtStart', 'true')
     child(labels, 'runAtEnd', 'true')
+    ET.indent(root, space='  ')
     return ET.tostring(root, encoding='utf-8', xml_declaration=True)
 
 

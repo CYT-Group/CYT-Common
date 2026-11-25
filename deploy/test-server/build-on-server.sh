@@ -25,14 +25,19 @@ echo "==> 源码目录: $SRC_DIR"
 echo "==> 目标镜像: $IMAGE"
 echo "==> 基础镜像前缀: ${BASE_REGISTRY:-<官方源>}"
 
+labels=()
+if [[ -n "${SOURCE_SHA:-}" ]]; then
+  labels=(--label "org.opencontainers.image.revision=$SOURCE_SHA")
+fi
 docker build \
+  "${labels[@]}" \
   --build-arg "BASE_REGISTRY=$BASE_REGISTRY" \
   --build-arg "NPM_REGISTRY=$NPM_REGISTRY" \
   -f "$SRC_DIR/deploy/test-server/Dockerfile" \
   -t "$IMAGE" \
   "$SRC_DIR"
 
-if [[ "$NO_PUSH" == "1" ]]; then
+if [[ "${NO_PUSH,,}" =~ ^(1|true|yes)$ ]]; then
   echo "NO_PUSH=1，跳过推送。"
   exit 0
 fi

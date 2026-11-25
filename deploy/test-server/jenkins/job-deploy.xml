@@ -1,50 +1,106 @@
-<?xml version='1.1' encoding='UTF-8'?>
+<?xml version='1.0' encoding='utf-8'?>
 <project>
-  <description>CYT-Common（Java 版）测试服一键部署：选分支 → 取源码 → 构建镜像 → 推局域网仓库 → 重建容器 → 健康检查。服务器不留源码，只跑镜像。与旧的 cyt-common-api（8085）完全隔离。</description>
+  <description>Common 测试环境访问地址：http://192.168.1.182:8088/
+原生 Git 检出并记录 Changes；BRANCH 实时读取远端分支，可按关键词筛选。
+构建独立版本镜像 → Flyway 校验及迁移 → 更新应用 → 健康检查。
+构建历史显示分支和提交，每次构建归档版本与镜像信息；与旧 Python common-api（8085）隔离。
+VERIFY_ONLY=true 仅验证版本及 SQL，不构建、不推送、不迁库、不部署。
+SKIP_DEPLOY=true 只构建推送，不迁库、不更新容器。</description>
   <keepDependencies>false</keepDependencies>
   <properties>
     <hudson.model.ParametersDefinitionProperty>
       <parameterDefinitions>
-        <hudson.model.ChoiceParameterDefinition>
+        <net.uaznia.lukanus.hudson.plugins.gitparameter.GitParameterDefinition>
           <name>BRANCH</name>
-          <description>要发布的分支（新建分支后跑一次 cyt-common-refresh-branches 刷新下拉）</description>
-          <choices class="java.util.Arrays$ArrayList"><a class="string-array">
-            <string>main</string>
-          </a></choices>
-        </hudson.model.ChoiceParameterDefinition>
+          <description>发布分支：实时读取远端，默认 main，可输入关键词筛选</description>
+          <uuid>b9d610bd-6f83-5e6b-afd4-cb16ccf75995</uuid>
+          <type>PT_BRANCH</type>
+          <branch />
+          <tagFilter>*</tagFilter>
+          <branchFilter>origin/(.*)</branchFilter>
+          <sortMode>ASCENDING_SMART</sortMode>
+          <defaultValue>main</defaultValue>
+          <selectedValue>DEFAULT</selectedValue>
+          <useRepository>https://github\.com/wangzi\-prince/CYT\-Common\.git</useRepository>
+          <quickFilterEnabled>true</quickFilterEnabled>
+          <listSize>10</listSize>
+          <requiredParameter>true</requiredParameter>
+        </net.uaznia.lukanus.hudson.plugins.gitparameter.GitParameterDefinition>
         <hudson.model.BooleanParameterDefinition>
           <name>SKIP_DEPLOY</name>
           <description>只构建并推送镜像，不重启容器</description>
           <defaultValue>false</defaultValue>
         </hudson.model.BooleanParameterDefinition>
+        <hudson.model.BooleanParameterDefinition>
+          <name>VERIFY_ONLY</name>
+          <description>仅验证检出版本及 SQL，不构建、不推送、不迁库、不部署</description>
+          <defaultValue>false</defaultValue>
+        </hudson.model.BooleanParameterDefinition>
       </parameterDefinitions>
     </hudson.model.ParametersDefinitionProperty>
   </properties>
-  <scm class="hudson.scm.NullSCM"/>
   <canRoam>true</canRoam>
   <disabled>false</disabled>
   <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
   <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
-  <triggers/>
+  <triggers />
   <concurrentBuild>false</concurrentBuild>
   <builders>
     <hudson.tasks.Shell>
-      <command>set -Eeuo pipefail
-# 拉源码的脚本必须在「检出仓库之前」就能用，所以服务器上放一份 bootstrap 副本。
-# 它走 GitHub API + codeload 下 tar 包（github.com:443 在这台机器不通）。
-BOOTSTRAP=/opt/cyt-common/deploy/git-hub.sh
-WORK=/tmp/cyt-common-build-$$
-cleanup() { rm -rf "$WORK"; echo "==&gt; 已清理临时工作区 $WORK"; }
-trap cleanup EXIT
-
-echo "==&gt; 分支: $BRANCH   只构建不重启: $SKIP_DEPLOY"
-bash "$BOOTSTRAP" fetch "$BRANCH" "$WORK"
-cd "$WORK"
-SKIP_DEPLOY="$SKIP_DEPLOY" bash deploy/test-server/ci-build.sh
+      <command>#!/usr/bin/env bash
+set -Eeuo pipefail
+bash /opt/cyt-common/deploy/jenkins-build.sh
 </command>
-      <configuredLocalRules/>
     </hudson.tasks.Shell>
   </builders>
-  <publishers/>
-  <buildWrappers/>
+  <publishers>
+    <hudson.tasks.ArtifactArchiver>
+      <artifacts>.jenkins-build/${BUILD_NUMBER}/*</artifacts>
+      <allowEmptyArchive>true</allowEmptyArchive>
+      <onlyIfSuccessful>false</onlyIfSuccessful>
+      <fingerprint>true</fingerprint>
+      <defaultExcludes>false</defaultExcludes>
+    </hudson.tasks.ArtifactArchiver>
+  </publishers>
+  <buildWrappers>
+    <org.jenkinsci.plugins.buildnamesetter.BuildNameSetter>
+      <template>#${BUILD_NUMBER} · ${ENV,var="BRANCH"} · ${GIT_REVISION,length=8}</template>
+      <descriptionTemplate>分支: ${ENV,var="BRANCH"} | 提交: ${GIT_REVISION,length=12} | 仅验证: ${ENV,var="VERIFY_ONLY"} | 仅构建: ${ENV,var="SKIP_DEPLOY"}</descriptionTemplate>
+      <runAtStart>true</runAtStart>
+      <runAtEnd>true</runAtEnd>
+    </org.jenkinsci.plugins.buildnamesetter.BuildNameSetter>
+  </buildWrappers>
+  <displayName>【测试环境】CYT-Common</displayName>
+  <scm class="hudson.plugins.git.GitSCM">
+    <configVersion>2</configVersion>
+    <userRemoteConfigs>
+      <hudson.plugins.git.UserRemoteConfig>
+        <url>https://github.com/wangzi-prince/CYT-Common.git</url>
+        <credentialsId>cyt-common-github</credentialsId>
+        <refspec>+refs/heads/*:refs/remotes/origin/*</refspec>
+      </hudson.plugins.git.UserRemoteConfig>
+    </userRemoteConfigs>
+    <branches>
+      <hudson.plugins.git.BranchSpec>
+        <name>*/${BRANCH}</name>
+      </hudson.plugins.git.BranchSpec>
+    </branches>
+    <doGenerateSubmoduleConfigurations>false</doGenerateSubmoduleConfigurations>
+    <submoduleCfg class="empty-list" />
+    <extensions>
+      <hudson.plugins.git.extensions.impl.FirstBuildChangelog>
+        <makeChangelog>true</makeChangelog>
+      </hudson.plugins.git.extensions.impl.FirstBuildChangelog>
+      <hudson.plugins.git.extensions.impl.LocalBranch>
+        <localBranch>${BRANCH}</localBranch>
+      </hudson.plugins.git.extensions.impl.LocalBranch>
+      <hudson.plugins.git.extensions.impl.CloneOption>
+        <shallow>false</shallow>
+        <noTags>true</noTags>
+        <reference />
+        <timeout>10</timeout>
+        <honorRefspec>true</honorRefspec>
+      </hudson.plugins.git.extensions.impl.CloneOption>
+    </extensions>
+  </scm>
 </project>

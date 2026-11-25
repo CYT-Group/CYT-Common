@@ -2,8 +2,10 @@
 
 import os
 from pathlib import Path
+import shlex
 import shutil
 import subprocess
+import sys
 import tempfile
 import unittest
 
@@ -38,7 +40,7 @@ class PostgresDeploymentGuardTests(unittest.TestCase):
                 ROOT / "deploy/test-server/docker-compose.yml",
                 source / "deploy/test-server/docker-compose.yml",
             )
-            for name in ("ci-build.sh", "build-on-server.sh", "redeploy.sh"):
+            for name in ("ci-build.sh", "build-on-server.sh", "redeploy.sh", "db-upgrade.sh"):
                 shutil.copyfile(
                     ROOT / "deploy/test-server" / name,
                     source / "deploy/test-server" / name,
@@ -57,9 +59,22 @@ class PostgresDeploymentGuardTests(unittest.TestCase):
                 encoding="utf-8",
             )
             fixtures = {
-                "docker": '#!/usr/bin/env bash\nprintf "%s\\n" "$*" >> "$COMMAND_LOG"\nif [[ "$*" == *"config --quiet"* && "$CONFIG_OK" != "true" ]]; then exit 1; fi\nexit 0\n',
+                "docker": """#!/usr/bin/env bash
+printf '%s\n' "$*" >> "$COMMAND_LOG"
+case " $* " in
+  *" config -q "*) [[ "$CONFIG_OK" == true ]] ;;
+  *" ps -q db "*) printf '%064d\n' 1 ;;
+  *" port app 8189 "*) printf '%s\n' '0.0.0.0:8088' ;;
+  *) exit 0 ;;
+esac
+""",
                 "id": "#!/usr/bin/env bash\necho 0\n",
-                "curl": '#!/usr/bin/env bash\necho \'{"ok":true,"database":"postgresql"}\'\n',
+                "curl": '#!/usr/bin/env bash\necho \'{"ok":true,"database":"postgresql","service":"cyt-common-api-java"}\'\n',
+                "python3": (
+                    '#!/usr/bin/env bash\n'
+                    '[[ "$1" != *migrate-database.py ]] || exit 0\n'
+                    'exec ' + shlex.quote(Path(sys.executable).as_posix()) + ' "$@"\n'
+                ),
             }
             for name, content in fixtures.items():
                 p = commands / name
@@ -73,6 +88,9 @@ class PostgresDeploymentGuardTests(unittest.TestCase):
                 "CONFIG_OK": str(config_ok).lower(),
                 "WAIT_SECONDS": "1",
                 "SKIP_DEPLOY": "true" if skip_deploy else "false",
+                "VERIFY_ONLY": "false",
+                "BUILD_NUMBER": "",
+                "NO_PUSH": "false",
             }
             # Git Bash prepends its own bin directory during startup. Set PATH
             # inside that shell so the isolated id/docker/curl fixtures win.
@@ -115,7 +133,7 @@ class PostgresDeploymentGuardTests(unittest.TestCase):
     ):
         result, log, composition = self.run_deploy(True, config_ok=False)
         self.assertNotEqual(0, result.returncode)
-        self.assertIn("config --quiet", log)
+        self.assertIn("config -q", log)
         self.assertNotIn("up -d", log)
         self.assertEqual("original-compose", composition)
 

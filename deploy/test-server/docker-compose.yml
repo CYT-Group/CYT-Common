@@ -6,7 +6,7 @@
 # 两个容器：db（专用 PostgreSQL 17）+ app（Spring Boot 单 JAR，前端静态资源已打进 JAR）。
 # 浏览器只访问 app 的 8088，同源提供 /admin/api、/integrations 与页面。
 #
-# 首次启动：Flyway 自动建表 + seed，约 1-2 分钟后 /health 才可用。
+# 发布脚本等待 PostgreSQL 并执行 Flyway，随后启动应用。
 # 健康检查：curl http://192.168.1.182:8088/health   （会真的查一次 PostgreSQL SELECT 1）
 
 services:
@@ -43,20 +43,19 @@ services:
       PORT: "8189"
       ENV: ${APP_ENV:-test}
       SPRING_PROFILES_ACTIVE: prod
-      # This test-only composition explicitly runs Flyway on startup.
-      SPRING_FLYWAY_ENABLED: "true"
+      SPRING_FLYWAY_ENABLED: "false"
       # ── 数据库（走 compose 内网服务名 db，不经过宿主机）──
       POSTGRES_URL: "jdbc:postgresql://db:5432/${POSTGRES_DATABASE:-cyt_common}"
       POSTGRES_USERNAME: ${POSTGRES_USERNAME:-cyt_gateway}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?请在 .env 里配置 POSTGRES_PASSWORD}
-      CORS_ALLOW_ORIGINS: ${CORS_ALLOW_ORIGINS:-http://localhost:8190,http://127.0.0.1:8190}
+      CORS_ALLOW_ORIGINS: "${CORS_ALLOW_ORIGINS:-http://localhost:8190,http://127.0.0.1:8190}"
       # ── 测试服行为：模拟上游，空库可初始化演示数据 ──
       # 两个开关都由 .env 决定：切到真上游时 MOCK_ALL=false，调用方沿用 X-System-Id 免密钥时 GATEWAY_DEV_MODE=true
       MOCK_ALL: ${MOCK_ALL:-true}
       GATEWAY_DEV_MODE: ${GATEWAY_DEV_MODE:-false}
       GATEWAY_CS_SHOPIFY_ORDER_WRITEBACK_STORES: ${GATEWAY_CS_SHOPIFY_ORDER_WRITEBACK_STORES:-}
       GATEWAY_CS_SHOPIFY_ORDER_WRITEBACK_KEY_ID: ${GATEWAY_CS_SHOPIFY_ORDER_WRITEBACK_KEY_ID:-}
-      JAVA_SEED_ENABLED: ${JAVA_SEED_ENABLED:-true}
+      JAVA_SEED_ENABLED: ${JAVA_SEED_ENABLED:-false}
       # 旧 Python 网关的 gmail / gdrive / gcs 三个平台一直是模拟态，其余平台真连。
       # 这里按平台单独放开，避免 MOCK_ALL=false 时这三个平台因为缺 Google 凭据直接 503。
       # 在 .env 里设成 false 即可让某个平台走真连，不设则默认与旧网关保持一致。
