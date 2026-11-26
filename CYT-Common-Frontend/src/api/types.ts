@@ -72,6 +72,8 @@ export interface PlatformModule extends Record<string, unknown> {
   name: string;
   description: string;
   base_url: string;
+  test_base_url?: string | null;
+  production_base_url?: string | null;
   auth_type: string;
   enabled: boolean;
   operation_count: number;
@@ -92,6 +94,29 @@ export interface CustomApi extends Record<string, unknown> {
   enabled: boolean;
   sensitive: boolean;
   timeout_s: number;
+}
+export interface CustomApiPreflight {
+  operation_key: string;
+  gateway_path: string;
+  api_enabled: boolean;
+  provider_enabled: boolean;
+  enabled: boolean;
+  upstream_address_configured: boolean;
+  upstream_environment: 'test' | 'production';
+  upstream_base_url: string;
+  environment_specific: boolean;
+  auth_type: string;
+  credential_refs: string[];
+  credential_status:
+    'not_required' | 'missing_reference' | 'missing_value' | 'configured' | 'unverified';
+  callers: (Omit<GrantDecision, 'operation'> & {
+    key: string;
+    display_name: string;
+    enabled: boolean;
+  })[];
+  authorized_count: number;
+  can_publish: boolean;
+  blocking_reasons: { code: string; message: string }[];
 }
 export interface Platform {
   platform: string;

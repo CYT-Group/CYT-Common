@@ -170,6 +170,17 @@ public class OperationRegistry {
     return custom(row);
   }
 
+  /** An internal draft can receive grants without being available to the invocation registry. */
+  public OperationDefinition grantTarget(String key) {
+    String current = canonical(key);
+    if (builtins.containsKey(current)) return builtins.get(current);
+    var row =
+        store.one(
+            "SELECT a.* FROM gateway_custom_api a JOIN gateway_module m ON a.module_key=m.key WHERE a.key=? AND m.service_kind='internal'",
+            current);
+    return row == null ? get(key) : custom(row);
+  }
+
   public boolean builtin(String key) {
     return builtins.containsKey(canonical(key));
   }

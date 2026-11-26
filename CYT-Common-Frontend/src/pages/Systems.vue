@@ -15,6 +15,12 @@ const { busy, run } = useAction();
 const q = ref('');
 const dialog = ref(route.query.action === 'create');
 const form = reactive({ key: '', display_name: '', description: '' });
+const authorizationReturn = computed(() => {
+  const operation = route.query.operation;
+  return route.query.intent === 'api-authorization' && typeof operation === 'string'
+    ? { path: '/exposed', query: { operation, section: 'access' } }
+    : undefined;
+});
 const rows = computed(() => {
   const words = q.value.trim().toLowerCase().split(/\s+/).filter(Boolean);
   return (data.value?.systems || []).filter((s) =>
@@ -37,6 +43,11 @@ async function create() {
   const result = await run(() => api.createSystem(form));
   if (!result) return;
   dialog.value = false;
+  if (authorizationReturn.value) {
+    ElMessage.success('调用方已创建，可以为此接口授予权限');
+    void router.push(authorizationReturn.value);
+    return;
+  }
   ElMessage.success('调用方已创建，接下来准备密钥和授权');
   void router.push({ path: `/systems/${encodeURIComponent(key)}`, query: { tab: 'keys' } });
 }
@@ -58,6 +69,8 @@ async function toggle(row: SystemItem) {
     <PageHeader
       title="调用方"
       description="一个调用方对应一个业务系统。进入后，在同一处管理它的密钥、能力授权和调用文档。"
+      ><el-button v-if="authorizationReturn" @click="router.push(authorizationReturn)"
+        >返回调用授权</el-button
       ><el-button :icon="Refresh" :loading="loading" @click="load">刷新</el-button
       ><el-button type="primary" :icon="Plus" @click="dialog = true"
         >新增调用方</el-button
@@ -158,7 +171,7 @@ async function toggle(row: SystemItem) {
           :disabled="!form.key || !form.display_name"
           :loading="busy"
           @click="create"
-          >创建并准备密钥</el-button
+          >{{ authorizationReturn ? '创建并返回授权' : '创建并准备密钥' }}</el-button
         ></template
       ></el-dialog
     >

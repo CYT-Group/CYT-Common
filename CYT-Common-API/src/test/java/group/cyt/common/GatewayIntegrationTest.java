@@ -6,6 +6,7 @@ import group.cyt.common.core.persistence.GatewayStore;
 import group.cyt.common.core.util.JsonUtils;
 import group.cyt.common.module.auth.service.AuthenticationService;
 import group.cyt.common.module.gateway.service.CallLogService;
+import group.cyt.common.module.grant.service.AuthorizationService;
 import group.cyt.common.module.registry.controller.RegistryController;
 import group.cyt.common.module.registry.service.OperationRegistry;
 import java.sql.*;
@@ -413,6 +414,80 @@ class GatewayIntegrationTest {
         422, request(HttpMethod.POST, "/admin/api/modules", body, token).getStatusCode().value());
     assertEquals(
         0, store.count("SELECT COUNT(*) FROM gateway_module WHERE key='invalid_kind_fixture'"));
+  }
+
+  @Test
+  void buyerRmaPushIsRegisteredDisabledAndRequiresAnExactGrant() {
+    var row = store.one("SELECT * FROM gateway_custom_api WHERE key='cs.buyer.push'");
+    assertNotNull(row);
+    assertEquals("cs", row.get("module_key"));
+    assertEquals(false, row.get("enabled"));
+    assertEquals("/api/cs/rma/external/buyer/push", row.get("path"));
+    assertEquals("CUSTOM_CS_RMA_BUYER_PUSH_TOKEN", row.get("secret_ref"));
+    var provider = store.one("SELECT name,service_kind,enabled FROM gateway_module WHERE key='cs'");
+    assertNotNull(provider);
+    assertEquals("CS", provider.get("name"));
+    assertEquals("internal", provider.get("service_kind"));
+    assertEquals(false, provider.get("enabled"));
+    assertNull(store.one("SELECT id FROM gateway_module WHERE key='cs_rma'"));
+    assertNull(store.one("SELECT id FROM gateway_custom_api WHERE key='cs_rma.buyer.push'"));
+
+    var operation = registry.custom(row);
+    var authorization = new AuthorizationService(store, registry);
+    assertEquals("/integrations/cs/buyer/push", operation.path());
+    assertTrue(operation.sensitive());
+    assertEquals("array", operation.schema().path("properties").path("platforms").path("type").asText());
+    assertFalse(JsonUtils.bool(authorization.decision(operation,
+        List.of(JsonUtils.obj("id", 1, "operation_pattern", "cs.*", "effect", "allow"))).get("allowed")));
+    assertTrue(JsonUtils.bool(authorization.decision(operation,
+        List.of(JsonUtils.obj("id", 2, "operation_pattern", operation.key(), "effect", "allow"))).get("allowed")));
+  }
+
+  @Test
+  void internalApiPublicationChecksDraftGrantsAndCredentialsWithoutDispatching() {
+    String token = admin();
+    String system = "test_internal_publication";
+    String callerKey = createSystem(system, true);
+    String operation = "publication_fixture.orders.push";
+    String reference = "CUSTOM_PUBLICATION_FIXTURE_TOKEN";
+    String value = "fixture-secret-for-publication-check";
+    var provider = request(HttpMethod.POST, "/admin/api/modules", Map.of(
+        "key", "publication_fixture", "name", "发布验证服务", "service_kind", "internal",
+        "base_url", "http://127.0.0.1:1", "enabled", false), token);
+    assertEquals(200, provider.getStatusCode().value());
+    var api = request(HttpMethod.POST, "/admin/api/custom-apis", Map.of(
+        "key", operation, "module_key", "publication_fixture", "method", "POST", "path", "/orders",
+        "auth_type", "bearer", "secret_ref", reference, "sensitive", true, "enabled", false), token);
+    assertEquals(200, api.getStatusCode().value());
+    String path = "/admin/api/custom-apis/" + api.getBody().get("id");
+    assertEquals(401, request(HttpMethod.GET, path + "/preflight", null, null).getStatusCode().value());
+
+    var before = request(HttpMethod.GET, path + "/preflight", null, token).getBody();
+    assertEquals(false, before.get("enabled"));
+    assertEquals(false, before.get("can_publish"));
+    assertEquals(0, before.get("authorized_count"));
+    assertEquals("missing_value", before.get("credential_status"));
+    assertEquals(422, request(HttpMethod.POST, path + "/publication", Map.of("enabled", true), token).getStatusCode().value());
+
+    var grant = new LinkedHashMap<String, Object>(Map.of("system", system, "operation", operation, "enabled", true));
+    assertEquals(422, request(HttpMethod.POST, "/admin/api/grants/toggle", grant, token).getStatusCode().value());
+    grant.put("confirm_sensitive", true);
+    assertEquals(200, request(HttpMethod.POST, "/admin/api/grants/toggle", grant, token).getStatusCode().value());
+    assertEquals(1, request(HttpMethod.GET, path + "/preflight", null, token).getBody().get("authorized_count"));
+    assertEquals(404, request(HttpMethod.POST, "/integrations/publication-fixture/orders/push", Map.of(), callerKey).getStatusCode().value());
+
+    String providerPath = "/admin/api/modules/" + provider.getBody().get("id");
+    assertEquals(200, request(HttpMethod.PUT, providerPath, Map.of("enabled", true), token).getStatusCode().value());
+    credentials.save("local", Map.of(reference, value), "fixture-admin");
+    var ready = request(HttpMethod.GET, path + "/preflight", null, token).getBody();
+    assertEquals(true, ready.get("can_publish"));
+    assertEquals("configured", ready.get("credential_status"));
+    assertFalse(JsonUtils.write(ready).contains(value));
+    assertEquals(true, request(HttpMethod.POST, path + "/publication", Map.of("enabled", true), token).getBody().get("enabled"));
+    assertEquals(operation, registry.get(operation).key());
+
+    assertEquals(200, request(HttpMethod.PUT, providerPath, Map.of("enabled", false), token).getStatusCode().value());
+    assertEquals(false, request(HttpMethod.POST, path + "/publication", Map.of("enabled", false), token).getBody().get("enabled"));
   }
 
   @Test

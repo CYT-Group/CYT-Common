@@ -22,6 +22,8 @@ public class ConfigurationService {
             "description",
             "service_kind",
             "base_url",
+            "test_base_url",
+            "production_base_url",
             "auth_type",
             "auth_name",
             "secret_ref",
@@ -106,6 +108,30 @@ public class ConfigurationService {
     return row;
   }
 
+  public static boolean hasEnvironmentAddresses(Map<String, Object> module) {
+    return module != null
+        && JsonUtils.str(module, "service_kind").equals("internal")
+        && (module.get("test_base_url") != null || module.get("production_base_url") != null);
+  }
+
+  private static String environmentAddress(Map<String, Object> module, boolean production) {
+    return JsonUtils.str(module, production ? "production_base_url" : "test_base_url");
+  }
+
+  public static Map<String, Object> customHttpConfig(
+      Map<String, Object> api, Map<String, Object> module, boolean production) {
+    Map<String, Object> config = new LinkedHashMap<>();
+    if (module != null) config.putAll(module);
+    String base = JsonUtils.str(api, "base_url");
+    if (hasEnvironmentAddresses(module))
+      config.put("base_url", environmentAddress(module, production));
+    else if (!base.isBlank()) config.put("base_url", base);
+    if (!JsonUtils.str(api, "auth_type", "inherit").equals("inherit"))
+      for (String key : List.of("auth_type", "auth_name", "secret_ref"))
+        config.put(key, api.get(key));
+    return config;
+  }
+
   @Transactional
   public long save(Kind kind, Long id, Map<String, Object> body, String actor) {
     Map<String, Object> data = new LinkedHashMap<>();
@@ -113,7 +139,16 @@ public class ConfigurationService {
         (k, v) -> {
           if (kind.fields.contains(k) && v != null) data.put(k, v);
         });
+    if (kind == Kind.MODULE) {
+      for (String field : List.of("test_base_url", "production_base_url")) {
+        if (!data.containsKey(field)) continue;
+        if (!(data.get(field) instanceof String value))
+          throw GatewayException.invalid("环境基础地址必须为文本");
+        data.put(field, value.trim());
+      }
+    }
     if (id == null) {
+      if (kind == Kind.MODULE) data.putIfAbsent("base_url", "");
       if (kind == Kind.API) {
         // An API may inherit the module address; the persisted empty override is still NOT NULL.
         data.putIfAbsent("base_url", "");
@@ -211,13 +246,22 @@ public class ConfigurationService {
     String key = JsonUtils.str(d, "key"),
         base = JsonUtils.str(d, "base_url"),
         auth = JsonUtils.str(d, "auth_type", "none");
+    boolean scopedAddress = false;
     if (kind == Kind.MODULE) {
-      if (!Set.of("third_party", "internal")
-          .contains(JsonUtils.str(d, "service_kind", "third_party")))
+      String serviceKind = JsonUtils.str(d, "service_kind", "third_party");
+      if (!Set.of("third_party", "internal").contains(serviceKind))
         throw GatewayException.invalid("服务来源必须为 third_party 或 internal");
       if (!key.matches("[a-z][a-z0-9_]{1,31}")
           || registry.contract().path("platforms").findValuesAsText("platform").contains(key))
         throw GatewayException.invalid("模块标识无效或与内置平台冲突");
+      scopedAddress = hasEnvironmentAddresses(d);
+      if (scopedAddress) {
+        validateEnvironmentAddress(JsonUtils.str(d, "test_base_url"), "测试");
+        validateEnvironmentAddress(JsonUtils.str(d, "production_base_url"), "正式");
+        base = environmentAddress(d, settings.production());
+      } else if (d.get("test_base_url") != null || d.get("production_base_url") != null) {
+        throw GatewayException.invalid("仅内部服务支持按环境配置基础地址");
+      }
     } else {
       if (!key.matches("[a-z][a-z0-9_]*\\.[a-z][a-z0-9_]*\\.[a-z][a-z0-9_]*")
           || registry.builtin(key)) throw GatewayException.invalid("操作标识无效或与内置操作冲突");
@@ -226,7 +270,9 @@ public class ConfigurationService {
         if (!key.startsWith(module + ".")) throw GatewayException.invalid("操作标识必须以模块标识开头");
         var m = store.one("SELECT * FROM gateway_module WHERE key=?", module);
         if (m == null) throw GatewayException.invalid("模块不存在");
-        if (base.isBlank()) base = JsonUtils.str(m, "base_url");
+        scopedAddress = hasEnvironmentAddresses(m);
+        if (scopedAddress) base = environmentAddress(m, settings.production());
+        else if (base.isBlank()) base = JsonUtils.str(m, "base_url");
       }
       String path = JsonUtils.str(d, "path", "/");
       if (!path.startsWith("/") || path.startsWith("//") || path.contains("\\"))
@@ -237,7 +283,7 @@ public class ConfigurationService {
       int retries = JsonUtils.integer(d.get("retry_max"), 1);
       if (retries < 1 || retries > 5) throw GatewayException.invalid("重试次数必须为 1–5");
     }
-    network.resolve(base);
+    if (!scopedAddress || !base.isBlank()) network.resolve(base);
     if (!Set.of("none", "inherit", "bearer", "header", "basic", "query", "oauth2_refresh")
         .contains(auth)) throw GatewayException.invalid("鉴权类型不支持");
     if (Set.of("bearer", "header", "basic", "query").contains(auth)
@@ -249,6 +295,22 @@ public class ConfigurationService {
     }
     double timeout = d.get("timeout_s") instanceof Number n ? n.doubleValue() : 30;
     if (timeout < 1 || timeout > 120) throw GatewayException.invalid("超时必须为 1–120 秒");
+  }
+
+  private static void validateEnvironmentAddress(String address, String label) {
+    if (address.isBlank()) return;
+    try {
+      URI uri = URI.create(address);
+      if (address.length() <= 255
+          && uri.getHost() != null
+          && ("http".equals(uri.getScheme()) || "https".equals(uri.getScheme()))
+          && uri.getUserInfo() == null
+          && uri.getQuery() == null
+          && uri.getFragment() == null) return;
+    } catch (IllegalArgumentException ignored) {
+      // Use the field-specific error for malformed addresses.
+    }
+    throw GatewayException.invalid(label + "基础地址必须为有效的 HTTP(S) 地址");
   }
 
   private void validateResponseRefs(com.fasterxml.jackson.databind.JsonNode node) {
