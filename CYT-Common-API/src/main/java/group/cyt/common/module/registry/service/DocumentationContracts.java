@@ -35,7 +35,7 @@ public class DocumentationContracts {
   private Map<String, Object> custom(OperationDefinition op) {
     if (registry.builtin(op.key())) return null;
     return store.one(
-        "SELECT a.response_schema_json,m.service_kind FROM gateway_custom_api a LEFT JOIN gateway_module m ON a.module_key=m.key WHERE a.key=?",
+        "SELECT a.response_schema_json,a.unwrap_response,m.service_kind FROM gateway_custom_api a LEFT JOIN gateway_module m ON a.module_key=m.key WHERE a.key=?",
         op.key());
   }
 
@@ -64,6 +64,7 @@ public class DocumentationContracts {
       var business =
           JsonUtils.map(JsonUtils.parse(JsonUtils.str(row, "response_schema_json", "{}")));
       if (business.isEmpty()) business.put("description", "业务响应字段尚未登记，请由提供方补齐响应契约；不会根据模拟数据推测。");
+      if (JsonUtils.bool(row.get("unwrap_response"))) return business;
       var wrapper =
           JsonUtils.obj(
               "type",

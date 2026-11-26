@@ -80,6 +80,7 @@ export interface PlatformModule extends Record<string, unknown> {
 }
 export interface CustomApi extends Record<string, unknown> {
   response_schema_json?: string | null;
+  unwrap_response?: boolean;
   id: number;
   key: string;
   name: string;

@@ -88,13 +88,10 @@ public class CustomHttpAdapter implements PlatformAdapter {
     String mode = JsonUtils.str(page, "mode", "none");
     if (mode.equals("none")) {
       var result = request(method, finalUri.toString(), headers, query, body, op.timeoutSeconds());
-      return JsonUtils.obj(
-          "status_code",
+      return formatResponse(
+          api,
           result.status(),
-          "data",
-          extract(result.body(), JsonUtils.str(api, "response_path")),
-          "mock",
-          false);
+          extract(result.body(), JsonUtils.str(api, "response_path")));
     }
     int max = Math.max(1, Math.min(50, JsonUtils.integer(page.get("max_pages"), 10))),
         size =
@@ -150,10 +147,9 @@ public class CustomHttpAdapter implements PlatformAdapter {
       }
       if (!more) break;
     }
-    return JsonUtils.obj(
-        "status_code",
+    return formatResponse(
+        api,
         status,
-        "data",
         JsonUtils.obj(
             "items",
             items,
@@ -164,9 +160,15 @@ public class CustomHttpAdapter implements PlatformAdapter {
             "truncated",
             more,
             "pagination",
-            JsonUtils.obj("mode", mode, "max_pages", max)),
-        "mock",
-        false);
+            JsonUtils.obj("mode", mode, "max_pages", max)));
+  }
+
+  private Object formatResponse(Map<String, Object> api, int status, Object data) {
+    if (!JsonUtils.bool(api.get("unwrap_response")))
+      return JsonUtils.obj("status_code", status, "data", data, "mock", false);
+    if (data == null)
+      throw new GatewayException(502, "upstream_error", "提供方响应缺少业务数据", false);
+    return data;
   }
 
   private HttpResult request(

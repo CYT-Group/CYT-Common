@@ -107,6 +107,22 @@ test('the catalog retains inactive definitions and honors the platform state ove
   assert.equal(gatewayPath('demo.items.get_detail'), '/integrations/demo/items/get-detail');
 });
 
+test('draft custom APIs document the configured response shape', () => {
+  const businessResponse = { type: 'object', properties: { items: { type: 'array' } } };
+  const row = {
+    id: 1,
+    key: 'cs.rma.list',
+    method: 'POST',
+    params_schema_json: '[]',
+    response_schema_json: JSON.stringify(businessResponse),
+    enabled: false,
+  };
+  const [direct] = buildCatalog([], [{ ...row, unwrap_response: true }], []);
+  const [wrapped] = buildCatalog([], [row], []);
+  assert.deepEqual(direct.response_schema, businessResponse);
+  assert.deepEqual(wrapped.response_schema.properties.data, businessResponse);
+});
+
 const thousandPlatforms = buildPlatformDirectory(
   [],
   Array.from({ length: 1000 }, (_, index) => {

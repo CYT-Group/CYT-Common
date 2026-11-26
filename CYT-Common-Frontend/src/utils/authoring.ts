@@ -143,6 +143,9 @@ export function buildCatalog(
         };
         if (p.required) required.push(p.name);
       }
+      const businessResponse: Schema = a.response_schema_json
+        ? JSON.parse(a.response_schema_json)
+        : { description: '业务响应契约尚未登记' };
       return {
         key: a.key,
         platform: a.key.split('.')[0]!,
@@ -158,17 +161,17 @@ export function buildCatalog(
         path: gatewayPath(a.key),
         integration_kind:
           connections.get(a.module_key)?.service_kind === 'internal' ? 'internal' : 'third_party',
-        response_schema: {
-          type: 'object',
-          description: '配置型 HTTP 接口数据包装',
-          properties: {
-            status_code: { type: 'integer', description: '提供方 HTTP 状态码' },
-            data: a.response_schema_json
-              ? JSON.parse(a.response_schema_json)
-              : { description: '业务响应契约尚未登记' },
-            mock: { type: 'boolean', description: '是否为模拟提供方结果' },
-          },
-        },
+        response_schema: a.unwrap_response
+          ? businessResponse
+          : {
+              type: 'object',
+              description: '配置型 HTTP 接口数据包装',
+              properties: {
+                status_code: { type: 'integer', description: '提供方 HTTP 状态码' },
+                data: businessResponse,
+                mock: { type: 'boolean', description: '是否为模拟提供方结果' },
+              },
+            },
         schema: { type: 'object', properties, required },
         ...active.get(a.key),
         source: 'custom',

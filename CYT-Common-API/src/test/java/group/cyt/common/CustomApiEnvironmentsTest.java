@@ -16,7 +16,9 @@ import group.cyt.common.module.custom.service.ConfigurationService;
 import group.cyt.common.module.custom.service.ConfigurationService.Kind;
 import group.cyt.common.module.grant.service.AuthorizationService;
 import group.cyt.common.module.registry.model.OperationDefinition;
+import group.cyt.common.module.registry.service.DocumentationContracts;
 import group.cyt.common.module.registry.service.OperationRegistry;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.env.MockEnvironment;
@@ -125,5 +127,51 @@ class CustomApiEnvironmentsTest {
         assertThrows(GatewayException.class, () -> adapter.invoke(operation, Map.of(), "buyer"));
     assertEquals(503, failure.status);
     verifyNoInteractions(upstream, credentials, network);
+  }
+
+  @Test
+  void unwrappedCustomResponseMatchesItsContractAndRejectsMissingData() throws Exception {
+    String key = "cs.rma.list";
+    String path = "/api/cs/rma/external/list";
+    api.put("key", key);
+    api.put("path", path);
+    api.put("response_path", "data");
+    api.put("response_schema_json", """
+        {"type":"object","properties":{"items":{"type":"array"}}}
+        """);
+    var operation = mock(OperationDefinition.class);
+    when(operation.key()).thenReturn(key);
+    when(operation.timeoutSeconds()).thenReturn(10.0);
+    when(store.one("SELECT * FROM gateway_custom_api WHERE key=? AND enabled=true", key))
+        .thenReturn(api);
+    when(store.one("SELECT * FROM gateway_module WHERE key=? AND enabled=true", "cs"))
+        .thenReturn(module);
+    when(store.one(startsWith("SELECT a.response_schema_json,a.unwrap_response,"), eq(key)))
+        .thenReturn(api);
+
+    var upstream = mock(UpstreamHttp.class);
+    var adapter = new CustomHttpAdapter(store, credentials, upstream, network, settings("test"));
+    var documentation = new DocumentationContracts(store, registry);
+    var body = """
+        {"success":true,"data":{"items":[],"next_cursor":null}}
+        """;
+    when(upstream.exchange(eq("POST"), eq(TEST_ADDRESS + path), anyMap(), any(byte[].class),
+        eq(10.0), any())).thenReturn(
+            new UpstreamHttp.ResponseData(200, Map.of(), body.getBytes(StandardCharsets.UTF_8)),
+            new UpstreamHttp.ResponseData(200, Map.of(), body.getBytes(StandardCharsets.UTF_8)),
+            new UpstreamHttp.ResponseData(200, Map.of(), "{}".getBytes(StandardCharsets.UTF_8)));
+
+    var business = JsonUtils.at(JsonUtils.parse(body), "data");
+    assertEquals(JsonUtils.obj("status_code", 200, "data", business, "mock", false),
+        adapter.invoke(operation, Map.of(), "buyer"));
+    assertNotNull(JsonUtils.at(documentation.envelope(operation), "properties.data.properties.data"));
+
+    api.put("unwrap_response", true);
+    assertEquals(business, adapter.invoke(operation, Map.of(), "buyer"));
+    var schema = documentation.envelope(operation);
+    assertNotNull(JsonUtils.at(schema, "properties.data.properties.items"));
+    assertNull(JsonUtils.at(schema, "properties.data.properties.data"));
+    assertEquals(502, assertThrows(GatewayException.class,
+        () -> adapter.invoke(operation, Map.of(), "buyer")).status);
   }
 }
