@@ -248,7 +248,13 @@ public final class TikTokCatalog implements PlatformCatalog {
                     "type",
                     "string",
                     "enum",
-                    array("epomaker-keyboard", "epomaker-usa", "linsoul", "mechlands", "kiiboom"),
+                    array(
+                        "epomaker-keyboard",
+                        "epomaker-usa",
+                        "epomaker-de",
+                        "linsoul",
+                        "mechlands",
+                        "kiiboom"),
                     "description",
                     "已在 Common 启用交易读取的店铺别名")
                 : object(
