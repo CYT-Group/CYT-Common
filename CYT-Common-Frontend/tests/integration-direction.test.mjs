@@ -11,3 +11,18 @@ test('nested request and response fields retain array paths, definitions, units 
   const rows=schemaRows(schema);assert.equal(rows.find(r=>r.name==='employees[].id').required,true);assert.equal(rows.find(r=>r.name==='employees[].manager.name').description,'直属领导姓名');assert.equal(rows.find(r=>r.name==='employees[].manager.name').type,'string | null');
   assert.ok(schemaRows(responseEnvelope({response_schema:schema})).some(r=>r.name==='data.employees[].manager.name'));
 });
+
+test('documented examples stay distinct from defaults and accepted values', () => {
+  const rows = schemaRows({
+    properties: {
+      from: { type: ['string', 'null'], examples: [null] },
+      limit: { type: 'integer', default: 50, examples: [20] },
+      source: { type: 'string', enum: ['cs', 'tiktok_shop'], examples: ['cs'] },
+    },
+  });
+  assert.deepEqual(rows.map((row) => row.default), [
+    '示例：null',
+    '50',
+    '可选值：["cs","tiktok_shop"]',
+  ]);
+});

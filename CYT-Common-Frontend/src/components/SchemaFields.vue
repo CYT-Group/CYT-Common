@@ -30,7 +30,7 @@ const rows = computed(() => schemaRows(props.schema));
         <dd>
           {{ row.description }}
           <small v-if="row.default !== '—'">
-            {{ row.default.startsWith('可选值：') ? row.default : `默认值：${row.default}` }}
+            {{ /^(可选值|示例)：/.test(row.default) ? row.default : `默认值：${row.default}` }}
           </small>
         </dd>
       </div>
@@ -56,7 +56,7 @@ const rows = computed(() => schemaRows(props.schema));
       ></el-table-column
     ><el-table-column prop="description" label="说明" min-width="230" /><el-table-column
       prop="default"
-      label="默认值 / 取值"
+      :label="showRequired ? '默认值 / 示例' : '取值 / 示例'"
       min-width="125"
   /></el-table>
 </template>

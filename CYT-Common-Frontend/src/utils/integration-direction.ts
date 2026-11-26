@@ -45,9 +45,11 @@ export function schemaRows(
         description: input.description || field.description || '未登记字段说明',
         default: field.enum
           ? '可选值：' + JSON.stringify(field.enum)
-          : field.default === undefined
-            ? '—'
-            : JSON.stringify(field.default),
+          : field.default !== undefined
+            ? JSON.stringify(field.default)
+            : field.examples?.length
+              ? '示例：' + JSON.stringify(field.examples[0])
+              : '—',
       },
       ...schemaRows(field, path, root, depth + 1),
     ];
