@@ -8,6 +8,7 @@ import type { SystemItem } from '~/api/types';
 import { useRequest, useAction, confirm } from '~/composables/useRequest';
 import PageHeader from '~/components/PageHeader.vue';
 import PageState from '~/components/PageState.vue';
+import ListFilterBar from '~/components/ListFilterBar.vue';
 const route = useRoute(),
   router = useRouter();
 const { data, loading, error, load } = useRequest(api.systems);
@@ -75,16 +76,21 @@ async function toggle(row: SystemItem) {
       style="margin-bottom: 20px"
     />
     <section class="panel">
-      <div class="panel-toolbar">
+      <ListFilterBar label="筛选调用方">
         <el-input
           v-model="q"
+          class="list-filter-search"
           :prefix-icon="Search"
           placeholder="搜索业务系统名称、标识或用途"
           clearable
           aria-label="搜索调用方"
-          style="max-width: 440px"
-        /><span class="subtext">{{ rows.length }} 个调用方</span>
-      </div>
+        />
+        <template #actions>
+          <span class="list-filter-count" role="status"
+            >共 <strong>{{ rows.length }}</strong> 个调用方</span
+          >
+        </template>
+      </ListFilterBar>
       <PageState :loading="loading" :error="error" @retry="load"
         ><el-table :data="rows" empty-text="还没有调用方，新增后即可准备密钥、授权与专属文档"
           ><el-table-column label="业务系统" min-width="230"

@@ -17,6 +17,7 @@ import { useRequest, useAction, confirm, dateTime } from '~/composables/useReque
 import { useCredentialAccess } from '~/composables/useCredentialAccess';
 import PageHeader from '~/components/PageHeader.vue';
 import PageState from '~/components/PageState.vue';
+import ListFilterBar from '~/components/ListFilterBar.vue';
 const router = useRouter();
 const route = useRoute();
 const env = ref('');
@@ -139,9 +140,12 @@ const rows = computed(() => {
         preview: selected.preview || '',
         hint: variable.hint || '',
         managerManaged: !!(selected.manager_managed || record?.manager_managed),
-        scopeLabel: selected.system && !selected.is_shared
-          ? selected.scope_policy === 'strict' ? '系统专属' : '缺省可用共享项'
-          : '平台共享',
+        scopeLabel:
+          selected.system && !selected.is_shared
+            ? selected.scope_policy === 'strict'
+              ? '系统专属'
+              : '缺省可用共享项'
+            : '平台共享',
         stored: record,
         cloud:
           record?.updated_by === 'gcloud-import' ? imported.value.get(selected.name) : undefined,
@@ -286,11 +290,13 @@ async function deleteEnv() {
 </script>
 <template>
   <div>
-    <PageHeader
-      title="环境与凭据"
-      description="查看各平台和调用系统的凭据绑定、来源和共享范围。"
-    >
-      <el-button v-if="!secrets.data.value?.secret_manager" :icon="InfoFilled" @click="cloudHelp = true">GCP 同步说明</el-button>
+    <PageHeader title="环境与凭据" description="查看各平台和调用系统的凭据绑定、来源和共享范围。">
+      <el-button
+        v-if="!secrets.data.value?.secret_manager"
+        :icon="InfoFilled"
+        @click="cloudHelp = true"
+        >GCP 同步说明</el-button
+      >
       <el-button :icon="Refresh" :loading="secrets.loading.value" @click="reload"
         >刷新状态</el-button
       >
@@ -354,9 +360,10 @@ async function deleteEnv() {
           >查看更新审计</el-button
         >
       </div>
-      <div class="panel-toolbar credential-filters">
+      <ListFilterBar label="筛选凭据">
         <el-input
           v-model="q"
+          class="list-filter-search"
           :prefix-icon="Search"
           clearable
           placeholder="搜索平台、变量名或用途"
@@ -393,7 +400,12 @@ async function deleteEnv() {
             :value="s.key"
             :label="s.display_name + ' · 专属配置'"
         /></el-select>
-      </div>
+        <template #actions>
+          <span class="list-filter-count" role="status"
+            >共 <strong>{{ filtered.length }}</strong> 项凭据</span
+          >
+        </template>
+      </ListFilterBar>
       <PageState
         :loading="environments.loading.value || secrets.loading.value"
         :error="environments.error.value || secrets.error.value"
@@ -416,7 +428,10 @@ async function deleteEnv() {
             ><template #default="{ row }"
               ><div class="credential-stack">
                 <span>{{ row.platformLabels.join(' / ') }}</span
-                ><span class="subtext">{{ row.required ? '必填' : '可选 / 扩展' }}{{ row.scopeLabel ? ' · ' + row.scopeLabel : '' }}</span>
+                ><span class="subtext"
+                  >{{ row.required ? '必填' : '可选 / 扩展'
+                  }}{{ row.scopeLabel ? ' · ' + row.scopeLabel : '' }}</span
+                >
               </div></template
             ></el-table-column
           >
@@ -435,10 +450,10 @@ async function deleteEnv() {
                         : row.managerManaged
                           ? '待绑定'
                           : row.stored
-                          ? '已保存 · 待加载'
-                          : row.required
-                            ? '缺少凭据'
-                            : '未设置'
+                            ? '已保存 · 待加载'
+                            : row.required
+                              ? '缺少凭据'
+                              : '未设置'
                     }}</el-tag
                   >
                 </div>
@@ -460,7 +475,10 @@ async function deleteEnv() {
                         : row.preview || '已保存'
                       : '—'
                   }}</span>
-                  <div v-if="!row.managerManaged && (row.set || row.stored)" class="credential-value-actions">
+                  <div
+                    v-if="!row.managerManaged && (row.set || row.stored)"
+                    class="credential-value-actions"
+                  >
                     <el-tooltip content="查看完整值"
                       ><el-button
                         :icon="View"
@@ -506,30 +524,33 @@ async function deleteEnv() {
                 v-if="row.stored"
                 link
                 type="danger"
-                :disabled="!secrets.data.value?.writable || (row.managerManaged && !row.stored?.bound)"
+                :disabled="
+                  !secrets.data.value?.writable || (row.managerManaged && !row.stored?.bound)
+                "
                 @click="deleteSecret(row)"
                 >{{ row.managerManaged ? '清理旧记录' : '删除' }}</el-button
               ></template
             ></el-table-column
           >
         </el-table>
-        <div class="catalog-pagination">
-          <span>共 {{ filtered.length }} 项凭据</span
-          ><el-pagination
+        <footer v-if="filtered.length > size" class="table-footer">
+          <el-pagination
             v-model:current-page="page"
             v-model:page-size="size"
             :page-sizes="[20, 50, 100]"
             :total="filtered.length"
+            :pager-count="5"
             layout="sizes, prev, pager, next"
           />
-        </div>
+        </footer>
       </PageState>
     </section>
     <section class="panel">
       <div class="panel-body credential-guidance">
         <strong>日常更新与轮换</strong>
         <p v-if="secrets.data.value?.secret_manager">
-          生产敏感凭据由 Secret Manager 管理，使用新版本发布以完成轮换。本页用于核对绑定状态和维护非敏感配置。
+          生产敏感凭据由 Secret Manager
+          管理，使用新版本发布以完成轮换。本页用于核对绑定状态和维护非敏感配置。
         </p>
         <p v-else>
           列表默认遮罩显示，点“查看”或“复制”读取完整值。平台密钥到期后，点“更新 / 轮换”保存新值。GCP
@@ -717,13 +738,6 @@ async function deleteEnv() {
 }
 .credential-summary > .el-button {
   margin-left: auto;
-}
-.credential-filters > .el-input {
-  flex: 1;
-  min-width: 220px;
-}
-.credential-filters > .el-select {
-  width: 165px;
 }
 .credential-stack {
   display: grid;

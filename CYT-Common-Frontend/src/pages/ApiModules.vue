@@ -17,6 +17,7 @@ import {
 } from '~/utils/authoring';
 import PageHeader from '~/components/PageHeader.vue';
 import PageState from '~/components/PageState.vue';
+import ListFilterBar from '~/components/ListFilterBar.vue';
 import SchemaFields from '~/components/SchemaFields.vue';
 const route = useRoute();
 const router = useRouter();
@@ -632,7 +633,15 @@ async function remove(row: PlatformModule | CustomApi) {
       ><span><b>调用授权</b> 哪个业务系统可以使用</span>
     </div>
     <section class="panel">
-      <div class="panel-toolbar">
+      <ListFilterBar label="筛选服务与接口配置">
+        <el-input
+          v-model="q"
+          class="list-filter-search"
+          :prefix-icon="Search"
+          placeholder="搜索名称、标识或说明"
+          aria-label="搜索服务与接口配置"
+          clearable
+        />
         <el-radio-group v-model="tab" aria-label="配置类型"
           ><el-radio-button value="modules"
             >{{ internalContext ? '提供方连接' : '平台连接' }}
@@ -642,14 +651,12 @@ async function remove(row: PlatformModule | CustomApi) {
             {{ contextApis.length }}</el-radio-button
           ></el-radio-group
         >
-        <el-input
-          v-model="q"
-          :prefix-icon="Search"
-          placeholder="搜索名称、标识或说明"
-          clearable
-          style="margin-left: auto"
-        />
-      </div>
+        <template v-if="q.trim()" #actions>
+          <span class="list-filter-count" role="status"
+            >共 <strong>{{ items.length }}</strong> 项</span
+          >
+        </template>
+      </ListFilterBar>
       <PageState :loading="loading" :error="error" @retry="load">
         <el-empty
           v-if="!items.length"

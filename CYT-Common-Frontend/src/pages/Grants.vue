@@ -12,6 +12,7 @@ import OperationModuleBrowser from '~/components/OperationModuleBrowser.vue';
 import { operationDirection } from '~/utils/integration-direction';
 import PageHeader from '~/components/PageHeader.vue';
 import PageState from '~/components/PageState.vue';
+import ListFilterBar from '~/components/ListFilterBar.vue';
 const props = defineProps<{ fixedSystem?: string; embedded?: boolean }>();
 const emit = defineEmits<{ updated: [] }>();
 
@@ -118,6 +119,12 @@ const skipBlocked = ref(false);
 watch([q, platform, category, state, kind, direction, pageSize], () => {
   page.value = 1;
 });
+watch(
+  () => operations.value.length,
+  (total) => {
+    page.value = Math.min(page.value, Math.max(1, Math.ceil(total / pageSize.value)));
+  },
+);
 watch([moduleOperations, loading], () => {
   if (
     !loading.value &&
@@ -292,55 +299,66 @@ async function remove(id: number) {
       </div>
       <template v-if="mode === 'matrix'">
         <div class="grant-filters">
-          <el-select v-model="direction" aria-label="授权调用方向"
-            ><el-option value="all" label="全部调用方向" /><el-option
-              value="third_party"
-              label="第三方接入" /><el-option value="internal" label="自有对外能力"
-          /></el-select>
-          <el-input
-            v-model="q"
-            :prefix-icon="Search"
-            placeholder="搜索名称、接口标识或业务词，支持多个关键词"
-            clearable
-            aria-label="搜索授权接口"
-          />
-          <el-select
-            v-model="platform"
-            clearable
-            filterable
-            placeholder="全部平台"
-            aria-label="筛选平台"
-            ><el-option
-              v-for="p in data?.platforms"
-              :key="p.platform"
-              :label="p.display_name"
-              :value="p.platform"
-          /></el-select>
-          <el-select v-model="state" aria-label="筛选授权状态"
-            ><el-option label="全部授权状态" value="all" /><el-option
-              label="尚未授权"
-              value="denied" /><el-option label="已授权" value="allowed"
-          /></el-select>
-          <el-select v-model="kind" aria-label="筛选操作类型"
-            ><el-option label="全部操作类型" value="all" /><el-option
-              label="只读操作"
-              value="read" /><el-option label="敏感操作" value="sensitive"
-          /></el-select>
-        </div>
-        <div class="grant-selection">
-          <span
-            >找到 <strong>{{ operations.length }}</strong> 项</span
-          >
-          <el-button
-            link
-            type="primary"
-            :disabled="!ready || !operations.length"
-            @click="select(operations.map((o) => o.key))"
-            >选中全部筛选结果</el-button
-          >
-          <el-button link :disabled="!ready" @click="selectReadOnly"
-            >仅选当前范围只读接口</el-button
-          >
+          <div class="grant-filter-bar" role="group" aria-label="筛选和选择操作权限">
+            <el-input
+              v-model="q"
+              class="grant-search"
+              :prefix-icon="Search"
+              name="operation-search"
+              placeholder="搜索名称、标识或业务词"
+              clearable
+              aria-label="搜索授权接口"
+            />
+            <el-select v-model="direction" aria-label="授权调用方向">
+              <el-option value="all" label="全部调用方向" />
+              <el-option value="third_party" label="第三方接入" />
+              <el-option value="internal" label="自有对外能力" />
+            </el-select>
+            <el-select
+              v-model="platform"
+              clearable
+              filterable
+              placeholder="全部平台"
+              aria-label="筛选平台"
+            >
+              <el-option
+                v-for="p in data?.platforms"
+                :key="p.platform"
+                :label="p.display_name"
+                :value="p.platform"
+              />
+            </el-select>
+            <el-select v-model="state" aria-label="筛选授权状态">
+              <el-option label="全部授权状态" value="all" />
+              <el-option label="尚未授权" value="denied" />
+              <el-option label="已授权" value="allowed" />
+            </el-select>
+            <el-select v-model="kind" aria-label="筛选操作类型">
+              <el-option label="全部操作类型" value="all" />
+              <el-option label="只读操作" value="read" />
+              <el-option label="敏感操作" value="sensitive" />
+            </el-select>
+            <div class="grant-result-actions">
+              <span class="grant-result-count" role="status">
+                找到 <strong>{{ operations.length }}</strong> 项
+              </span>
+              <el-button
+                link
+                type="primary"
+                :disabled="!ready || !operations.length"
+                title="选中全部筛选结果，包含其他页"
+                @click="select(operations.map((o) => o.key))"
+                >全选结果</el-button
+              >
+              <el-button
+                link
+                :disabled="!ready"
+                title="仅选当前筛选范围内的只读接口"
+                @click="selectReadOnly"
+                >仅选只读</el-button
+              >
+            </div>
+          </div>
         </div>
         <div v-if="selected.size" class="grant-batchbar">
           <div>
@@ -371,14 +389,19 @@ async function remove(id: number) {
           :closable="false"
         />
       </template>
-      <div v-else class="grant-selection">
+      <ListFilterBar v-else label="筛选授权规则">
         <el-input
           v-model="ruleQ"
+          class="list-filter-search"
           :prefix-icon="Search"
           placeholder="搜索匹配规则或备注"
           clearable
-        /><span class="subtext">拒绝规则优先于允许规则；通配允许不包含敏感操作。</span>
-      </div>
+          aria-label="搜索授权规则"
+        />
+        <template #actions>
+          <span class="muted">拒绝规则优先于允许规则；通配允许不包含敏感操作。</span>
+        </template>
+      </ListFilterBar>
       <PageState :loading="loading" :error="error" @retry="load">
         <OperationModuleBrowser
           v-if="mode === 'matrix'"
@@ -471,16 +494,16 @@ async function remove(id: number) {
               ></el-table-column
             >
           </el-table>
-          <div class="grant-pagination">
+          <footer v-if="operations.length > pageSize" class="table-footer">
             <el-pagination
               v-model:current-page="page"
               v-model:page-size="pageSize"
               :total="operations.length"
               :page-sizes="[20, 50, 100]"
-              layout="total, sizes, prev, pager, next"
-              small
+              :pager-count="5"
+              layout="sizes, prev, pager, next"
             />
-          </div>
+          </footer>
         </OperationModuleBrowser>
         <el-table
           v-else
@@ -673,21 +696,61 @@ async function remove(id: number) {
   margin-left: auto;
 }
 .grant-filters {
-  display: grid;
-  grid-template-columns: minmax(250px, 1fr) 170px 150px 150px;
-  gap: 10px;
-  padding: 0 20px 12px;
+  container-type: inline-size;
+  padding: 12px var(--app-panel-padding);
 }
-.grant-selection {
+.grant-filter-bar {
+  display: grid;
+  grid-template-columns:
+    minmax(200px, var(--app-filter-search-max-width)) repeat(4, minmax(118px, 144px))
+    minmax(max-content, 1fr);
+  align-items: center;
+  gap: 10px 8px;
+}
+.grant-filter-bar :deep(.el-select__wrapper) {
+  padding-inline: 10px;
+}
+.grant-result-actions {
   display: flex;
   align-items: center;
+  justify-self: end;
   flex-wrap: wrap;
-  gap: 14px;
-  padding: 6px 20px 14px;
+  gap: 8px 10px;
+  padding-inline-start: 8px;
   font-size: 13px;
 }
-.grant-selection .el-input {
-  max-width: 360px;
+.grant-result-actions .el-button + .el-button {
+  margin-left: 0;
+}
+@container (width < 930px) {
+  .grant-filter-bar {
+    grid-template-columns: repeat(4, minmax(122px, 1fr)) max-content;
+  }
+  .grant-search {
+    grid-column: 1 / -1;
+  }
+}
+@container (width < 740px) {
+  .grant-filter-bar {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .grant-result-actions {
+    grid-column: 1 / -1;
+    justify-self: start;
+    padding-inline-start: 0;
+  }
+}
+@container (max-width: 560px) {
+  .grant-filter-bar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+.grant-result-count {
+  color: var(--app-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+.grant-result-count strong {
+  color: var(--app-text);
 }
 .grant-batchbar {
   display: flex;
@@ -722,10 +785,6 @@ async function remove(id: number) {
   font-size: 12px;
   margin-top: 4px;
 }
-.grant-pagination {
-  padding: 16px 20px;
-  overflow-x: auto;
-}
 .batch-summary {
   margin-top: 0;
 }
@@ -748,9 +807,9 @@ async function remove(id: number) {
 :deep(.focused-grant td) {
   background: var(--el-color-primary-light-9) !important;
 }
-@media (max-width: 1100px) {
+@media (max-width: 760px) {
   .grant-filters {
-    grid-template-columns: 1fr 1fr;
+    padding-inline: 14px;
   }
 }
 @media (max-width: 600px) {
@@ -760,21 +819,8 @@ async function remove(id: number) {
   .system-status {
     margin-left: 0;
   }
-  .grant-filters {
-    padding: 0 12px 12px;
-  }
-  .grant-filters > :first-child {
-    grid-column: 1 / -1;
-  }
-  .grant-selection {
-    padding: 6px 12px 14px;
-    gap: 10px;
-  }
   .grant-batchbar {
     margin: 0 12px 12px;
-  }
-  .grant-pagination {
-    padding: 14px 12px;
   }
 }
 </style>

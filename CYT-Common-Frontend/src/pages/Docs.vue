@@ -19,6 +19,7 @@ import type { Operation } from '~/api/types';
 import DocumentationExample from '~/components/DocumentationExample.vue';
 import JsonViewer from '~/components/JsonViewer.vue';
 import PageState from '~/components/PageState.vue';
+import ListFilterBar from '~/components/ListFilterBar.vue';
 import ResponseFields from '~/components/ResponseFields.vue';
 import SchemaFields from '~/components/SchemaFields.vue';
 import { useAction, useRequest } from '~/composables/useRequest';
@@ -597,7 +598,6 @@ const commonRoutes = [
             <div class="docs-catalog-controls">
               <div class="docs-catalog-title">
                 <h2>接口目录</h2>
-                <span role="status">{{ filtered.length }} 项</span>
                 <button
                   v-if="groups.length"
                   class="docs-catalog-toggle"
@@ -609,15 +609,16 @@ const commonRoutes = [
                   {{ catalogExpanded ? '收起列表' : '展开列表' }}
                 </button>
               </div>
-              <el-input
-                v-model="search"
-                :prefix-icon="Search"
-                type="search"
-                clearable
-                placeholder="搜索名称、路径或标识"
-                aria-label="搜索文档接口"
-              />
-              <div class="docs-catalog-filters">
+              <ListFilterBar class="docs-catalog-filter" label="筛选接口目录">
+                <el-input
+                  v-model="search"
+                  class="list-filter-search"
+                  :prefix-icon="Search"
+                  type="search"
+                  clearable
+                  placeholder="搜索名称、路径或标识"
+                  aria-label="搜索文档接口"
+                />
                 <el-select
                   :model-value="platform"
                   :empty-values="[null, undefined]"
@@ -647,7 +648,12 @@ const commonRoutes = [
                     :label="item.name + ' · ' + item.total"
                   />
                 </el-select>
-              </div>
+                <template #actions>
+                  <span class="list-filter-count" role="status"
+                    >共 <strong>{{ filtered.length }}</strong> 项</span
+                  >
+                </template>
+              </ListFilterBar>
             </div>
             <nav
               v-if="groups.length"

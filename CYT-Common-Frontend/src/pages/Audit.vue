@@ -7,6 +7,7 @@ import type { Audit } from '~/api/types';
 import { useRequest, dateTime } from '~/composables/useRequest';
 import PageHeader from '~/components/PageHeader.vue';
 import PageState from '~/components/PageState.vue';
+import ListFilterBar from '~/components/ListFilterBar.vue';
 import JsonViewer from '~/components/JsonViewer.vue';
 const route = useRoute();
 const query = reactive({
@@ -21,6 +22,14 @@ function search() {
   query.page = 1;
   void load();
 }
+watch(data, (result) => {
+  if (!result) return;
+  const lastPage = Math.max(1, Math.ceil(result.total / query.page_size));
+  if (query.page > lastPage) {
+    query.page = lastPage;
+    void load();
+  }
+});
 onMounted(load);
 watch(
   () => route.query,
@@ -39,24 +48,32 @@ watch(
       ><el-button :icon="Refresh" :loading="loading" @click="load">刷新</el-button></PageHeader
     >
     <section class="panel">
-      <div class="panel-toolbar">
+      <ListFilterBar label="筛选审计日志">
         <el-input
           v-model="query.q"
+          class="list-filter-search"
           :prefix-icon="Search"
           placeholder="搜索动作、目标"
+          aria-label="搜索审计日志"
           clearable
           @keyup.enter="search"
           @clear="search"
         /><el-input
           v-model="query.actor"
+          class="list-filter-field"
           placeholder="操作人"
+          aria-label="筛选操作人"
           clearable
-          style="width: 200px"
           @keyup.enter="search"
           @clear="search"
-        /><el-button @click="search">查询</el-button
-        ><span class="muted" style="margin-left: auto; font-size: 11px">审计记录仅追加</span>
-      </div>
+        /><el-button @click="search">查询</el-button>
+        <template #actions>
+          <span class="list-filter-count" role="status"
+            >共 <strong>{{ data?.total || 0 }}</strong> 条记录</span
+          >
+          <span class="muted">审计记录仅追加</span>
+        </template>
+      </ListFilterBar>
       <PageState :loading="loading" :error="error" @retry="load"
         ><el-table
           :data="data?.items || []"
@@ -76,12 +93,12 @@ watch(
             ></el-table-column
           ></el-table
         >
-        <footer class="table-footer">
-          <span>共 {{ data?.total || 0 }} 条记录</span
-          ><el-pagination
+        <footer v-if="(data?.total || 0) > query.page_size" class="table-footer">
+          <el-pagination
             v-model:current-page="query.page"
             :page-size="query.page_size"
             :total="data?.total || 0"
+            :pager-count="5"
             layout="prev, pager, next"
             @current-change="load"
           /></footer

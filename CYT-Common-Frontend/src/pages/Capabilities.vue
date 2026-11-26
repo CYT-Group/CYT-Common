@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { Search, Right } from '@element-plus/icons-vue';
 import { api } from '~/api';
@@ -7,6 +7,7 @@ import type { CapabilityDepth, CapabilityItem } from '~/api/types';
 import { useRequest } from '~/composables/useRequest';
 import PageHeader from '~/components/PageHeader.vue';
 import PageState from '~/components/PageState.vue';
+import ListFilterBar from '~/components/ListFilterBar.vue';
 const router = useRouter();
 const route = useRoute();
 const { data, loading, error, load } = useRequest(api.capabilityReview);
@@ -15,6 +16,7 @@ const platform = ref(String(route.query.platform || ''));
 const assessment = ref('');
 const depth = ref('');
 const page = ref(1);
+const pageSize = 20;
 const selected = ref<CapabilityItem>();
 const labels = {
   recommended: '建议优先使用',
@@ -56,7 +58,15 @@ const filtered = computed(() =>
         .includes(query.value.trim().toLowerCase()),
   ),
 );
-const rows = computed(() => filtered.value.slice((page.value - 1) * 20, page.value * 20));
+const rows = computed(() =>
+  filtered.value.slice((page.value - 1) * pageSize, page.value * pageSize),
+);
+watch(
+  () => filtered.value.length,
+  (total) => {
+    page.value = Math.min(page.value, Math.max(1, Math.ceil(total / pageSize)));
+  },
+);
 function search() {
   page.value = 1;
 }
@@ -144,24 +154,46 @@ onMounted(load);
         >
       </section>
       <section class="panel">
-        <div class="panel-body capability-toolbar">
+        <ListFilterBar label="筛选能力指南">
           <el-input
             v-model="query"
+            class="list-filter-search"
             :prefix-icon="Search"
             clearable
             placeholder="搜索业务、接口或改进建议"
+            aria-label="搜索业务能力"
             @input="search"
           />
-          <el-select v-model="platform" clearable placeholder="全部平台" @change="search"
+          <el-select
+            v-model="platform"
+            clearable
+            placeholder="全部平台"
+            aria-label="筛选平台"
+            @change="search"
             ><el-option v-for="item in platforms" :key="item" :value="item" :label="item"
           /></el-select>
-          <el-select v-model="depth" clearable placeholder="全部封装深度" @change="search"
+          <el-select
+            v-model="depth"
+            clearable
+            placeholder="全部封装深度"
+            aria-label="筛选封装深度"
+            @change="search"
             ><el-option v-for="(label, key) in depthLabels" :key="key" :value="key" :label="label"
           /></el-select>
-          <el-select v-model="assessment" clearable placeholder="全部使用建议" @change="search"
+          <el-select
+            v-model="assessment"
+            clearable
+            placeholder="全部使用建议"
+            aria-label="筛选使用建议"
+            @change="search"
             ><el-option v-for="(label, value) in labels" :key="value" :value="value" :label="label"
           /></el-select>
-        </div>
+          <template #actions>
+            <span class="list-filter-count" role="status"
+              >共 <strong>{{ filtered.length }}</strong> 项</span
+            >
+          </template>
+        </ListFilterBar>
         <el-table :data="rows" row-key="key" @row-click="selected = $event" class="capability-table"
           ><el-table-column label="对外能力" min-width="270"
             ><template #default="{ row }"
@@ -197,15 +229,15 @@ onMounted(load);
             ></el-table-column
           ></el-table
         >
-        <div class="panel-body capability-pagination">
-          <span class="subtext">共 {{ filtered.length }} 项</span
-          ><el-pagination
+        <footer v-if="filtered.length > pageSize" class="table-footer">
+          <el-pagination
             v-model:current-page="page"
             :total="filtered.length"
-            :page-size="20"
+            :page-size="pageSize"
+            :pager-count="5"
             layout="prev, pager, next"
           />
-        </div>
+        </footer>
       </section>
       <section class="panel">
         <header class="panel-head">
@@ -332,18 +364,6 @@ onMounted(load);
   line-height: 1.8;
   color: var(--app-text-secondary);
 }
-.capability-toolbar {
-  display: grid;
-  grid-template-columns: minmax(220px, 1fr) 150px 150px 150px;
-  gap: 12px;
-}
-.capability-pagination {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 12px;
-}
 .capability-table :deep(.el-table__row) {
   cursor: pointer;
 }
@@ -368,16 +388,8 @@ onMounted(load);
   text-decoration: none;
 }
 @media (max-width: 700px) {
-  .capability-toolbar {
-    grid-template-columns: 1fr;
-  }
   .capability-depth-counts {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-@media (min-width: 701px) and (max-width: 1100px) {
-  .capability-toolbar {
-    grid-template-columns: 1fr 1fr;
   }
 }
 </style>

@@ -117,6 +117,7 @@ export function platformPage<T>(items: T[], requestedPage: number, requestedSize
   return {
     items: items.slice(start, start + pageSize),
     page,
+    pageCount,
     pageSize,
     total: items.length,
     from: items.length ? start + 1 : 0,

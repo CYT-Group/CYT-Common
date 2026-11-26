@@ -5,6 +5,7 @@ import { Check, CopyDocument, Plus } from '@element-plus/icons-vue';
 import { api } from '~/api';
 import { dateTime, useAction, useRequest } from '~/composables/useRequest';
 import PageState from './PageState.vue';
+import ListFilterBar from './ListFilterBar.vue';
 
 type CallerKey = Awaited<ReturnType<typeof api.keys>>['items'][number];
 
@@ -124,7 +125,7 @@ async function manageKey(key: CallerKey) {
 
     <PageState :loading="loading" :error="error" @retry="refreshKeys">
       <template v-if="keys.length">
-        <div class="key-filters">
+        <ListFilterBar label="筛选调用密钥">
           <el-radio-group v-model="filter" size="small" aria-label="筛选密钥状态">
             <el-radio-button value="all">全部 {{ keys.length }}</el-radio-button>
             <el-radio-button value="active">有效 {{ activeCount }}</el-radio-button>
@@ -132,7 +133,7 @@ async function manageKey(key: CallerKey) {
               >已吊销 {{ keys.length - activeCount }}</el-radio-button
             >
           </el-radio-group>
-        </div>
+        </ListFilterBar>
         <table v-if="visibleKeys.length" class="key-table" role="table" aria-label="密钥列表">
           <thead role="rowgroup">
             <tr role="row">
@@ -263,9 +264,6 @@ async function manageKey(key: CallerKey) {
 }
 .keys-heading > .el-button {
   flex: none;
-}
-.key-filters {
-  padding: 14px var(--app-panel-padding);
 }
 .key-table {
   width: 100%;

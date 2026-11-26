@@ -27,6 +27,7 @@ html:root {
   --app-panel-padding: 22px;
   --app-row-height: 64px;
   --app-control-height: 36px;
+  --app-filter-search-max-width: 320px;
   --el-color-primary: #2563eb;
   --el-color-primary-light-3: #6692f1;
   --el-color-primary-light-5: #92b1f5;
@@ -663,14 +664,30 @@ kbd {
   width: 155px;
 }
 .table-footer {
+  container: table-pagination / inline-size;
   padding: 15px var(--app-panel-padding);
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: safe flex-end;
+  gap: 8px 12px;
   border-top: 1px solid var(--app-divider);
-  font-size: 12px;
+  overflow-x: auto;
   color: var(--app-text-muted);
+  font-size: 12px;
+}
+@container table-pagination (width < 365px) {
+  .table-footer .el-pagination {
+    --el-pagination-item-gap: 0px;
+    display: grid;
+    grid-template-columns: repeat(3, max-content);
+    justify-content: end;
+    row-gap: 8px;
+  }
+  .table-footer .el-pagination__sizes {
+    grid-column: 1 / -1;
+    justify-self: end;
+  }
 }
 .el-table {
   --el-table-header-bg-color: #f8fafc;
@@ -724,14 +741,14 @@ kbd {
   padding-left: 11px;
   padding-right: 11px;
 }
-.el-select__wrapper {
+.el-select--default .el-select__wrapper {
   min-height: var(--app-control-height);
 }
-.el-select--small .el-select__wrapper {
-  min-height: 30px;
+.el-select.el-select--small .el-select__wrapper {
+  min-height: var(--el-component-size-small);
 }
-.el-select--large .el-select__wrapper {
-  min-height: 42px;
+.el-select.el-select--large .el-select__wrapper {
+  min-height: var(--el-component-size-large);
 }
 .el-form-item {
   margin-bottom: 22px;
@@ -1180,7 +1197,6 @@ kbd {
   }
   .table-footer {
     padding: 14px;
-    flex-wrap: wrap;
   }
   .el-table .cell {
     padding-left: 14px;

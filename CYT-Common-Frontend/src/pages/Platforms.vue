@@ -25,6 +25,7 @@ import {
 } from '~/utils/platform-directory';
 import PageHeader from '~/components/PageHeader.vue';
 import PageState from '~/components/PageState.vue';
+import ListFilterBar from '~/components/ListFilterBar.vue';
 const route = useRoute();
 const router = useRouter();
 const favoriteStorage = 'cyt_common_favorite_platforms';
@@ -183,7 +184,7 @@ function jumpToPage() {
     ElMessage.info('请输入大于 0 的整数页码');
     return;
   }
-  page.value = Math.min(target, Math.max(1, Math.ceil(filtered.value.length / pageSize.value)));
+  page.value = Math.min(target, current.value.pageCount);
   jumpPage.value = String(page.value);
 }
 function toggleFavorite(platform: DirectoryPlatform) {
@@ -346,45 +347,44 @@ onUnmounted(() => {
           />
         </div>
       </div>
-      <div class="directory-toolbar">
-        <div class="directory-search">
-          <el-input
-            ref="searchInput"
-            v-model="q"
-            :prefix-icon="Search"
-            clearable
-            placeholder="搜索名称、标识、域名或用途"
-            aria-label="搜索服务"
-            ><template #suffix><kbd>/</kbd></template></el-input
+      <ListFilterBar label="筛选服务接入">
+        <el-input
+          ref="searchInput"
+          v-model="q"
+          class="list-filter-search"
+          :prefix-icon="Search"
+          clearable
+          placeholder="搜索名称、标识、域名或用途"
+          aria-label="搜索服务"
+          title="支持空格分隔多个关键词，准确匹配优先。"
+          ><template #suffix><kbd class="directory-search-shortcut">/</kbd></template></el-input
+        >
+        <el-select v-if="source !== 'all'" v-model="source" aria-label="连接方式"
+          ><el-option value="all" label="全部来源" /><el-option
+            value="builtin"
+            label="内置适配器" /><el-option value="custom" label="自定义 HTTP"
+        /></el-select>
+        <el-select v-model="state" aria-label="服务状态"
+          ><el-option value="all" label="全部状态" /><el-option
+            value="pending"
+            label="待配置凭据" /><el-option value="configured" label="连接 / 凭据已配" /><el-option
+            value="mock"
+            label="模拟模式" /><el-option value="disabled" label="已停用"
+        /></el-select>
+        <el-select v-model="sort" aria-label="服务排序"
+          ><el-option value="recommended" label="常用优先" /><el-option
+            value="name"
+            label="名称排序" /><el-option value="operations" label="接口数量排序"
+        /></el-select>
+        <template #actions>
+          <span class="list-filter-count" role="status">
+            {{ hasFilters ? '匹配' : '共' }} <strong>{{ filtered.length }}</strong> 个服务
+          </span>
+          <el-button v-if="hasFilters" link type="primary" @click="resetFilters"
+            >清除筛选</el-button
           >
-          <p>支持空格分隔多个关键词，准确匹配优先。</p>
-        </div>
-        <div class="directory-filter-set">
-          <el-select v-if="source !== 'all'" v-model="source" aria-label="连接方式"
-            ><el-option value="all" label="全部来源" /><el-option
-              value="builtin"
-              label="内置适配器" /><el-option value="custom" label="自定义 HTTP"
-          /></el-select>
-          <el-select v-model="state" aria-label="服务状态"
-            ><el-option value="all" label="全部状态" /><el-option
-              value="pending"
-              label="待配置凭据" /><el-option
-              value="configured"
-              label="连接 / 凭据已配" /><el-option value="mock" label="模拟模式" /><el-option
-              value="disabled"
-              label="已停用"
-          /></el-select>
-          <el-select v-model="sort" aria-label="服务排序"
-            ><el-option value="recommended" label="常用优先" /><el-option
-              value="name"
-              label="名称排序" /><el-option value="operations" label="接口数量排序"
-          /></el-select>
-        </div>
-      </div>
-      <div v-if="hasFilters" class="directory-filter-summary">
-        <span>匹配 {{ filtered.length }} 个服务</span
-        ><el-button link type="primary" @click="resetFilters">清除筛选</el-button>
-      </div>
+        </template>
+      </ListFilterBar>
       <PageState :loading="loading" :error="error" @retry="load">
         <el-empty
           v-if="!filtered.length"
@@ -524,32 +524,29 @@ onUnmounted(() => {
             </footer>
           </article>
         </div>
-        <div v-if="filtered.length" class="directory-pagination">
-          <span
-            >显示 {{ current.from }}–{{ current.to }}，共 <b>{{ filtered.length }}</b> 个服务</span
-          >
-          <div class="directory-page-controls">
-            <el-pagination
-              v-model:current-page="page"
-              v-model:page-size="pageSize"
-              :page-sizes="sizes"
-              :pager-count="5"
-              :total="filtered.length"
-              layout="sizes, prev, pager, next"
+        <footer v-if="current.pageCount > 1" class="table-footer">
+          <span>显示第 {{ current.from }}–{{ current.to }} 项</span>
+          <div class="directory-jump">
+            <span>前往</span>
+            <el-input
+              v-model="jumpPage"
+              type="number"
+              :min="1"
+              :max="current.pageCount"
+              aria-label="跳转页码"
+              @keydown.enter.prevent="jumpToPage"
             />
-            <div class="directory-jump">
-              <span>前往</span
-              ><el-input
-                v-model="jumpPage"
-                type="number"
-                :min="1"
-                :max="Math.max(1, Math.ceil(filtered.length / pageSize))"
-                aria-label="跳转页码"
-                @keydown.enter.prevent="jumpToPage"
-              /><el-button size="small" @click="jumpToPage">跳转</el-button>
-            </div>
+            <el-button size="small" @click="jumpToPage">跳转</el-button>
           </div>
-        </div>
+          <el-pagination
+            v-model:current-page="page"
+            v-model:page-size="pageSize"
+            :page-sizes="sizes"
+            :pager-count="5"
+            :total="filtered.length"
+            layout="sizes, prev, pager, next"
+          />
+        </footer>
       </PageState>
     </section>
     <el-drawer
@@ -687,23 +684,7 @@ onUnmounted(() => {
   color: var(--el-color-primary);
   background: var(--app-primary-soft);
 }
-.directory-toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  gap: 16px;
-  padding: 20px 22px 16px;
-}
-.directory-search {
-  flex: 1;
-  min-width: 260px;
-}
-.directory-search p {
-  font-size: 11px;
-  color: var(--app-text-muted);
-  margin: 8px 0 0;
-}
-.directory-search kbd {
+.directory-search-shortcut {
   font-family: inherit;
   border: 1px solid var(--app-border);
   border-radius: 4px;
@@ -711,22 +692,6 @@ onUnmounted(() => {
   line-height: 19px;
   color: var(--app-text-muted);
   background: var(--app-surface-soft);
-}
-.directory-filter-set {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-.directory-filter-set .el-select {
-  width: 135px;
-}
-.directory-filter-summary {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 22px 12px;
-  font-size: 12px;
-  color: var(--app-text-muted);
 }
 .directory-table {
   cursor: pointer;
@@ -853,27 +818,6 @@ onUnmounted(() => {
 .is-favorite {
   color: #b58b39 !important;
 }
-.directory-pagination {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 15px;
-  padding: 17px 22px;
-  border-top: 1px solid var(--app-divider);
-  color: var(--app-text-muted);
-  font-size: 12px;
-}
-.directory-pagination b {
-  color: #5f687e;
-  font-weight: 500;
-}
-.directory-page-controls {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 10px;
-}
 .directory-jump {
   display: flex;
   align-items: center;
@@ -980,17 +924,6 @@ onUnmounted(() => {
 .directory-detail-heading > .el-button {
   margin-left: auto;
 }
-@media (max-width: 1100px) {
-  .directory-search {
-    flex-basis: 100%;
-  }
-  .directory-filter-set {
-    width: 100%;
-  }
-  .directory-filter-set .el-select {
-    flex: 1;
-  }
-}
 @media (max-width: 600px) {
   .directory-collections {
     gap: 14px;
@@ -999,24 +932,6 @@ onUnmounted(() => {
   .directory-collections > button {
     font-size: 12px;
     gap: 5px;
-  }
-  .directory-toolbar {
-    padding: 16px 14px;
-  }
-  .directory-filter-set {
-    gap: 7px;
-  }
-  .directory-filter-set .el-select {
-    min-width: 95px;
-  }
-  .directory-pagination {
-    padding: 15px 14px;
-    flex-direction: column;
-    align-items: flex-start;
-    overflow: auto;
-  }
-  .directory-pagination :deep(.el-pagination__sizes) {
-    margin-right: 7px;
   }
   .directory-cards {
     padding: 0 14px 14px;

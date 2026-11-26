@@ -301,10 +301,6 @@
   color: var(--docs-ink);
   font-size: 14px;
 }
-.docs-catalog-title span {
-  color: var(--docs-muted);
-  font-size: 12px;
-}
 .docs-catalog-toggle {
   display: none;
   align-items: center;
@@ -317,10 +313,12 @@
   font-size: 12px;
   cursor: pointer;
 }
-.docs-catalog-filters {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 6px;
+.docs-catalog-filter {
+  --list-filter-padding: 0;
+  --list-filter-mobile-padding: 0;
+  --list-filter-border: 0;
+  --list-filter-field-width: calc((100% - 8px) / 2);
+  --list-filter-field-limit: 100%;
 }
 .docs-catalog-list {
   overflow: auto;

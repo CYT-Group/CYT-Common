@@ -10,6 +10,7 @@ import { operationExample } from '~/utils/schema';
 import { filterOperationModule, operationModule } from '~/utils/operation-modules';
 import { operationDirection } from '~/utils/integration-direction';
 import OperationModuleBrowser from '~/components/OperationModuleBrowser.vue';
+import ListFilterBar from '~/components/ListFilterBar.vue';
 import PageHeader from '~/components/PageHeader.vue';
 import PageState from '~/components/PageState.vue';
 import SchemaFields from '~/components/SchemaFields.vue';
@@ -269,9 +270,10 @@ async function copyPath(path: string) {
         </el-radio-group>
         <span class="muted">内置接口由适配器维护；自定义接口可直接配置和编辑。</span>
       </div>
-      <div class="panel-toolbar catalog-filters">
+      <ListFilterBar label="筛选服务接口">
         <el-input
           v-model="q"
+          class="list-filter-search"
           :prefix-icon="Search"
           clearable
           placeholder="搜索名称、标识或用途"
@@ -290,8 +292,13 @@ async function copyPath(path: string) {
             value="available"
             label="已注册 / 已启用" /><el-option value="inactive" label="未启用 / 平台停用"
         /></el-select>
-        <el-button v-if="hasFilters" link @click="resetFilters">清除筛选</el-button>
-      </div>
+        <template #actions>
+          <span class="list-filter-count" role="status"
+            >共 <strong>{{ filtered.length }}</strong> 个接口</span
+          >
+          <el-button v-if="hasFilters" link @click="resetFilters">清除筛选</el-button>
+        </template>
+      </ListFilterBar>
       <PageState :loading="loading" :error="error" @retry="load">
         <OperationModuleBrowser
           v-model="category"
@@ -388,16 +395,16 @@ async function copyPath(path: string) {
               ></el-table-column
             >
           </el-table>
-          <div class="catalog-pagination">
-            <span class="muted">共 {{ filtered.length }} 个接口</span
-            ><el-pagination
+          <footer v-if="filtered.length > pageSize" class="table-footer">
+            <el-pagination
               v-model:current-page="page"
               v-model:page-size="pageSize"
               :page-sizes="[15, 30, 60]"
               :total="filtered.length"
+              :pager-count="5"
               layout="sizes, prev, pager, next"
             />
-          </div>
+          </footer>
         </OperationModuleBrowser>
       </PageState>
     </section>
