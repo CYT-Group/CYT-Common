@@ -89,7 +89,7 @@ export const api = {
     get<{ current: string; writable: boolean; items: Environment[] }>(`${base}/environments`),
   createEnvironment: (body: unknown) => post(`${base}/environments`, body),
   deleteEnvironment: (id: number) => remove(`${base}/environments/${id}`),
-  secrets: (env: string) =>
+  secrets: (env: string, usage?: 'third-party') =>
     get<{
       db_secrets: {
         name: string;
@@ -103,7 +103,7 @@ export const api = {
       secret_manager?: boolean;
       platforms: CredentialPlatform[];
       systems?: { key: string; display_name: string }[];
-    }>(`${base}/environments/${encodeURIComponent(env)}/secrets`),
+    }>(`${base}/environments/${encodeURIComponent(env)}/secrets`, { usage }),
   saveSecret: (env: string, values: Record<string, string>) =>
     put(`${base}/environments/${encodeURIComponent(env)}/secrets`, { values }),
   readSecret: (env: string, name: string, action: 'view' | 'copy') =>

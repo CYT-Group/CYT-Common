@@ -87,13 +87,19 @@ public class CredentialController {
   }
 
   @GetMapping("/environments/{key}/secrets")
-  public Object listSecrets(@PathVariable String key) {
+  public Object listSecrets(@PathVariable String key, @RequestParam(required = false) String usage) {
     var e = env(key);
     boolean current = settings.current().equals(key);
     boolean managed = secrets.secretManager(key);
     var stored = store.rows(
         "SELECT name,CHAR_LENGTH(ciphertext) AS length,updated_by,updated_at FROM gateway_secret WHERE env=? ORDER BY name",
         key);
+    if ("third-party".equals(usage)) {
+      Set<String> internal = internalCredentialNames();
+      stored = stored.stream()
+          .filter(row -> !internal.contains(JsonUtils.str(row, "name")))
+          .toList();
+    }
     if (managed)
       stored = stored.stream().<Map<String, Object>>map(row -> {
         var item = new LinkedHashMap<>(row);
@@ -121,6 +127,30 @@ public class CredentialController {
         "portal",
         "db_secrets",
         stored);
+  }
+
+  private Set<String> internalCredentialNames() {
+    Set<String> references = new HashSet<>();
+    var modules = store.rows("""
+        SELECT secret_ref,client_id_ref,client_secret_ref,refresh_token_ref
+        FROM gateway_module WHERE service_kind='internal'
+        """);
+    for (var module : modules)
+      for (var field : List.of("secret_ref", "client_id_ref", "client_secret_ref", "refresh_token_ref"))
+        references.add(JsonUtils.str(module, field));
+    var apis = store.rows("""
+        SELECT a.secret_ref FROM gateway_custom_api a JOIN gateway_module m ON m.key=a.module_key
+        WHERE m.service_kind='internal'
+        """);
+    for (var api : apis) references.add(JsonUtils.str(api, "secret_ref"));
+
+    Set<String> names = new HashSet<>(references);
+    for (var system : store.rows("SELECT key FROM gateway_system")) {
+      String prefix = "CUSTOM_" + CredentialService.accountKey(JsonUtils.str(system, "key")) + "_";
+      for (String reference : references)
+        if (reference.startsWith("CUSTOM_")) names.add(prefix + reference.substring("CUSTOM_".length()));
+    }
+    return names;
   }
 
   @PutMapping("/environments/{key}/secrets")

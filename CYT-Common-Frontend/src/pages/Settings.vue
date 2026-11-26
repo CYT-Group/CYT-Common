@@ -15,11 +15,10 @@ const Callbacks = defineAsyncComponent(() => import('./Callbacks.vue'));
 </script>
 <template>
   <div>
-    <PageHeader
-      title="设置"
-      description="这里管理网关连接上游所需的环境、凭据和回调；业务系统的调用密钥在调用方内管理。"
-    /><el-tabs v-model="tab" class="context-tabs"
-      ><el-tab-pane label="环境与上游凭据" name="credentials"
+    <PageHeader title="设置" description="管理运行环境、第三方平台凭据和事件回调。" /><el-tabs
+      v-model="tab"
+      class="context-tabs"
+      ><el-tab-pane label="第三方凭据" name="credentials"
         ><Credentials v-if="tab === 'credentials'" /></el-tab-pane
       ><el-tab-pane label="事件回调" name="callbacks"
         ><Callbacks v-if="tab === 'callbacks'" /></el-tab-pane

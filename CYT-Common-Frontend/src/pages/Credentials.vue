@@ -21,7 +21,7 @@ const router = useRouter();
 const route = useRoute();
 const env = ref('');
 const environments = useRequest(api.environments);
-const secrets = useRequest(() => api.secrets(env.value));
+const secrets = useRequest(() => api.secrets(env.value, 'third-party'));
 const history = useRequest(() =>
   api.audit({ actor: 'gcloud-import', q: env.value, page_size: 20 }),
 );
@@ -287,7 +287,7 @@ async function deleteEnv() {
 <template>
   <div>
     <PageHeader
-      title="环境与凭据"
+      title="第三方平台凭据"
       description="查看各平台和调用系统的凭据绑定、来源和共享范围。"
     >
       <el-button v-if="!secrets.data.value?.secret_manager" :icon="InfoFilled" @click="cloudHelp = true">GCP 同步说明</el-button>

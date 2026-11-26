@@ -27,6 +27,11 @@ const {
   load,
 } = useRequest(() => api.customApiPreflight(props.config.id));
 const { busy, run } = useAction();
+const { busy: credentialBusy, run: runCredentialAction } = useAction();
+const credentialDialog = ref(false);
+const credentialEnv = ref('');
+const credentialRef = ref('');
+const credentialValue = ref('');
 const debugDialog = ref(false);
 const grantSystem = ref('');
 const gatewayPath = computed(() => check.value?.gateway_path || props.operation.path);
@@ -167,8 +172,28 @@ function editApi() {
   });
 }
 
-function openCredentials() {
-  void router.push({ path: '/settings', query: { tab: 'credentials' } });
+async function openCredentials() {
+  const reference = check.value?.credential_refs[0];
+  if (!reference) return;
+  const environments = await runCredentialAction(api.environments);
+  if (!environments?.current) return;
+  credentialValue.value = '';
+  credentialRef.value = reference;
+  credentialEnv.value = environments.current;
+  credentialDialog.value = true;
+}
+
+async function saveCredential() {
+  if (!credentialValue.value.trim() || !check.value?.credential_refs.includes(credentialRef.value))
+    return;
+  const result = await runCredentialAction(() =>
+    api.saveSecret(credentialEnv.value, { [credentialRef.value]: credentialValue.value }),
+  );
+  if (!result) return;
+  credentialValue.value = '';
+  credentialDialog.value = false;
+  ElMessage.success('后端凭据已保存');
+  await load();
 }
 
 function createCaller() {
@@ -581,14 +606,20 @@ async function changeGrant(key: string, enabled: boolean) {
                       <span v-else-if="caller.enabled && caller.reason">{{ caller.reason }}</span>
                     </div>
                   </div>
-                  <el-button
-                    v-if="caller.enabled && caller.allowed"
-                    link
-                    type="danger"
-                    :disabled="busy || loading"
-                    @click="changeGrant(caller.key, false)"
-                    >禁止调用</el-button
-                  >
+                  <div v-if="caller.enabled && caller.allowed" class="caller-actions">
+                    <RouterLink
+                      class="caller-key-link"
+                      :to="{ path: `/systems/${caller.key}`, query: { tab: 'keys' } }"
+                      >调用密钥</RouterLink
+                    >
+                    <el-button
+                      link
+                      type="danger"
+                      :disabled="busy || loading"
+                      @click="changeGrant(caller.key, false)"
+                      >禁止调用</el-button
+                    >
+                  </div>
                 </li>
               </ul>
             </template>
@@ -596,6 +627,48 @@ async function changeGrant(key: string, enabled: boolean) {
         </el-tab-pane>
       </el-tabs>
     </section>
+
+    <el-dialog
+      v-model="credentialDialog"
+      :title="`${service?.name || '后端'} 凭据 · ${environmentLabel}`"
+      width="min(500px, 92vw)"
+      :close-on-click-modal="false"
+      :show-close="!credentialBusy"
+      :close-on-press-escape="!credentialBusy"
+      append-to-body
+      @closed="credentialValue = ''"
+    >
+      <el-form label-position="top" @submit.prevent="saveCredential">
+        <el-form-item label="凭据引用">
+          <el-select v-model="credentialRef" aria-label="凭据引用" :disabled="credentialBusy">
+            <el-option
+              v-for="reference in check?.credential_refs"
+              :key="reference"
+              :label="reference"
+              :value="reference"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="新凭据值" required>
+          <el-input
+            v-model="credentialValue"
+            type="password"
+            autocomplete="new-password"
+            :disabled="credentialBusy"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button :disabled="credentialBusy" @click="credentialDialog = false">取消</el-button>
+        <el-button
+          type="primary"
+          :loading="credentialBusy"
+          :disabled="!credentialValue.trim()"
+          @click="saveCredential"
+          >保存凭据</el-button
+        >
+      </template>
+    </el-dialog>
 
     <el-dialog v-model="debugDialog" title="调试接口" width="min(460px, 92vw)" append-to-body>
       <el-alert title="当前接口尚不可实际调用" type="info" :closable="false" show-icon />
@@ -805,9 +878,18 @@ dd {
   font-size: 12px;
   color: var(--app-text-secondary);
 }
-.caller-row > .el-button {
+.caller-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
   flex-shrink: 0;
   min-height: 36px;
+}
+.caller-key-link {
+  color: var(--app-primary);
+}
+.caller-key-link:hover {
+  text-decoration: underline;
 }
 .check-row {
   display: grid;
