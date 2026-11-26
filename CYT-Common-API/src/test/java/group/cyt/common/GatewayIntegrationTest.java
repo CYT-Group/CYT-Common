@@ -6,6 +6,7 @@ import group.cyt.common.core.persistence.GatewayStore;
 import group.cyt.common.core.util.JsonUtils;
 import group.cyt.common.module.auth.service.AuthenticationService;
 import group.cyt.common.module.gateway.service.CallLogService;
+import group.cyt.common.module.grant.service.AuthorizationService;
 import group.cyt.common.module.registry.controller.RegistryController;
 import group.cyt.common.module.registry.service.OperationRegistry;
 import java.sql.*;
@@ -413,6 +414,33 @@ class GatewayIntegrationTest {
         422, request(HttpMethod.POST, "/admin/api/modules", body, token).getStatusCode().value());
     assertEquals(
         0, store.count("SELECT COUNT(*) FROM gateway_module WHERE key='invalid_kind_fixture'"));
+  }
+
+  @Test
+  void buyerRmaPushIsRegisteredDisabledAndRequiresAnExactGrant() {
+    var row = store.one("SELECT * FROM gateway_custom_api WHERE key='cs.buyer.push'");
+    assertNotNull(row);
+    assertEquals("cs", row.get("module_key"));
+    assertEquals(false, row.get("enabled"));
+    assertEquals("/api/cs/rma/external/buyer/push", row.get("path"));
+    assertEquals("CUSTOM_CS_RMA_BUYER_PUSH_TOKEN", row.get("secret_ref"));
+    var provider = store.one("SELECT name,service_kind,enabled FROM gateway_module WHERE key='cs'");
+    assertNotNull(provider);
+    assertEquals("CS", provider.get("name"));
+    assertEquals("internal", provider.get("service_kind"));
+    assertEquals(false, provider.get("enabled"));
+    assertNull(store.one("SELECT id FROM gateway_module WHERE key='cs_rma'"));
+    assertNull(store.one("SELECT id FROM gateway_custom_api WHERE key='cs_rma.buyer.push'"));
+
+    var operation = registry.custom(row);
+    var authorization = new AuthorizationService(store, registry);
+    assertEquals("/integrations/cs/buyer/push", operation.path());
+    assertTrue(operation.sensitive());
+    assertEquals("array", operation.schema().path("properties").path("platforms").path("type").asText());
+    assertFalse(JsonUtils.bool(authorization.decision(operation,
+        List.of(JsonUtils.obj("id", 1, "operation_pattern", "cs.*", "effect", "allow"))).get("allowed")));
+    assertTrue(JsonUtils.bool(authorization.decision(operation,
+        List.of(JsonUtils.obj("id", 2, "operation_pattern", operation.key(), "effect", "allow"))).get("allowed")));
   }
 
   @Test
