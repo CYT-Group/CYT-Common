@@ -22,6 +22,7 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 @Service
 public class AuthenticationService {
   private static final String API_KEY_ID = AuthenticationService.class.getName() + ".apiKeyId";
+  private static final String DEV_IDENTITY = AuthenticationService.class.getName() + ".devIdentity";
   private final GatewaySettings settings;
   private final GatewayStore store;
   private final Map<String, Deque<Long>> failures = new ConcurrentHashMap<>();
@@ -42,8 +43,12 @@ public class AuthenticationService {
 
   public String system(HttpServletRequest request) {
     request.removeAttribute(API_KEY_ID);
-    if (settings.dev() && !header(request, "X-System-Id").isBlank())
-      return enabled(header(request, "X-System-Id").trim().toLowerCase(Locale.ROOT));
+    request.removeAttribute(DEV_IDENTITY);
+    if (settings.dev() && !header(request, "X-System-Id").isBlank()) {
+      String system = enabled(header(request, "X-System-Id").trim().toLowerCase(Locale.ROOT));
+      request.setAttribute(DEV_IDENTITY, true);
+      return system;
+    }
     String token = bearer(request);
     if (token.startsWith("cyt_") && settings.flag("GATEWAY_APIKEY_ENABLED", true)) {
       String[] parts = token.split("_", 3);
@@ -100,6 +105,11 @@ public class AuthenticationService {
     if (RequestContextHolder.getRequestAttributes() instanceof ServletRequestAttributes attributes)
       return Objects.toString(attributes.getRequest().getAttribute(API_KEY_ID), "");
     return "";
+  }
+
+  public static boolean usesDevIdentity() {
+    return RequestContextHolder.getRequestAttributes() instanceof ServletRequestAttributes attributes
+        && Boolean.TRUE.equals(attributes.getRequest().getAttribute(DEV_IDENTITY));
   }
 
   public String enabled(String system) {

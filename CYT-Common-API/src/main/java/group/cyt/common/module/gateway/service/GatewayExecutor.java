@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 /** All public, batch and admin-simulation routes use this pipeline. */
 @Service
 public class GatewayExecutor {
+  private static final Set<String> VERIFIED_RMA_READERS = Set.of("tiktok.returns.list", "cs.rma.list");
   private final ExecutorService upstreamExecutor = Executors.newVirtualThreadPerTaskExecutor();
   private final OperationRegistry registry;
   private final AuthorizationService authorization;
@@ -84,6 +85,8 @@ public class GatewayExecutor {
       var op = registry.get(key);
       key = op.key();
       platform = op.platform();
+      if (VERIFIED_RMA_READERS.contains(key) && AuthenticationService.usesDevIdentity())
+        throw GatewayException.unauth("读取售后数据需要 API Key 或服务账号身份令牌");
       mock = adapters.mock(op);
       if (op.tags() != null && op.tags().contains("idempotency_required")) {
         String requestId = JsonUtils.str(params == null ? Map.of() : params, "request_id");
