@@ -1,11 +1,13 @@
 package group.cyt.common.module.custom.adapter;
 
+import group.cyt.common.core.config.GatewaySettings;
 import group.cyt.common.core.exception.GatewayException;
 import group.cyt.common.core.http.*;
 import group.cyt.common.core.persistence.GatewayStore;
 import group.cyt.common.core.util.JsonUtils;
 import group.cyt.common.module.adapter.PlatformAdapter;
 import group.cyt.common.module.credential.service.CredentialService;
+import group.cyt.common.module.custom.service.ConfigurationService;
 import group.cyt.common.module.registry.model.OperationDefinition;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
@@ -23,13 +25,19 @@ public class CustomHttpAdapter implements PlatformAdapter {
   private final CredentialService credentials;
   private final UpstreamHttp http;
   private final NetworkPolicy network;
+  private final GatewaySettings settings;
 
   public CustomHttpAdapter(
-      GatewayStore store, CredentialService credentials, UpstreamHttp http, NetworkPolicy network) {
+      GatewayStore store,
+      CredentialService credentials,
+      UpstreamHttp http,
+      NetworkPolicy network,
+      GatewaySettings settings) {
     this.store = store;
     this.credentials = credentials;
     this.http = http;
     this.network = network;
+    this.settings = settings;
   }
 
   public boolean supports(String platform) {
@@ -46,13 +54,11 @@ public class CustomHttpAdapter implements PlatformAdapter {
                 "SELECT * FROM gateway_module WHERE key=? AND enabled=true", api.get("module_key"));
     if (!JsonUtils.str(api, "module_key").isBlank() && module == null)
       throw GatewayException.forbidden("模块已停用");
-    Map<String, Object> config = new LinkedHashMap<>();
-    if (module != null) config.putAll(module);
-    boolean inherit = JsonUtils.str(api, "auth_type", "inherit").equals("inherit");
-    String base = JsonUtils.str(api, "base_url");
-    if (base.isBlank()) base = JsonUtils.str(config, "base_url");
-    if (!inherit)
-      for (String k : List.of("auth_type", "auth_name", "secret_ref")) config.put(k, api.get(k));
+    boolean production = settings.production();
+    var config = ConfigurationService.customHttpConfig(api, module, production);
+    String base = JsonUtils.str(config, "base_url");
+    if (base.isBlank() && ConfigurationService.hasEnvironmentAddresses(module))
+      throw GatewayException.config((production ? "正式" : "测试") + "环境基础地址未配置");
     Map<String, String> headers = new LinkedHashMap<>();
     if (module != null)
       JsonUtils.map(JsonUtils.parse(JsonUtils.str(module, "headers_json", "{}")))

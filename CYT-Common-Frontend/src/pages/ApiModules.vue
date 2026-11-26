@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref, watch } from 'vue';
+import { computed, onMounted, reactive, ref, watch, type ComponentPublicInstance } from 'vue';
 import { onBeforeRouteLeave, useRoute, useRouter } from 'vue-router';
-import { Plus, Search, Refresh, Delete } from '@element-plus/icons-vue';
-import { ElMessage } from 'element-plus';
+import { Delete, EditPen, MoreFilled, Plus, Refresh, Search } from '@element-plus/icons-vue';
+import { ElMessage, type DropdownInstance } from 'element-plus';
 import { api } from '~/api';
 import type { CustomApi, PlatformModule } from '~/api/types';
 import { operationModules } from '~/utils/operation-modules';
@@ -36,6 +36,7 @@ const { data, loading, error, load } = useRequest(async () => {
   };
 });
 const { busy, run } = useAction();
+const configurationMenus = new Map<number, DropdownInstance>();
 const tab = ref<'modules' | 'apis'>(route.query.tab === 'modules' ? 'modules' : 'apis');
 const q = ref('');
 const moduleDialog = ref(false);
@@ -52,13 +53,20 @@ const parameters = ref<ParameterDraft[]>([]);
 const advanced = ref<string[]>([]);
 const initial = ref('');
 const lastIntent = ref('');
+const openedFromCatalog = computed(
+  () => route.query.kind === 'internal' && (route.query.edit || route.query.action === 'create'),
+);
 const saved = ref<{
   kind: 'modules' | 'custom-apis';
   id: number;
   key: string;
-  enabled: boolean;
-  moduleKey: string;
 }>();
+const savedApi = computed(() => {
+  const current = saved.value;
+  return current?.kind === 'custom-apis'
+    ? data.value?.apis.find((row) => row.id === current.id)
+    : undefined;
+});
 const emptyModule = () => ({
   id: undefined as number | undefined,
   key: '',
@@ -66,6 +74,8 @@ const emptyModule = () => ({
   description: '',
   service_kind: route.query.kind === 'internal' ? 'internal' : 'third_party',
   base_url: '',
+  test_base_url: undefined as string | null | undefined,
+  production_base_url: undefined as string | null | undefined,
   auth_type: 'none',
   auth_name: '',
   secret_ref: '',
@@ -104,11 +114,38 @@ const emptyApi = () => ({
   sort_order: 0,
 });
 const moduleForm = reactive(emptyModule());
+function hasEnvironmentAddresses(module?: {
+  service_kind?: string;
+  test_base_url?: string | null;
+  production_base_url?: string | null;
+}) {
+  return (
+    module?.service_kind === 'internal' &&
+    (typeof module.test_base_url === 'string' || typeof module.production_base_url === 'string')
+  );
+}
+const moduleUsesEnvironmentAddresses = computed(
+  () =>
+    moduleForm.service_kind === 'internal' &&
+    (!moduleForm.id || hasEnvironmentAddresses(moduleForm)),
+);
+const testBaseUrl = computed({
+  get: () => moduleForm.test_base_url ?? '',
+  set: (value: string) => (moduleForm.test_base_url = value),
+});
+const productionBaseUrl = computed({
+  get: () => moduleForm.production_base_url ?? '',
+  set: (value: string) => (moduleForm.production_base_url = value),
+});
+function configureEnvironmentAddresses() {
+  moduleForm.test_base_url = '';
+  moduleForm.production_base_url = '';
+}
 const moduleTitle = computed(() =>
   moduleForm.service_kind === 'internal'
     ? moduleForm.id
-      ? '编辑提供方连接'
-      : '登记提供方'
+      ? '编辑后端连接'
+      : '登记后端服务'
     : moduleForm.id
       ? '编辑第三方服务连接'
       : '接入第三方服务',
@@ -137,6 +174,7 @@ const apiCategories = computed(() => {
 const selectedModule = computed(() =>
   data.value?.modules.find((m) => m.key === apiForm.module_key),
 );
+const apiUsesEnvironmentAddresses = computed(() => hasEnvironmentAddresses(selectedModule.value));
 const internalContext = computed(
   () =>
     route.query.kind === 'internal' ||
@@ -204,6 +242,7 @@ async function closeModule(done?: () => void) {
     moduleDialog.value = false;
     initial.value = '';
     done?.();
+    await cancelCatalogEdit();
   }
 }
 async function closeApi(done?: () => void) {
@@ -211,6 +250,7 @@ async function closeApi(done?: () => void) {
     apiDialog.value = false;
     initial.value = '';
     done?.();
+    await cancelCatalogEdit();
   }
 }
 onBeforeRouteLeave(async () => {
@@ -415,7 +455,8 @@ function validateStep(index: number) {
         throw new Error('该操作标识已被使用，包括未启用的接口');
       if (apiForm.module_key && !apiForm.key.startsWith(apiForm.module_key + '.'))
         throw new Error('操作标识必须以所选平台「' + apiForm.module_key + '.」开头');
-      https(apiForm.base_url || selectedModule.value?.base_url || '', '基础地址');
+      if (!apiUsesEnvironmentAddresses.value)
+        https(apiForm.base_url || selectedModule.value?.base_url || '', '基础地址');
       if (
         !apiForm.path.startsWith('/') ||
         apiForm.path.startsWith('//') ||
@@ -451,8 +492,6 @@ function validateStep(index: number) {
       credentials(apiForm);
       jsonObject(apiForm.headers_json, '固定 Header');
       jsonObject(apiForm.pagination_json, '分页配置');
-      if (apiForm.enabled && selectedModule.value && !selectedModule.value.enabled)
-        throw new Error('所属平台已停用，请先启用服务连接，或暂存为未启用接口');
     }
     return true;
   } catch (error) {
@@ -535,23 +574,41 @@ async function saveModule() {
       data.value?.modules.some((m) => m.key === moduleForm.key && m.id !== moduleForm.id)
     )
       throw new Error('平台标识已被使用，请使用一个新的标识');
-    https(moduleForm.base_url, '基础地址');
+    if (moduleUsesEnvironmentAddresses.value) {
+      moduleForm.test_base_url = testBaseUrl.value.trim();
+      moduleForm.production_base_url = productionBaseUrl.value.trim();
+      if (moduleForm.test_base_url) https(moduleForm.test_base_url, '测试环境基础地址');
+      if (moduleForm.production_base_url) https(moduleForm.production_base_url, '正式环境基础地址');
+    } else {
+      https(moduleForm.base_url, '基础地址');
+    }
     credentials(moduleForm);
     jsonObject(moduleForm.headers_json, '固定 Header');
   } catch (error) {
     fail((error as Error).message);
     return;
   }
-  const result = await run(() => api.saveResource('modules', { ...moduleForm }));
+  const { test_base_url, production_base_url, ...configuration } = moduleForm;
+  const result = await run(() =>
+    api.saveResource(
+      'modules',
+      moduleUsesEnvironmentAddresses.value
+        ? { ...configuration, test_base_url, production_base_url }
+        : configuration,
+    ),
+  );
   if (!result) return;
   moduleDialog.value = false;
   initial.value = '';
+  if (configuration.service_kind === 'internal') {
+    ElMessage.success('后端连接已保存');
+    await router.replace(exposedLocation(undefined, 'providers'));
+    return;
+  }
   saved.value = {
     kind: 'modules',
     id: result.id,
     key: moduleForm.key,
-    enabled: moduleForm.enabled,
-    moduleKey: moduleForm.key,
   };
   await load();
 }
@@ -561,34 +618,90 @@ async function saveApi() {
       step.value = index;
       return;
     }
-  const result = await run(() => api.saveResource('custom-apis', { ...apiForm }));
+  const { enabled, ...configuration } = apiForm;
+  const result = await run(() =>
+    api.saveResource(
+      'custom-apis',
+      configuration.id ? configuration : { ...configuration, enabled: false },
+    ),
+  );
   if (!result) return;
   apiDialog.value = false;
   initial.value = '';
+  if (selectedModule.value?.service_kind === 'internal') {
+    ElMessage.success(configuration.id ? '接口配置已保存' : '接口草稿已保存');
+    await router.replace(exposedLocation(configuration.key));
+    return;
+  }
   saved.value = {
     kind: 'custom-apis',
     id: result.id,
     key: apiForm.key,
-    enabled: apiForm.enabled,
-    moduleKey: apiForm.module_key,
   };
   await load();
 }
-async function enableAndDebug() {
-  if (!saved.value || saved.value.kind !== 'custom-apis') return;
-  const row = data.value?.apis.find((a) => a.id === saved.value?.id);
-  if (!row) return;
-  if (row.module_key && !data.value?.modules.find((m) => m.key === row.module_key)?.enabled) {
+function connectionEnabled(row: CustomApi) {
+  return (
+    !row.module_key || Boolean(data.value?.modules.find((m) => m.key === row.module_key)?.enabled)
+  );
+}
+async function changeApiActivation(row: CustomApi) {
+  const enabled = !row.enabled;
+  if (enabled && !connectionEnabled(row)) {
     ElMessage.warning('请先在平台连接中启用所属平台');
     return;
   }
-  const result =
-    row.enabled || (await run(() => api.saveResource('custom-apis', { ...row, enabled: true })));
-  if (result)
-    void router.push({
-      path: '/playground',
-      query: { operation: row.key, direction: internalContext.value ? 'internal' : 'third_party' },
-    });
+  const title = enabled ? '启用接口' : '停用接口';
+  const effect = enabled
+    ? '启用后，已有权限的调用方可以访问此接口。'
+    : '停用后，调用方将无法访问此接口。';
+  if (!(await confirm(`确认${title}「${row.name || row.key}」？${effect}`, title))) return;
+  const result = await run(() => api.saveResource('custom-apis', { id: row.id, enabled }));
+  if (result) await load();
+}
+function openDebug() {
+  const row = savedApi.value;
+  if (!row?.enabled || !connectionEnabled(row)) return;
+  void router.push({
+    path: '/playground',
+    query: { operation: row.key, direction: 'third_party' },
+  });
+}
+function exposedLocation(
+  operation = typeof route.query.operation === 'string' ? route.query.operation : '',
+  view: 'providers' | 'interfaces' = tab.value === 'modules' ? 'providers' : 'interfaces',
+) {
+  const { provider, section } = route.query;
+  return {
+    path: '/exposed',
+    query: operation
+      ? { operation, section: section === 'release' ? undefined : section, provider }
+      : { view: view === 'providers' ? view : undefined, provider },
+  };
+}
+async function cancelCatalogEdit() {
+  if (!openedFromCatalog.value) return;
+  const view = route.query.view === 'providers' ? 'providers' : 'interfaces';
+  await router.replace(exposedLocation(undefined, view));
+}
+function openSavedDetails() {
+  const current = saved.value;
+  if (!current) return;
+  void router.push({ path: '/registry', query: { platform: current.key.split('.')[0] } });
+}
+function handleCatalogAction(command: string, row: PlatformModule | CustomApi) {
+  if (command === 'add') {
+    tab.value = 'apis';
+    editApi(undefined, row.key);
+  } else if (command === 'details') {
+    void router.push(exposedLocation(row.key));
+  } else if (command === 'delete') {
+    void remove(row);
+  }
+}
+function closeConfigurationMenu(id: number) {
+  configurationMenus.get(id)?.handleClose();
+  document.getElementById(`configuration-action-${id}`)?.focus();
 }
 function addForSavedPlatform() {
   const key = saved.value?.key || '';
@@ -616,15 +729,15 @@ async function remove(row: PlatformModule | CustomApi) {
     <PageHeader
       :title="internalContext ? '对外接口配置' : '第三方服务与接口配置'"
       :description="
-        internalContext ? '配置提供方连接、请求参数与响应字段' : '管理第三方服务连接与接口配置'
+        internalContext ? '配置后端连接、请求参数与响应字段' : '管理第三方服务连接与接口配置'
       "
     >
-      <el-button @click="router.push(internalContext ? '/exposed' : '/platforms')">{{
-        internalContext ? '返回对外能力' : '返回服务接入'
+      <el-button @click="router.push(internalContext ? exposedLocation() : '/platforms')">{{
+        internalContext ? '返回 API 管理' : '返回服务接入'
       }}</el-button>
       <el-button :icon="Refresh" :loading="loading" @click="load">刷新</el-button>
       <el-button type="primary" :icon="Plus" @click="create">{{
-        tab === 'modules' ? (internalContext ? '登记提供方' : '接入新平台') : '新增接口'
+        tab === 'modules' ? (internalContext ? '登记后端服务' : '接入新平台') : '新增接口'
       }}</el-button>
     </PageHeader>
     <div v-if="!internalContext" class="workflow-strip">
@@ -644,7 +757,7 @@ async function remove(row: PlatformModule | CustomApi) {
         />
         <el-radio-group v-model="tab" aria-label="配置类型"
           ><el-radio-button value="modules"
-            >{{ internalContext ? '提供方连接' : '平台连接' }}
+            >{{ internalContext ? '后端服务' : '平台连接' }}
             {{ contextModules.length }}</el-radio-button
           ><el-radio-button value="apis"
             >{{ internalContext ? '对外接口' : 'HTTP 接口' }}
@@ -665,14 +778,14 @@ async function remove(row: PlatformModule | CustomApi) {
               ? '没有匹配的配置'
               : tab === 'modules'
                 ? internalContext
-                  ? '登记提供方，配置系统地址与鉴权方式'
+                  ? '登记后端服务，配置系统地址与鉴权方式'
                   : '先添加一个平台连接，多个接口即可共享地址和鉴权'
                 : internalContext
                   ? '添加需要开放的业务接口'
                   : '添加一个 HTTP 接口，保存后会出现在操作目录中'
           "
           ><el-button type="primary" @click="create">{{
-            tab === 'modules' ? (internalContext ? '登记提供方' : '接入新平台') : '新增接口'
+            tab === 'modules' ? (internalContext ? '登记后端服务' : '接入新平台') : '新增接口'
           }}</el-button></el-empty
         >
         <el-table v-else :data="items" row-key="id">
@@ -682,11 +795,21 @@ async function remove(row: PlatformModule | CustomApi) {
               <p class="subtext mono">{{ row.key }}</p></template
             ></el-table-column
           >
-          <el-table-column v-if="tab === 'modules'" label="基础地址" min-width="230"
-            ><template #default="{ row }"
-              ><span class="mono">{{ row.base_url }}</span></template
-            ></el-table-column
-          >
+          <el-table-column v-if="tab === 'modules'" label="基础地址" min-width="230">
+            <template #default="{ row }">
+              <div v-if="hasEnvironmentAddresses(row)" class="environment-address-list">
+                <div>
+                  <el-tag size="small" effect="plain">测试</el-tag
+                  ><span class="mono">{{ row.test_base_url || '未配置' }}</span>
+                </div>
+                <div>
+                  <el-tag size="small" effect="plain">正式</el-tag
+                  ><span class="mono">{{ row.production_base_url || '未配置' }}</span>
+                </div>
+              </div>
+              <span v-else class="mono">{{ row.base_url }}</span>
+            </template>
+          </el-table-column>
           <el-table-column v-else label="上游请求" min-width="230"
             ><template #default="{ row }"
               ><el-tag size="small" effect="plain">{{ row.method }}</el-tag
@@ -699,21 +822,68 @@ async function remove(row: PlatformModule | CustomApi) {
             label="接口数"
             width="80"
           />
-          <el-table-column v-else :label="internalContext ? '提供方' : '平台连接'" width="130"
+          <el-table-column v-else :label="internalContext ? '后端服务' : '平台连接'" width="130"
             ><template #default="{ row }">{{
               data?.modules.find((m) => m.key === row.module_key)?.name ||
               row.module_key ||
               '独立配置'
             }}</template></el-table-column
           >
-          <el-table-column label="状态" width="110"
+          <el-table-column
+            :label="internalContext && tab === 'modules' ? '连接状态' : '状态'"
+            width="110"
             ><template #default="{ row }"
               ><el-tag :type="row.enabled ? 'success' : 'info'" effect="plain">{{
                 row.enabled ? '已启用' : '未启用'
               }}</el-tag></template
             ></el-table-column
           >
-          <el-table-column label="操作" width="190"
+          <el-table-column v-if="internalContext" label="操作" width="158">
+            <template #default="{ row }">
+              <div class="configuration-actions">
+                <el-button
+                  :icon="EditPen"
+                  @click="tab === 'modules' ? editModule(row) : editApi(row)"
+                  >{{ tab === 'modules' ? '编辑连接' : '编辑接口' }}</el-button
+                >
+                <el-dropdown
+                  :id="`configuration-action-${row.id}`"
+                  :ref="
+                    (menu: Element | ComponentPublicInstance | null) =>
+                      menu
+                        ? configurationMenus.set(row.id, menu as DropdownInstance)
+                        : configurationMenus.delete(row.id)
+                  "
+                  trigger="click"
+                  @command="(command: string) => handleCatalogAction(command, row)"
+                >
+                  <el-button
+                    text
+                    circle
+                    :icon="MoreFilled"
+                    :aria-label="'更多操作 ' + (row.name || row.key)"
+                    @keydown.esc.stop.prevent="closeConfigurationMenu(row.id)"
+                  />
+                  <template #dropdown>
+                    <el-dropdown-menu @keydown.esc.stop.prevent="closeConfigurationMenu(row.id)">
+                      <el-dropdown-item v-if="tab === 'modules'" command="add" :icon="Plus"
+                        >新增 API</el-dropdown-item
+                      >
+                      <el-dropdown-item v-else command="details">查看接口详情</el-dropdown-item>
+                      <el-dropdown-item
+                        divided
+                        command="delete"
+                        :icon="Delete"
+                        class="configuration-delete"
+                        >{{ tab === 'modules' ? '删除后端服务' : '删除接口' }}</el-dropdown-item
+                      >
+                    </el-dropdown-menu>
+                  </template>
+                </el-dropdown>
+              </div>
+            </template>
+          </el-table-column>
+          <el-table-column v-else label="操作" :width="tab === 'apis' ? 220 : 190"
             ><template #default="{ row }"
               ><el-button
                 link
@@ -735,14 +905,21 @@ async function remove(row: PlatformModule | CustomApi) {
                 type="primary"
                 @click="
                   router.push({
-                    path: internalContext ? '/exposed' : '/registry',
+                    path: '/registry',
                     query: {
                       operation: row.key,
-                      ...(internalContext ? {} : { platform: row.key.split('.')[0] }),
+                      platform: row.key.split('.')[0],
                     },
                   })
                 "
                 >查看详情</el-button
+              ><el-button
+                v-if="tab === 'apis'"
+                link
+                type="primary"
+                :disabled="busy"
+                @click="changeApiActivation(row)"
+                >{{ row.enabled ? '停用' : '启用' }}</el-button
               ><el-button link type="danger" @click="remove(row)">删除</el-button></template
             ></el-table-column
           >
@@ -815,15 +992,33 @@ async function remove(row: PlatformModule | CustomApi) {
             <p class="subtext">接口标识将以此开头，创建后不可修改。</p></el-form-item
           >
         </div>
-        <el-form-item label="基础地址" required
-          ><el-input v-model="moduleForm.base_url" :placeholder="moduleBasePlaceholder" />
-          <p class="subtext">
-            同一平台的接口共享此地址；保存会校验域名，不会测试真实鉴权。
-            <span v-if="moduleForm.service_kind === 'internal'"
-              >内部网络地址需由部署管理员加入可信服务来源。</span
+        <template v-if="moduleUsesEnvironmentAddresses">
+          <div class="form-grid">
+            <el-form-item label="测试环境基础地址">
+              <el-input v-model="testBaseUrl" placeholder="https://test.internal.example" />
+            </el-form-item>
+            <el-form-item label="正式环境基础地址">
+              <el-input v-model="productionBaseUrl" placeholder="https://api.internal.example" />
+            </el-form-item>
+          </div>
+          <p class="form-hint">启动环境决定使用的基础地址。地址留空时，该环境无法访问后端。</p>
+        </template>
+        <el-form-item v-else label="基础地址" required>
+          <el-input
+            v-model="moduleForm.base_url"
+            aria-label="基础地址"
+            :placeholder="moduleBasePlaceholder"
+          />
+          <template v-if="moduleForm.service_kind === 'internal'">
+            <p class="subtext">当前配置使用单一基础地址。</p>
+            <el-button link type="primary" @click="configureEnvironmentAddresses"
+              >按环境配置地址</el-button
             >
-          </p></el-form-item
-        >
+          </template>
+          <p v-else class="subtext">
+            同一平台的接口共享此地址。保存会校验域名，实际鉴权在调试时检查。
+          </p>
+        </el-form-item>
         <el-form-item label="服务用途"
           ><el-input
             v-model="moduleForm.description"
@@ -902,7 +1097,9 @@ async function remove(row: PlatformModule | CustomApi) {
           type="primary"
           :loading="busy"
           @click="saveModule"
-          >保存服务连接</el-button
+          >{{
+            moduleForm.service_kind === 'internal' && moduleForm.id ? '保存更改' : '保存服务连接'
+          }}</el-button
         ></template
       >
     </el-dialog>
@@ -980,7 +1177,13 @@ async function remove(row: PlatformModule | CustomApi) {
               /><el-button @click="fillEndpoint">拆分地址</el-button>
             </div></el-form-item
           >
-          <el-form-item v-if="!apiForm.module_key || apiForm.base_url" label="基础地址" required
+          <p v-if="apiUsesEnvironmentAddresses" class="form-hint">
+            基础地址由后端服务按环境提供。在后端连接中管理测试和正式地址。
+          </p>
+          <el-form-item
+            v-else-if="!apiForm.module_key || apiForm.base_url"
+            label="基础地址"
+            required
             ><el-input v-model="apiForm.base_url" placeholder="https://api.example.com"
           /></el-form-item>
           <p v-else class="form-hint">
@@ -997,7 +1200,25 @@ async function remove(row: PlatformModule | CustomApi) {
               ><el-input v-model="apiForm.path" placeholder="/videos 或 /videos/{{params.id}}"
             /></el-form-item>
           </div>
-          <div class="endpoint">
+          <div v-if="apiUsesEnvironmentAddresses" class="environment-address-list">
+            <div>
+              <el-tag size="small" effect="plain">测试</el-tag
+              ><span class="mono">{{
+                selectedModule?.test_base_url
+                  ? selectedModule.test_base_url.replace(/\/$/, '') + apiForm.path
+                  : '基础地址未配置'
+              }}</span>
+            </div>
+            <div>
+              <el-tag size="small" effect="plain">正式</el-tag
+              ><span class="mono">{{
+                selectedModule?.production_base_url
+                  ? selectedModule.production_base_url.replace(/\/$/, '') + apiForm.path
+                  : '基础地址未配置'
+              }}</span>
+            </div>
+          </div>
+          <div v-else class="endpoint">
             <el-tag size="small">{{ apiForm.method }}</el-tag
             ><span class="mono">{{ endpointPreview || '填写地址和路径后生成预览' }}</span>
           </div>
@@ -1134,7 +1355,7 @@ async function remove(row: PlatformModule | CustomApi) {
           </div>
           <p class="form-hint">
             业务系统始终调用网关 POST 地址，上游实际使用
-            {{ apiForm.method }}。保存不会新增授权规则，现有通配授权仍会匹配新接口。
+            {{ apiForm.method }}。敏感操作需要精确授权，其他接口按已有规则匹配。
           </p>
           <el-form-item label="上游鉴权"
             ><el-select v-model="apiForm.auth_type"
@@ -1196,10 +1417,13 @@ async function remove(row: PlatformModule | CustomApi) {
             ></el-collapse
           >
           <div class="authoring-review">
-            <el-checkbox v-model="apiForm.sensitive">敏感操作，必须精确授权</el-checkbox
-            ><el-checkbox v-model="apiForm.enabled">保存后启用接口</el-checkbox>
+            <el-checkbox v-model="apiForm.sensitive">敏感操作，必须精确授权</el-checkbox>
             <p class="subtext">
-              默认先保存为未启用，之后可选择“启用并调试”；启用会立即注册调用路径。
+              {{
+                apiForm.id
+                  ? '在配置列表或 API 管理详情维护启停和调试。'
+                  : '新接口保存为草稿，请在检查配置后单独启用。'
+              }}
             </p>
           </div>
         </template>
@@ -1224,7 +1448,7 @@ async function remove(row: PlatformModule | CustomApi) {
           >上一步</el-button
         ><el-button v-if="step < 2" type="primary" @click="next">下一步</el-button
         ><el-button v-else type="primary" :loading="busy" @click="saveApi">{{
-          apiForm.enabled ? '保存并启用' : '保存配置'
+          internalContext ? (apiForm.id ? '保存更改' : '保存草稿') : '保存配置'
         }}</el-button></template
       >
     </el-drawer>
@@ -1238,57 +1462,48 @@ async function remove(row: PlatformModule | CustomApi) {
         ><el-alert
           type="success"
           :closable="false"
-          :title="
-            saved.kind === 'modules'
-              ? internalContext
-                ? '提供方连接已保存'
-                : '平台连接已保存，尚未验证真实鉴权'
-              : saved.enabled
-                ? '接口已启用，可继续调试和授权'
-                : '接口已保存为未启用，可在目录中查看和继续编辑'
-          "
+          :title="saved.kind === 'modules' ? '平台连接已保存，尚未验证真实鉴权' : '接口配置已保存'"
         />
         <p class="mono form-hint">{{ saved.key }}</p>
-        <p v-if="!internalContext" class="form-hint">
+        <p class="form-hint">
           凭据属于上游平台；API Key 和操作授权属于调用方业务系统，这是两套不同的身份。
+        </p>
+        <p v-if="savedApi && (!savedApi.enabled || !connectionEnabled(savedApi))" class="form-hint">
+          {{
+            connectionEnabled(savedApi)
+              ? '实时调试需要先启用接口。'
+              : '实时调试需要先启用后端服务和接口。'
+          }}
         </p>
         <div class="saved-next-grid">
           <el-button
-            v-if="!internalContext"
             @click="
               saved = undefined;
               router.push('/credentials');
             "
             >配置上游凭据</el-button
-          ><el-button v-if="saved.kind === 'modules'" type="primary" @click="addForSavedPlatform">{{
-            internalContext ? '新增对外接口' : '为此平台新增接口'
-          }}</el-button
-          ><el-button v-else type="primary" :loading="busy" @click="enableAndDebug">{{
-            saved.enabled ? '前往调试' : '启用并前往调试'
-          }}</el-button
-          ><el-button
-            @click="
-              router.push({
-                path: internalContext ? '/exposed' : '/registry',
-                query: internalContext
-                  ? {
-                      ...(saved.kind === 'modules'
-                        ? { view: 'providers' }
-                        : { operation: saved.key }),
-                    }
-                  : { platform: saved.key.split('.')[0] },
-              })
-            "
-            >{{ internalContext ? '返回对外能力' : '在操作目录查看' }}</el-button
-          ><el-button
+          ><el-button v-if="saved.kind === 'modules'" type="primary" @click="addForSavedPlatform"
+            >为此平台新增接口</el-button
+          >
+          <el-button v-if="savedApi" :loading="busy" @click="changeApiActivation(savedApi)">{{
+            savedApi.enabled ? '停用接口' : '启用接口'
+          }}</el-button>
+          <el-button
             v-if="saved.kind === 'custom-apis'"
-            :disabled="!saved.enabled"
+            :disabled="!savedApi?.enabled || !connectionEnabled(savedApi)"
+            @click="openDebug"
+            >前往调试</el-button
+          >
+          <el-button @click="openSavedDetails">在操作目录查看</el-button>
+          <el-button
+            v-if="saved.kind === 'custom-apis'"
+            :disabled="!savedApi?.enabled || !connectionEnabled(savedApi)"
             @click="
               router.push({
                 path: '/grants',
                 query: {
                   operation: saved.key,
-                  direction: internalContext ? 'internal' : 'third_party',
+                  direction: 'third_party',
                 },
               })
             "
@@ -1299,3 +1514,34 @@ async function remove(row: PlatformModule | CustomApi) {
     </el-dialog>
   </div>
 </template>
+
+<style scoped>
+.configuration-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.configuration-delete {
+  color: var(--el-color-danger);
+}
+.configuration-delete:focus {
+  color: var(--el-color-danger-dark-2);
+  background: var(--el-color-danger-light-9);
+}
+.environment-address-list {
+  display: grid;
+  gap: 6px;
+}
+.environment-address-list > div {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.environment-address-list .el-tag {
+  flex: none;
+}
+.environment-address-list .mono {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+</style>

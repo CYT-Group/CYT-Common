@@ -152,7 +152,7 @@ public class AuthorizationService {
         || !pattern.matches("\\*|[a-z][a-z0-9_]*(?:\\.[a-z][a-z0-9_]*)*(?:\\.\\*)?"))
       throw GatewayException.invalid("授权规则格式无效");
     if (!pattern.contains("*")) {
-      var op = registry.get(pattern);
+      var op = registry.grantTarget(pattern);
       if (op.sensitive()
           && effect.equals("allow")
           && !JsonUtils.bool(body.get("confirm_sensitive")))

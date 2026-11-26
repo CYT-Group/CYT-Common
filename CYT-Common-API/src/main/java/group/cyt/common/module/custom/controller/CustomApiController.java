@@ -1,8 +1,10 @@
 package group.cyt.common.module.custom.controller;
 
+import group.cyt.common.core.exception.GatewayException;
 import group.cyt.common.core.persistence.GatewayStore;
 import group.cyt.common.core.util.JsonUtils;
 import group.cyt.common.module.auth.service.AuthenticationService;
+import group.cyt.common.module.custom.service.ApiPublicationService;
 import group.cyt.common.module.custom.service.ConfigurationService;
 import group.cyt.common.module.custom.service.ConfigurationService.Kind;
 import group.cyt.common.module.gateway.service.GatewayExecutor;
@@ -18,16 +20,19 @@ public class CustomApiController {
   private final GatewayStore store;
   private final OperationRegistry registry;
   private final GatewayExecutor executor;
+  private final ApiPublicationService publication;
 
   public CustomApiController(
       ConfigurationService config,
       GatewayStore store,
       OperationRegistry registry,
-      GatewayExecutor executor) {
+      GatewayExecutor executor,
+      ApiPublicationService publication) {
     this.config = config;
     this.store = store;
     this.registry = registry;
     this.executor = executor;
+    this.publication = publication;
   }
 
   @GetMapping("/modules")
@@ -77,6 +82,19 @@ public class CustomApiController {
   @DeleteMapping("/custom-apis/{id}")
   public Object deleteApi(@PathVariable long id, HttpServletRequest req) {
     return delete(Kind.API, id, req);
+  }
+
+  @GetMapping("/custom-apis/{id}/preflight")
+  public Object preflight(@PathVariable long id) {
+    return publication.preflight(id);
+  }
+
+  @PostMapping("/custom-apis/{id}/publication")
+  public Object publication(
+      @PathVariable long id, @RequestBody Map<String, Object> body, HttpServletRequest req) {
+    if (!(body.get("enabled") instanceof Boolean enabled))
+      throw GatewayException.invalid("请指定布尔值 enabled");
+    return publication.publish(id, enabled, AuthenticationService.actor(req));
   }
 
   @PostMapping("/custom-apis/{id}/test")

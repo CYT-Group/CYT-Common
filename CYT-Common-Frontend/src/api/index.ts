@@ -11,6 +11,7 @@ import type {
   Audit,
   PlatformModule,
   CustomApi,
+  CustomApiPreflight,
   CredentialPlatform,
   CapabilityReview,
   GrantDecision,
@@ -115,6 +116,10 @@ export const api = {
   simulate: (body: unknown) => post<Record<string, unknown>>(`${base}/simulate`, body),
   modules: () => get<{ items: PlatformModule[] }>(`${base}/modules`),
   customApis: () => get<{ items: CustomApi[] }>(`${base}/custom-apis`),
+  customApiPreflight: (id: number) =>
+    get<CustomApiPreflight>(`${base}/custom-apis/${id}/preflight`),
+  setApiPublication: (id: number, enabled: boolean) =>
+    post<{ ok: boolean; enabled: boolean }>(`${base}/custom-apis/${id}/publication`, { enabled }),
   callbacks: () => get<{ items: Record<string, unknown>[] }>(`${base}/callbacks`),
   saveResource: (
     resource: 'modules' | 'custom-apis' | 'callbacks',

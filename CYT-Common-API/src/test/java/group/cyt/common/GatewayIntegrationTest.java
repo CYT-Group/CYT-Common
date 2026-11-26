@@ -444,6 +444,53 @@ class GatewayIntegrationTest {
   }
 
   @Test
+  void internalApiPublicationChecksDraftGrantsAndCredentialsWithoutDispatching() {
+    String token = admin();
+    String system = "test_internal_publication";
+    String callerKey = createSystem(system, true);
+    String operation = "publication_fixture.orders.push";
+    String reference = "CUSTOM_PUBLICATION_FIXTURE_TOKEN";
+    String value = "fixture-secret-for-publication-check";
+    var provider = request(HttpMethod.POST, "/admin/api/modules", Map.of(
+        "key", "publication_fixture", "name", "发布验证服务", "service_kind", "internal",
+        "base_url", "http://127.0.0.1:1", "enabled", false), token);
+    assertEquals(200, provider.getStatusCode().value());
+    var api = request(HttpMethod.POST, "/admin/api/custom-apis", Map.of(
+        "key", operation, "module_key", "publication_fixture", "method", "POST", "path", "/orders",
+        "auth_type", "bearer", "secret_ref", reference, "sensitive", true, "enabled", false), token);
+    assertEquals(200, api.getStatusCode().value());
+    String path = "/admin/api/custom-apis/" + api.getBody().get("id");
+    assertEquals(401, request(HttpMethod.GET, path + "/preflight", null, null).getStatusCode().value());
+
+    var before = request(HttpMethod.GET, path + "/preflight", null, token).getBody();
+    assertEquals(false, before.get("enabled"));
+    assertEquals(false, before.get("can_publish"));
+    assertEquals(0, before.get("authorized_count"));
+    assertEquals("missing_value", before.get("credential_status"));
+    assertEquals(422, request(HttpMethod.POST, path + "/publication", Map.of("enabled", true), token).getStatusCode().value());
+
+    var grant = new LinkedHashMap<String, Object>(Map.of("system", system, "operation", operation, "enabled", true));
+    assertEquals(422, request(HttpMethod.POST, "/admin/api/grants/toggle", grant, token).getStatusCode().value());
+    grant.put("confirm_sensitive", true);
+    assertEquals(200, request(HttpMethod.POST, "/admin/api/grants/toggle", grant, token).getStatusCode().value());
+    assertEquals(1, request(HttpMethod.GET, path + "/preflight", null, token).getBody().get("authorized_count"));
+    assertEquals(404, request(HttpMethod.POST, "/integrations/publication-fixture/orders/push", Map.of(), callerKey).getStatusCode().value());
+
+    String providerPath = "/admin/api/modules/" + provider.getBody().get("id");
+    assertEquals(200, request(HttpMethod.PUT, providerPath, Map.of("enabled", true), token).getStatusCode().value());
+    credentials.save("local", Map.of(reference, value), "fixture-admin");
+    var ready = request(HttpMethod.GET, path + "/preflight", null, token).getBody();
+    assertEquals(true, ready.get("can_publish"));
+    assertEquals("configured", ready.get("credential_status"));
+    assertFalse(JsonUtils.write(ready).contains(value));
+    assertEquals(true, request(HttpMethod.POST, path + "/publication", Map.of("enabled", true), token).getBody().get("enabled"));
+    assertEquals(operation, registry.get(operation).key());
+
+    assertEquals(200, request(HttpMethod.PUT, providerPath, Map.of("enabled", false), token).getStatusCode().value());
+    assertEquals(false, request(HttpMethod.POST, path + "/publication", Map.of("enabled", false), token).getBody().get("enabled"));
+  }
+
+  @Test
   @Order(24)
   void documentationDirectionsStaySeparateAndResponseContractsPersist() {
     String token = admin(), system = "doc_direction_fixture";

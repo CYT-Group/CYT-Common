@@ -200,10 +200,16 @@ async function execute() {
               query: { tab: 'docs', operation, direction },
             })
           : direction === 'internal'
-            ? router.push('/exposed')
+            ? router.push({ path: '/exposed', query: { operation: operation || undefined } })
             : router.push({ path: '/registry', query: { platform: operation.split('.')[0] } })
       "
-      >{{ route.query.system ? '返回调用方' : '返回服务接口' }}</el-button
+      >{{
+        route.query.system
+          ? '返回调用方'
+          : direction === 'internal' && operation
+            ? '返回接口详情'
+            : '返回服务接口'
+      }}</el-button
     >
   </div>
 </template>
